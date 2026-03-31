@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction A — Immersive Full-Bleed</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-2: #1a1a1e;
+    --border: rgba(255,255,255,0.06);
+    --text-primary: #f0ede8;
+    --text-secondary: #8a8580;
+    --text-muted: #4a4845;
+    --accent: #c9a96e;
+    --accent-dim: rgba(201, 169, 110, 0.15);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    z-index: 100;
+  }
+
+  .logo {
+    padding: 0 20px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-section {
+    padding: 20px 12px 8px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--text-primary); border-left-color: var(--accent); background: var(--accent-dim); }
+
+  .nav-icon { width: 16px; opacity: 0.7; }
+
+  .nav-bottom {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .avatar-row:hover { background: rgba(255,255,255,0.04); }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c9a96e, #8b6f45);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #0a0a0b;
+  }
+  .avatar-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+  .avatar-role { font-size: 11px; color: var(--text-muted); }
+
+  /* MAIN */
+  .main {
+    margin-left: 220px;
+    min-height: 100vh;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,11,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 50;
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 24px; }
+
+  .page-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface-2);
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .filter-tab {
+    padding: 5px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-tab.active {
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .filter-tab:hover:not(.active) { color: var(--text-primary); }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    width: 220px;
+    cursor: text;
+  }
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    width: 100%;
+  }
+  .search-bar input::placeholder { color: var(--text-muted); }
+  .search-icon { color: var(--text-muted); font-size: 14px; }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.12); }
+
+  /* HERO — FEATURED */
+  .hero-section {
+    padding: 0;
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1208 0%, #0d1a1a 50%, #0a0a14 100%);
+  }
+
+  .hero-thumb {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 60%;
+    background: linear-gradient(135deg, #1c2a1c, #0d1520, #1a1008);
+    overflow: hidden;
+  }
+
+  /* Simulated cinematic frame */
+  .cinematic-frame {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 60%, rgba(201,169,110,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(100,150,200,0.05) 0%, transparent 40%),
+      linear-gradient(180deg, #0d1520 0%, #1a2530 30%, #0f1f18 70%, #0a0a0b 100%);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #0a0a0b 30%, transparent 70%);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 48px 40px;
+    max-width: 520px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero-title {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hero-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .tag {
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .tag:hover { border-color: rgba(201,169,110,0.4); color: var(--accent); }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #0a0a0b;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary:hover { background: #d4b47a; transform: translateY(-1px); }
+
+  .btn-ghost {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+  /* GRID */
+  .grid-section {
+    padding: 32px 32px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .see-all {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    opacity: 0.8;
+  }
+  .see-all:hover { opacity: 1; }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .video-card {
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    position: relative;
+    group: true;
+  }
+  .video-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+  }
+
+  .card-thumb {
+    width: 100%;
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Cinematic color palettes per card */
+  .thumb-1 { background: linear-gradient(135deg, #1a0f05, #2d1e0a, #1a1510, #0d1a10); }
+  .thumb-2 { background: linear-gradient(135deg, #050d1a, #0d1525, #0a1020, #151015); }
+  .thumb-3 { background: linear-gradient(135deg, #0d0505, #1a0a08, #200d10, #0a0505); }
+  .thumb-4 { background: linear-gradient(135deg, #080d05, #0d1a08, #101805, #050d08); }
+  .thumb-5 { background: linear-gradient(135deg, #0a0510, #120a1a, #0d0515, #05080d); }
+  .thumb-6 { background: linear-gradient(135deg, #100805, #1a1008, #150c05, #0d0805); }
+  .thumb-7 { background: linear-gradient(135deg, #050a10, #080f1a, #050d18, #080a14); }
+  .thumb-8 { background: linear-gradient(135deg, #0a0a05, #151508, #12100a, #0a0808); }
+
+  .thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 40% 50%, rgba(255,255,255,0.03) 0%, transparent 60%);
+  }
+
+  .play-btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: rgba(0,0,0,0.3);
+  }
+  .video-card:hover .play-btn { opacity: 1; }
+
+  .play-circle {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #0a0a0b;
+    padding-left: 2px;
+  }
+
+  .card-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+  }
+
+  .save-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px; height: 28px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .video-card:hover .save-btn { opacity: 1; }
+  .save-btn:hover { background: var(--accent); color: #0a0a0b; }
+
+  .card-body {
+    padding: 12px 14px 14px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .card-tag {
+    padding: 2px 7px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* DIVIDER LABEL */
+  .label-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .direction-label {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    z-index: 200;
+    max-width: 240px;
+  }
+  .dir-name { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .dir-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* INSPIRATION PILLS */
+  .quick-filters {
+    padding: 0 32px 24px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+  }
+  .quick-filters::-webkit-scrollbar { display: none; }
+
+  .filter-pill {
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .filter-pill:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.15); }
+  .filter-pill.active { background: var(--accent-dim); border-color: rgba(201,169,110,0.4); color: var(--accent); }
+
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">◈ Veilr</div>
+
+  <div class="nav-section">Explorer</div>
+  <div class="nav-item active">
+    <span class="nav-icon">◈</span> Feed
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◎</span> Tendances
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◇</span> Découvrir
+  </div>
+
+  <div class="nav-section">Mes projets</div>
+  <div class="nav-item">
+    <span class="nav-icon">▱</span> Film Corporate PME
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">▱</span> Mariage Dupont
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">+</span> Nouveau projet
+  </div>
+
+  <div class="nav-section">Collections</div>
+  <div class="nav-item">
+    <span class="nav-icon">◉</span> Lumière naturelle
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◉</span> Transitions douces
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">◉</span> Color grading chaud
+  </div>
+
+  <div class="nav-bottom">
+    <div class="avatar-row">
+      <div class="avatar">L</div>
+      <div>
+        <div class="avatar-name">Léa Martin</div>
+        <div class="avatar-role">Plan Pro</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="page-title">Feed</span>
+      <div class="filter-tabs">
+        <div class="filter-tab active">Tout</div>
+        <div class="filter-tab">Corporate</div>
+        <div class="filter-tab">Mariage</div>
+        <div class="filter-tab">Docu</div>
+        <div class="filter-tab">Clip</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Chercher une ambiance, un style…">
+      </div>
+      <div class="icon-btn" title="Filtres avancés">⚙</div>
+      <div class="icon-btn" title="Notifications">🔔</div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-thumb">
+      <div class="cinematic-frame"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">✦ Sélection du jour</div>
+      <div class="hero-title">Lumière de Novembre<br>— Erik Winkowski</div>
+      <div class="hero-meta">
+        <span>🎬 Film de mariage</span>
+        <span style="color: var(--text-muted)">•</span>
+        <span>⏱ 4:32</span>
+        <span style="color: var(--text-muted)">•</span>
+        <span>🌍 France</span>
+      </div>
+      <div class="hero-tags">
+        <div class="tag">Lumière dorée</div>
+        <div class="tag">Steadicam</div>
+        <div class="tag">Slow motion</div>
+        <div class="tag">Score live</div>
+      </div>
+      <div class="hero-actions">
+        <div class="btn-primary">▶ Regarder</div>
+        <div class="btn-ghost">+ Sauvegarder</div>
+        <div class="btn-ghost">→ Ajouter au projet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK FILTERS -->
+  <div class="quick-filters">
+    <div class="filter-pill active">Tout</div>
+    <div class="filter-pill">✦ Recommandé pour toi</div>
+    <div class="filter-pill">🌅 Heure magique</div>
+    <div class="filter-pill">🏙 Corporate minimaliste</div>
+    <div class="filter-pill">🎞 Grain argentique</div>
+    <div class="filter-pill">🌊 Mouvement lent</div>
+    <div class="filter-pill">🔆 High-key</div>
+    <div class="filter-pill">🌑 Low-key dramatique</div>
+    <div class="filter-pill">🎵 Score émotionnel</div>
+    <div class="filter-pill">🗺 Nouvelle vague</div>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid-section">
+    <div class="section-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="section-title">Récemment ajoutés</span>
+        <div class="label-badge">✦ 14 nouveaux</div>
+      </div>
+      <span class="see-all">Voir tout →</span>
+    </div>
+
+    <div class="video-grid">
+      <!-- Card 1 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-1">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">3:45</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">The Golden Hour Edit</div>
+          <div class="card-meta">Alexandr Lamont · Mariage · 2025</div>
+          <div class="card-tags">
+            <div class="card-tag">Chaud</div>
+            <div class="card-tag">Handheld</div>
+            <div class="card-tag">Intime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-2">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">5:12</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Rapport Annuel Nexus</div>
+          <div class="card-meta">Studio Prisme · Corporate · 2026</div>
+          <div class="card-tags">
+            <div class="card-tag">Bleu acier</div>
+            <div class="card-tag">Drone</div>
+            <div class="card-tag">B2B</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-3">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">2:58</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Terres Rouges</div>
+          <div class="card-meta">Hana Forêt · Documentaire · 2025</div>
+          <div class="card-tags">
+            <div class="card-tag">Ocre</div>
+            <div class="card-tag">Naturel</div>
+            <div class="card-tag">Voix off</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-4">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">4:01</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Forêt de Fontainebleau</div>
+          <div class="card-meta">Lucas Bernard · Nature · 2025</div>
+          <div class="card-tags">
+            <div class="card-tag">Vert profond</div>
+            <div class="card-tag">Silence</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-5">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">6:22</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Studio Nuit</div>
+          <div class="card-meta">Vera Liu · Clip musical · 2026</div>
+          <div class="card-tags">
+            <div class="card-tag">Néon</div>
+            <div class="card-tag">Long plan</div>
+            <div class="card-tag">Urbain</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-6">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">3:18</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Brand Film — Maison Orsay</div>
+          <div class="card-meta">Paul Vernet · Corporate · 2026</div>
+          <div class="card-tags">
+            <div class="card-tag">Luxe</div>
+            <div class="card-tag">Tabletop</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-7">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">7:04</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Mer du Nord — Hiver</div>
+          <div class="card-meta">Siri Andersen · Documentaire · 2025</div>
+          <div class="card-tags">
+            <div class="card-tag">Froid</div>
+            <div class="card-tag">Grand angle</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="video-card">
+        <div class="card-thumb thumb-8">
+          <div class="thumb-overlay"></div>
+          <div class="play-btn"><div class="play-circle">▶</div></div>
+          <div class="save-btn">♡</div>
+          <div class="card-duration">4:47</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Portrait — Céramiste</div>
+          <div class="card-meta">Inès Karim · Portrait · 2026</div>
+          <div class="card-tags">
+            <div class="card-tag">Artisanat</div>
+            <div class="card-tag">Gros plan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DIRECTION LABEL -->
+<div class="direction-label">
+  <div class="dir-name">Direction A — Immersive Full-Bleed</div>
+  <div class="dir-desc">Hero cinématique plein cadre · Navigation latérale · Grid 4 colonnes · Accent doré</div>
+</div>
+
+</body>
+</html>

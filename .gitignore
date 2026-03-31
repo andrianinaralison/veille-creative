@@ -1,0 +1,25 @@
+# Dependencies
+veille-creative/node_modules/
+node_modules/
+
+# Build output
+veille-creative/dist/
+dist/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
