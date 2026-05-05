@@ -207,7 +207,7 @@ export default function ReferenceModal({ reference, onClose }) {
                 onClick={() => setSaved(!saved)}
                 className={`flex flex-1 items-center justify-center gap-2.5 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all ${
                   saved
-                    ? 'bg-gold text-canvas'
+                    ? 'bg-surface-raised text-ink border border-ink/20'
                     : 'bg-ink text-canvas hover:bg-ink/90'
                 }`}
               >

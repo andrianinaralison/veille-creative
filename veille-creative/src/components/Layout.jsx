@@ -33,8 +33,9 @@ export default function Layout({ children }) {
 
           {/* Left: Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-5 h-5 rounded-sm bg-gold flex items-center justify-center">
-              <span className="text-canvas font-black text-[9px] leading-none tracking-tight">°</span>
+            <div className="w-5 h-5 rounded-sm bg-ink flex items-center justify-center relative overflow-hidden">
+              <span className="text-canvas font-black text-[9px] leading-none tracking-tight relative z-10">°</span>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, transparent 49%, rgba(0,0,0,0.18) 50%)' }} />
             </div>
             <span className="text-sm font-bold tracking-tight text-ink">180Degre</span>
           </Link>
@@ -61,7 +62,7 @@ export default function Layout({ children }) {
                       <span className="absolute bottom-0 left-3 right-3 h-px bg-ink" />
                     )}
                     {dot && !isActive && (
-                      <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-gold" />
+                      <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-ink" />
                     )}
                   </>
                 )}

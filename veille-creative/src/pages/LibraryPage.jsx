@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { Search, ChevronLeft, ChevronRight, ChevronDown, Bookmark, BookmarkCheck, SlidersHorizontal, X, Sparkles } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { Search, ChevronLeft, ChevronRight, ChevronDown, Bookmark, BookmarkCheck, SlidersHorizontal, X, Play } from 'lucide-react'
 import { mockReferences } from '../data/mockData'
 import ReferenceModal from '../components/ReferenceModal'
 
-// ─── Filter config (inspiré de Frameset, adapté vidéaste) ────────────────────
+// ─── Filter config ────────────────────────────────────────────────────────────
 
 const FILTER_GROUPS = [
   {
@@ -65,9 +65,9 @@ const FILTER_GROUPS = [
     id: 'lumiere',
     label: 'Lumière',
     options: [
-      { id: 'basse-lumiere',   label: 'Basse lumière',    match: r => r.tags.includes('basse-lumière') },
-      { id: 'exterieur',       label: 'Extérieur',        match: r => r.tags.includes('extérieur') },
-      { id: 'lumiere-naturelle', label: 'Lumière naturelle', match: r => r.tags.some(t => ['lumière','lumière-naturelle'].includes(t)) },
+      { id: 'basse-lumiere',     label: 'Basse lumière',      match: r => r.tags.includes('basse-lumière') },
+      { id: 'exterieur',         label: 'Extérieur',          match: r => r.tags.includes('extérieur') },
+      { id: 'lumiere-naturelle', label: 'Lumière naturelle',  match: r => r.tags.some(t => ['lumière','lumière-naturelle'].includes(t)) },
     ],
   },
   {
@@ -81,13 +81,26 @@ const FILTER_GROUPS = [
   },
 ]
 
+// Quick pills — mapped to filter groups
+const QUICK_PILLS = [
+  { label: 'Tout',         clear: true },
+  { label: 'Mariage',      groupId: 'categorie',   optId: 'mariage' },
+  { label: 'Corporate',    groupId: 'categorie',   optId: 'corporate' },
+  { label: 'Événementiel', groupId: 'categorie',   optId: 'evenementiel' },
+  { label: 'Anamorphique', groupId: 'colorimetrie', optId: 'anamorphique' },
+  { label: 'Golden hour',  groupId: 'colorimetrie', optId: 'golden-hour' },
+  { label: 'Vintage',      groupId: 'colorimetrie', optId: 'vintage' },
+  { label: 'Lumix S5ii',   groupId: 'camera',      optId: 'lumix' },
+  { label: 'Sony FX3',     groupId: 'camera',      optId: 'sony' },
+]
+
 // ─── Categories (rows) ────────────────────────────────────────────────────────
 
 const buildCategories = (refs) => [
   {
     id: 'recommande',
-    label: 'Recommandé pour vous',
-    icon: '✦',
+    label: 'Recommandé · selon vos projets',
+    sub: '14 références alignées avec vos projets actifs',
     refs: [
       ...refs.filter(r => r.projectId),
       ...refs.filter(r => !r.projectId).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt)),
@@ -96,98 +109,156 @@ const buildCategories = (refs) => [
   {
     id: 'mariage',
     label: 'Mariage & Cinéma',
+    sub: 'Films de mariage cinématiques',
     refs: refs.filter(r => r.mood === 'romantique'),
   },
   {
     id: 'corporate',
     label: 'Corporate & Conférences',
+    sub: 'Aftermovies et films d\'entreprise',
     refs: refs.filter(r => r.mood === 'professionnel' || r.tags.some(t => ['corporate','B2B'].includes(t))),
   },
   {
     id: 'evenementiel',
     label: 'Événementiel & Galas',
+    sub: 'Captations d\'événements',
     refs: refs.filter(r => r.mood === 'vivant' || r.mood === 'élégant' || r.tags.some(t => ['gala','awards','foule'].includes(t))),
   },
   {
     id: 'colorimetrie',
     label: 'Colorimétrie & Lumière',
+    sub: 'Golden hour, grain, V-Log',
     refs: refs.filter(r => r.tags.some(t => ['colorimétrie','golden-hour','LUT','V-Log','grain','vintage'].includes(t))),
   },
   {
     id: 'technique',
     label: 'Technique & Workflow',
+    sub: 'BTS, slow motion, anamorphique',
     refs: refs.filter(r => r.tags.some(t => ['BTS','technique','workflow','handheld','slow-motion','anamorphique'].includes(t))),
   },
   {
     id: 'narration',
     label: 'Narration & Montage',
+    sub: 'Structure narrative et transitions',
     refs: refs.filter(r => r.tags.some(t => ['narrative','structure','montage','transitions','transition'].includes(t))),
   },
 ]
 
-// ─── Platform colors ──────────────────────────────────────────────────────────
+// ─── Hero Cinema Marquee ──────────────────────────────────────────────────────
 
-const platformDot = {
-  Vimeo: '#1ab7ea',
-  Instagram: '#e1306c',
-  TikTok: '#ff0050',
-  YouTube: '#ff0000',
-  Shotdeck: '#f5a623',
-  Pinterest: '#bd081c',
-}
-
-// ─── Netflix Card ─────────────────────────────────────────────────────────────
-
-function NetflixCard({ reference, onClick }) {
-  const [saved, setSaved] = useState(reference.saved ?? !!reference.savedAt)
-  const dot = platformDot[reference.platform] || '#888'
-
-  const handleSave = (e) => {
-    e.stopPropagation()
-    setSaved(!saved)
-  }
-
+function Hero({ reference, onSelect }) {
   return (
-    <div className="group flex-shrink-0 w-80 cursor-pointer" onClick={onClick}>
-      <div className="relative aspect-video rounded-lg overflow-hidden bg-surface-raised mb-3">
-        <img
-          src={reference.thumbnail}
-          alt={reference.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="relative flex-shrink-0" style={{ height: 360 }}>
+      <img
+        src={reference.thumbnail}
+        alt={reference.title}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: 'brightness(0.52) saturate(1.05)' }}
+      />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(12,10,9,0.38) 0%, rgba(12,10,9,0.08) 30%, rgba(12,10,9,0.96) 95%)' }} />
 
-        <button
-          onClick={handleSave}
-          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all backdrop-blur-sm opacity-0 group-hover:opacity-100 ${
-            saved ? 'bg-gold text-canvas' : 'bg-black/50 text-white hover:bg-gold hover:text-canvas'
-          }`}
-        >
-          {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-        </button>
-
-        <div className="absolute bottom-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span
-            className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: `${dot}30`, color: dot, border: `1px solid ${dot}50` }}
+      <div className="absolute inset-0 px-8 pb-10 flex flex-col justify-end">
+        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-muted mb-3">
+          · EN VEDETTE · CETTE SEMAINE
+        </div>
+        <h1 className="font-editorial text-[52px] leading-[0.96] tracking-tight mb-3.5 max-w-2xl text-ink">
+          {reference.title}
+        </h1>
+        <div className="flex gap-3.5 items-center text-ink-muted text-xs mb-5 font-mono">
+          <span>{reference.author}</span>
+          <span>·</span>
+          <span>{reference.platform}</span>
+          <span>·</span>
+          <span>{(reference.tags || []).slice(0, 2).join(' / ')}</span>
+        </div>
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => window.open(reference.url, '_blank')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-ink text-canvas text-[13px] font-semibold transition-opacity hover:opacity-90"
           >
-            <span className="w-1 h-1 rounded-full" style={{ backgroundColor: dot }} />
-            {reference.platform}
-          </span>
+            <Play size={11} fill="currentColor" /> Aperçu cinéma
+          </button>
+          <button
+            onClick={() => onSelect(reference)}
+            className="flex items-center gap-2 px-4 py-2.5 border border-ink/25 text-ink text-[13px] transition-colors hover:border-ink/60"
+          >
+            <Bookmark size={11} /> Sauvegarder
+          </button>
+          <button
+            onClick={() => onSelect(reference)}
+            className="flex items-center gap-2 px-4 py-2.5 text-ink-muted text-[13px] transition-colors hover:text-ink"
+          >
+            Détail →
+          </button>
         </div>
       </div>
 
-      <div>
-        <p className="text-[10px] text-ink-muted mb-0.5 truncate">{reference.author || reference.platform}</p>
-        <p className="text-[13px] text-ink leading-snug line-clamp-2">{reference.title}</p>
+      <div className="absolute top-16 right-8 text-right font-mono">
+        <div className="text-[10px] text-ink-muted">CETTE SEMAINE</div>
+        <div className="text-[10px] text-ink">14 nouvelles · 3 dans vos projets</div>
       </div>
     </div>
   )
 }
 
-// ─── Netflix Row ──────────────────────────────────────────────────────────────
+// ─── Portrait Card (cinema shelf) ────────────────────────────────────────────
 
-function NetflixRow({ category, onSelect }) {
+function ShelfCard({ reference, onClick }) {
+  const [saved, setSaved] = useState(reference.saved ?? !!reference.savedAt)
+
+  return (
+    <div
+      className="group relative flex-shrink-0 cursor-pointer overflow-hidden rounded-sm"
+      style={{ width: 164, aspectRatio: '4/5' }}
+      onClick={onClick}
+    >
+      <img
+        src={reference.thumbnail}
+        alt={reference.title}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+      />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.88))' }} />
+
+      {/* Saved indicator top-left */}
+      {saved && (
+        <span className="absolute top-2 left-2 w-[18px] h-[18px] bg-ink text-canvas grid place-items-center">
+          <BookmarkCheck size={9} />
+        </span>
+      )}
+
+      {/* Save button on hover */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setSaved(!saved) }}
+        className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ${
+          saved ? 'bg-ink text-canvas' : 'bg-black/50 text-white hover:bg-ink hover:text-canvas'
+        }`}
+      >
+        {saved ? <BookmarkCheck size={10} /> : <Bookmark size={10} />}
+      </button>
+
+      {/* Bottom overlay */}
+      <div className="absolute left-2.5 right-2.5 bottom-2.5">
+        <div className="font-mono text-[8px] text-white/45 uppercase tracking-widest mb-1 truncate">
+          {reference.author}
+        </div>
+        <div className="text-[11px] text-white leading-tight font-medium line-clamp-2 mb-1.5">
+          {reference.title}
+        </div>
+        <div className="flex gap-1 flex-wrap">
+          {(reference.tags || []).slice(0, 2).map(t => (
+            <span key={t} className="text-[8px] px-1.5 py-0.5 bg-white/10 text-white/60 lowercase">
+              {t.replace(/-/g, ' ')}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Cinema Row ───────────────────────────────────────────────────────────────
+
+function CinemaRow({ category, onSelect }) {
   const scrollRef = useRef(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -195,7 +266,7 @@ function NetflixRow({ category, onSelect }) {
   const scroll = (dir) => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollBy({ left: dir * 320 * 3, behavior: 'smooth' })
+    el.scrollBy({ left: dir * 164 * 4, behavior: 'smooth' })
   }
 
   const onScroll = () => {
@@ -208,52 +279,44 @@ function NetflixRow({ category, onSelect }) {
   if (!category.refs.length) return null
 
   return (
-    <div className="group/row mb-14">
-      {/* Row header */}
-      <div className="flex items-baseline justify-between px-8 mb-5">
-        <div className="flex items-center gap-2.5">
-          {category.icon && (
-            <span className="text-gold text-sm">{category.icon}</span>
-          )}
-          <h2 className="text-lg font-semibold text-ink group-hover/row:text-gold transition-colors cursor-default">
-            {category.label}
-          </h2>
-          <span className="text-xs text-gold opacity-0 group-hover/row:opacity-100 transition-opacity">
-            Voir tout →
-          </span>
-        </div>
-        <span className="text-[11px] text-ink-faint">
-          {category.refs.length} référence{category.refs.length > 1 ? 's' : ''}
+    <div className="group/row mb-12">
+      <div className="flex items-baseline gap-3 px-8 mb-4">
+        <h2 className="font-editorial text-[22px] font-normal text-ink">{category.label}</h2>
+        {category.sub && (
+          <span className="text-[11px] text-ink-muted">{category.sub}</span>
+        )}
+        <span className="flex-1" />
+        <span className="font-mono text-[10px] text-ink-muted opacity-0 group-hover/row:opacity-100 transition-opacity">
+          VOIR TOUT  →
         </span>
       </div>
 
-      {/* Scroll container */}
       <div className="relative">
         {canScrollLeft && (
           <button
             onClick={() => scroll(-1)}
-            className="absolute left-2 top-[90px] -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-canvas/90 border border-surface-border flex items-center justify-center text-ink hover:bg-surface-raised transition-all opacity-0 group-hover/row:opacity-100 shadow-lg"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-canvas/90 border border-surface-border flex items-center justify-center text-ink opacity-0 group-hover/row:opacity-100 transition-all hover:bg-surface-raised shadow-lg"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={14} />
           </button>
         )}
         {canScrollRight && (
           <button
             onClick={() => scroll(1)}
-            className="absolute right-2 top-[90px] -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-canvas/90 border border-surface-border flex items-center justify-center text-ink hover:bg-surface-raised transition-all opacity-0 group-hover/row:opacity-100 shadow-lg"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-canvas/90 border border-surface-border flex items-center justify-center text-ink opacity-0 group-hover/row:opacity-100 transition-all hover:bg-surface-raised shadow-lg"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={14} />
           </button>
         )}
 
         <div
           ref={scrollRef}
           onScroll={onScroll}
-          className="flex gap-4 px-8 overflow-x-auto pb-1"
+          className="flex gap-2.5 px-8 overflow-x-auto pb-1"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {category.refs.map(ref => (
-            <NetflixCard key={ref.id} reference={ref} onClick={() => onSelect(ref)} />
+            <ShelfCard key={ref.id} reference={ref} onClick={() => onSelect(ref)} />
           ))}
           <div className="flex-shrink-0 w-4" />
         </div>
@@ -275,7 +338,6 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
 
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] animate-fade-in"
@@ -283,36 +345,33 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
         />
       )}
 
-      {/* Panel */}
       <div
         className={`fixed right-0 top-0 h-full w-[340px] z-50 bg-surface border-l border-surface-border flex flex-col transition-transform duration-300 ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-surface-border flex-shrink-0">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal size={15} className="text-ink-muted" />
+            <SlidersHorizontal size={14} className="text-ink-muted" />
             <span className="text-sm font-semibold text-ink">Filtres</span>
             {totalActive > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold text-canvas font-semibold">
+              <span className="text-[10px] px-1.5 py-0.5 bg-ink text-canvas font-semibold">
                 {totalActive}
               </span>
             )}
           </div>
           <div className="flex items-center gap-3">
             {totalActive > 0 && (
-              <button onClick={onClearAll} className="text-[11px] text-ink-muted hover:text-gold transition-colors">
+              <button onClick={onClearAll} className="text-[11px] text-ink-muted hover:text-ink transition-colors">
                 Effacer tout
               </button>
             )}
             <button onClick={onClose} className="text-ink-muted hover:text-ink transition-colors">
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
         </div>
 
-        {/* Groups */}
         <div className="flex-1 overflow-y-auto">
           {FILTER_GROUPS.map(group => {
             const groupSelected = activeFilters[group.id] ?? new Set()
@@ -320,7 +379,6 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
 
             return (
               <div key={group.id} className="border-b border-surface-border">
-                {/* Group header */}
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-surface-raised transition-colors"
@@ -328,18 +386,17 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-medium text-ink">{group.label}</span>
                     {groupSelected.size > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold font-medium">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-ink/15 text-ink font-medium">
                         {groupSelected.size}
                       </span>
                     )}
                   </div>
                   <ChevronDown
-                    size={14}
+                    size={13}
                     className={`text-ink-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
-                {/* Group options */}
                 {isOpen && (
                   <div className="px-6 pb-4 flex flex-wrap gap-2">
                     {group.options.map(opt => {
@@ -348,10 +405,10 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
                         <button
                           key={opt.id}
                           onClick={() => onToggle(group.id, opt.id)}
-                          className={`text-[11px] px-3 py-1.5 rounded-full border transition-all ${
+                          className={`text-[11px] px-3 py-1.5 border transition-all ${
                             isActive
-                              ? 'border-gold bg-gold/15 text-gold'
-                              : 'border-surface-border text-ink-muted hover:border-ink-muted hover:text-ink'
+                              ? 'border-ink/30 bg-ink/10 text-ink'
+                              : 'border-surface-border text-ink-muted hover:border-ink/25 hover:text-ink'
                           }`}
                         >
                           {opt.label}
@@ -365,11 +422,10 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
           })}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-surface-border flex-shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-lg bg-gold text-canvas text-sm font-medium hover:bg-gold-light transition-colors"
+            className="w-full py-2.5 bg-ink text-canvas text-sm font-medium hover:opacity-90 transition-opacity"
           >
             Voir les résultats
           </button>
@@ -383,46 +439,12 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
 
 export default function LibraryPage() {
   const [search, setSearch] = useState('')
-  const [activeFilters, setActiveFilters] = useState({}) // { groupId: Set<optionId> }
+  const [activeFilters, setActiveFilters] = useState({})
   const [filterOpen, setFilterOpen] = useState(false)
   const [selectedRef, setSelectedRef] = useState(null)
 
-  // Typing animation
-  const PHRASES = [
-    'Bibliothèque',
-    'Comment vous inspirer aujourd\'hui ?',
-    'Trouvez les meilleures références indé',
-    'Un brief ? Promptez et laissez faire la magie',
-  ]
-  const [typedText, setTypedText] = useState(PHRASES[0])
-  const [phraseIndex, setPhraseIndex] = useState(0)
-  const [charIndex, setCharIndex] = useState(PHRASES[0].length)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const heroRef = mockReferences[0]
 
-  useEffect(() => {
-    const current = PHRASES[phraseIndex]
-    let delay = isDeleting ? 35 : 65
-
-    if (!isDeleting && charIndex === current.length) {
-      delay = 2200
-      const t = setTimeout(() => setIsDeleting(true), delay)
-      return () => clearTimeout(t)
-    }
-    if (isDeleting && charIndex === 0) {
-      const nextIndex = (phraseIndex + 1) % PHRASES.length
-      setIsDeleting(false)
-      setPhraseIndex(nextIndex)
-      return
-    }
-
-    const t = setTimeout(() => {
-      setCharIndex(prev => isDeleting ? prev - 1 : prev + 1)
-      setTypedText(current.slice(0, isDeleting ? charIndex - 1 : charIndex + 1))
-    }, delay)
-    return () => clearTimeout(t)
-  }, [charIndex, isDeleting, phraseIndex])
-
-  // Toggle a filter option
   const toggleFilter = (groupId, optId) => {
     setActiveFilters(prev => {
       const current = new Set(prev[groupId] ?? [])
@@ -432,7 +454,6 @@ export default function LibraryPage() {
     })
   }
 
-  // Remove a single chip
   const removeFilter = (groupId, optId) => {
     setActiveFilters(prev => {
       const current = new Set(prev[groupId] ?? [])
@@ -441,17 +462,15 @@ export default function LibraryPage() {
     })
   }
 
-  // Clear all filters
   const clearAllFilters = () => setActiveFilters({})
 
-  // Active filter chips list (flat)
   const activeChips = useMemo(() => {
     const chips = []
     FILTER_GROUPS.forEach(group => {
       const selected = activeFilters[group.id]
       if (!selected || selected.size === 0) return
       group.options.forEach(opt => {
-        if (selected.has(opt.id)) chips.push({ groupId: group.id, optId: opt.id, label: opt.label, groupLabel: group.label })
+        if (selected.has(opt.id)) chips.push({ groupId: group.id, optId: opt.id, label: opt.label })
       })
     })
     return chips
@@ -459,11 +478,8 @@ export default function LibraryPage() {
 
   const totalActiveFilters = activeChips.length
 
-  // Filter function
   const filtered = useMemo(() => {
     let refs = mockReferences
-
-    // Text search
     if (search) {
       const q = search.toLowerCase()
       refs = refs.filter(r =>
@@ -473,8 +489,6 @@ export default function LibraryPage() {
         r.context?.toLowerCase().includes(q)
       )
     }
-
-    // Attribute filters: AND across groups, OR within a group
     FILTER_GROUPS.forEach(group => {
       const selected = activeFilters[group.id]
       if (!selected || selected.size === 0) return
@@ -485,131 +499,153 @@ export default function LibraryPage() {
         })
       )
     })
-
     return refs
   }, [search, activeFilters])
 
   const categories = useMemo(() => buildCategories(filtered), [filtered])
   const isFiltering = !!search || totalActiveFilters > 0
 
+  const isPillActive = (pill) => {
+    if (pill.clear) return !isFiltering
+    const group = activeFilters[pill.groupId]
+    return group?.has(pill.optId) ?? false
+  }
+
+  const handlePill = (pill) => {
+    if (pill.clear) {
+      clearAllFilters()
+      setSearch('')
+    } else {
+      toggleFilter(pill.groupId, pill.optId)
+    }
+  }
+
   return (
     <div className="bg-canvas min-h-screen animate-fade-in">
 
-      {/* ── Header ── */}
-      <div className="px-8 pt-10 pb-0">
-        <div className="mb-7">
-          <h1 className="font-editorial text-5xl text-ink mb-1">
-            {typedText}<span className="animate-pulse">|</span>
-          </h1>
-          <p className="text-ink-muted text-sm">
-            {mockReferences.length} références — {filtered.length} correspondantes
-          </p>
-        </div>
+      {/* ── Cinema Marquee Hero ── */}
+      {!isFiltering && (
+        <Hero reference={heroRef} onSelect={setSelectedRef} />
+      )}
 
-        {/* Search + Filter button */}
-        <div className="flex items-center gap-3 mb-0">
-          <div className="relative flex-1 max-w-2xl">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted" />
+      {/* ── Filter bar ── */}
+      <div className="px-8 border-b border-surface-border">
+        {/* Quick pills + search */}
+        <div className="flex items-center gap-2 py-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {QUICK_PILLS.map(pill => (
+            <button
+              key={pill.label}
+              onClick={() => handlePill(pill)}
+              className={`flex-shrink-0 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
+                isPillActive(pill)
+                  ? 'border-ink/30 bg-ink/10 text-ink'
+                  : 'border-surface-border text-ink-muted hover:border-ink/20 hover:text-ink'
+              }`}
+            >
+              {pill.label}
+            </button>
+          ))}
+
+          <span className="flex-1 min-w-4" />
+
+          {/* Search input */}
+          <div className="relative flex-shrink-0 w-72">
+            <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
             <input
               type="text"
-              placeholder="Titre, technique, intention créative, caméra..."
+              placeholder="Titre, technique, intention..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-11 pr-10 py-3.5 rounded-xl bg-surface border border-surface-border text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold/50 transition-colors"
+              className="w-full pl-9 pr-8 py-1.5 bg-surface border border-surface-border text-[12px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink/20 transition-colors rounded-sm"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
               >
-                <X size={14} />
+                <X size={12} />
               </button>
             )}
           </div>
 
-          {/* Filter toggle */}
+          {/* Filter sidebar button */}
           <button
             onClick={() => setFilterOpen(true)}
-            className={`flex items-center gap-2 px-4 py-3.5 rounded-xl border text-sm font-medium transition-all flex-shrink-0 ${
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border text-[12px] font-medium transition-all ${
               totalActiveFilters > 0
-                ? 'border-gold bg-gold/10 text-gold'
-                : 'border-surface-border text-ink-muted hover:border-ink-muted hover:text-ink'
+                ? 'border-ink/30 bg-ink/10 text-ink'
+                : 'border-surface-border text-ink-muted hover:border-ink/20 hover:text-ink'
             }`}
           >
-            <SlidersHorizontal size={15} />
-            Filtres
+            <SlidersHorizontal size={12} />
+            Affiner
             {totalActiveFilters > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold text-canvas font-semibold">
+              <span className="text-[9px] px-1 py-0.5 bg-ink text-canvas font-semibold">
                 {totalActiveFilters}
               </span>
             )}
           </button>
         </div>
 
-        {/* Active filter chips */}
+        {/* Active chips row */}
         {activeChips.length > 0 && (
-          <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <div className="flex items-center gap-2 pb-3 flex-wrap">
             {activeChips.map(chip => (
               <button
                 key={`${chip.groupId}-${chip.optId}`}
                 onClick={() => removeFilter(chip.groupId, chip.optId)}
-                className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full border border-gold bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
+                className="flex items-center gap-1.5 text-[11px] px-3 py-1 border border-ink/25 bg-ink/8 text-ink hover:bg-ink/15 transition-colors whitespace-nowrap rounded-full"
+                style={{ background: 'rgba(240,235,228,0.08)' }}
               >
                 {chip.label}
-                <X size={10} />
+                <X size={9} />
               </button>
             ))}
             <button
               onClick={clearAllFilters}
-              className="text-[11px] px-3 py-1.5 rounded-full border border-surface-border text-ink-muted hover:text-ink hover:border-ink-muted transition-colors"
+              className="text-[11px] px-3 py-1 border border-surface-border text-ink-muted hover:text-ink hover:border-ink/20 transition-colors rounded-full"
             >
-              Effacer tout
+              Tout effacer
             </button>
           </div>
         )}
       </div>
 
-      {/* ── Divider ── */}
-      <div className="border-t border-surface-border mt-7 mb-0" />
-
       {/* ── Content ── */}
       {filtered.length === 0 ? (
         <div className="text-center py-24 text-ink-muted">
-          <Search size={36} className="mx-auto mb-4 opacity-20" />
+          <Search size={32} className="mx-auto mb-4 opacity-20" />
           <p className="text-sm mb-1">Aucune référence ne correspond</p>
           <button
             onClick={() => { setSearch(''); clearAllFilters() }}
-            className="mt-3 text-xs text-gold hover:text-gold-light"
+            className="mt-3 text-xs text-ink hover:text-ink-muted transition-colors"
           >
             Réinitialiser les filtres
           </button>
         </div>
       ) : isFiltering ? (
-        /* ── Filtered: flat grid responsive ── */
         <div className="px-8 py-10">
-          <p className="text-[11px] text-ink-muted mb-6">
+          <p className="font-mono text-[10px] text-ink-muted uppercase tracking-widest mb-7">
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
             {search ? ` pour « ${search} »` : ''}
           </p>
           <div
-            className="grid gap-5 items-start"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+            className="grid gap-3"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(164px, 1fr))' }}
           >
             {filtered.map(ref => (
-              <NetflixCard key={ref.id} reference={ref} onClick={() => setSelectedRef(ref)} />
+              <ShelfCard key={ref.id} reference={ref} onClick={() => setSelectedRef(ref)} />
             ))}
           </div>
         </div>
       ) : (
-        /* ── Default: Netflix rows ── */
         <div className="pt-10 pb-16">
           {categories.map(cat => (
-            <NetflixRow key={cat.id} category={cat} onSelect={setSelectedRef} />
+            <CinemaRow key={cat.id} category={cat} onSelect={setSelectedRef} />
           ))}
         </div>
       )}
 
-      {/* ── Filter Sidebar ── */}
       <FilterSidebar
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
@@ -618,7 +654,6 @@ export default function LibraryPage() {
         onClearAll={clearAllFilters}
       />
 
-      {/* ── Modal ── */}
       {selectedRef && (
         <ReferenceModal
           reference={selectedRef}
