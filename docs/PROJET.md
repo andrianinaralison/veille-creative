@@ -87,10 +87,10 @@ Les étapes sont ordonnées par dépendance technique — chaque bloc débloque 
 - Branchement côté frontend (état global Zustand)
 - Protection des routes `/admin`
 
-### Étape 4 — Bibliothèque réelle `[⏳ À faire]`
-- `GET /api/v1/references` avec filtres SQL — remplacer les 60+ mocks
-- Brancher le smart search Claude sur les données réelles (remplacer `results: []`)
-- LibraryPage et CategoryPage branchées sur l'API
+### Étape 4 — Bibliothèque réelle `[✅ Terminé]`
+- ✅ `GET /api/v1/references` avec filtres SQL
+- ✅ LibraryPage et CategoryPage branchées sur l'API
+- ⏳ Smart search Claude sur données réelles (encore `results: []`)
 
 ### Étape 5 — Projets `[⏳ À faire]`
 - CRUD complet `/api/v1/projects`

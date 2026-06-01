@@ -87,7 +87,7 @@ Plan d'itérations (voir `docs/backlog-180degres.md`) :
 ## Backlog secondaire (post-curation)
 
 - Auth utilisateurs — POST /api/v1/auth/signup, /login, /me
-- Bibliothèque — GET /api/v1/references avec filtres SQL (remplacer mock data)
+- Smart search — brancher `/api/v1/search` sur les données réelles (remplacer `results: []`)
 - Projets — CRUD /api/v1/projects
 - Moodboard — CRUD /api/v1/moodboards + export PDF
 - Digest — modèle éditorial *(déprioritisé post-MVP)*
@@ -108,8 +108,8 @@ Plan d'itérations (voir `docs/backlog-180degres.md`) :
 - ✅ Backoffice `/admin` — CurationPage, monitoring live, tableau validation DRAFT/PUBLISHED/REJECTED
 - ✅ Profils créateurs 4 sources — YouTube (scan auto au submit), Instagram, Vimeo, site web
 - ❌ Auth utilisateurs (JWT)
-- ❌ Bibliothèque branchée sur API réelle (encore sur mock data)
-- ❌ Requêtes SQL réelles dans search.route.js (`results: []`)
+- ✅ Bibliothèque branchée sur API réelle — LibraryPage + CategoryPage sur `/api/v1/references`
+- ❌ Smart search branché sur données réelles (`results: []` dans search.route.js)
 - ❌ Projets & Moodboard
 - ❌ Digest hebdomadaire
 
