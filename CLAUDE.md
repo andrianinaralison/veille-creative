@@ -58,6 +58,16 @@ Prix : 39€/mois. Persona principale : Léa, 31 ans, Lyon, Sony A7SIII.
 - Structured output : `output_config.format` avec `json_schema` — jamais de prefill (interdit sur Sonnet 4.6)
 - `max_tokens` calibré à la réponse réelle — 256 pour du JSON compact
 
+## Git — Branches
+
+| Branche | Rôle |
+|---|---|
+| `main` | Production — code stable |
+| `2025-05-05_Save` | Checkpoint du main au 05/05/2026 — rollback si besoin |
+| `feat/admin-curation` | ← **branche active** — tout le développement backoffice curation ici |
+
+Tout le travail sur le backoffice se fait sur `feat/admin-curation`. Merger dans `main` uniquement quand une itération est validée.
+
 ## Priorité courante — Backoffice Curation
 
 > ⚠️ Avant toute session de développement sur cette feature, lire : `docs/admin-curation-context.md`

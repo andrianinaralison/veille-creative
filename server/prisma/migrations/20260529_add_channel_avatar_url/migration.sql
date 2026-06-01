@@ -1,0 +1,1 @@
+ALTER TABLE "Reference" ADD COLUMN IF NOT EXISTS "channelAvatarUrl" TEXT NOT NULL DEFAULT '';

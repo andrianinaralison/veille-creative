@@ -1,7 +1,9 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ChevronDown, Bookmark, BookmarkCheck, SlidersHorizontal, X, Play } from 'lucide-react'
-import { mockReferences } from '../data/mockData'
 import ReferenceModal from '../components/ReferenceModal'
+
+const API = 'http://localhost:3001/api/v1'
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 
@@ -94,68 +96,63 @@ const QUICK_PILLS = [
   { label: 'Sony FX3',     groupId: 'camera',      optId: 'sony' },
 ]
 
-// ─── Categories (rows) ────────────────────────────────────────────────────────
+// ─── Categories fallback (si aucune section configurée) ──────────────────────
 
-const buildCategories = (refs) => [
+const buildFallbackCategories = (refs) => [
   {
-    id: 'recommande',
-    label: 'Recommandé · selon vos projets',
-    sub: '14 références alignées avec vos projets actifs',
-    refs: [
-      ...refs.filter(r => r.projectId),
-      ...refs.filter(r => !r.projectId).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt)),
-    ].slice(0, 14),
+    id: 'recent',
+    label: 'Récemment ajoutés',
+    sub: 'Les dernières références publiées',
+    refs: [...refs].sort((a, b) => new Date(b.publishedAt ?? b.createdAt) - new Date(a.publishedAt ?? a.createdAt)).slice(0, 14),
   },
   {
     id: 'mariage',
     label: 'Mariage & Cinéma',
     sub: 'Films de mariage cinématiques',
-    refs: refs.filter(r => r.mood === 'romantique'),
+    refs: refs.filter(r => r.mood === 'romantique' || (r.tags ?? []).includes('mariage')),
   },
   {
     id: 'corporate',
     label: 'Corporate & Conférences',
     sub: 'Aftermovies et films d\'entreprise',
-    refs: refs.filter(r => r.mood === 'professionnel' || r.tags.some(t => ['corporate','B2B'].includes(t))),
+    refs: refs.filter(r => r.mood === 'professionnel' || (r.tags ?? []).some(t => ['corporate','B2B'].includes(t))),
   },
   {
     id: 'evenementiel',
     label: 'Événementiel & Galas',
     sub: 'Captations d\'événements',
-    refs: refs.filter(r => r.mood === 'vivant' || r.mood === 'élégant' || r.tags.some(t => ['gala','awards','foule'].includes(t))),
+    refs: refs.filter(r => (r.tags ?? []).some(t => ['gala','awards','événementiel'].includes(t))),
   },
   {
     id: 'colorimetrie',
     label: 'Colorimétrie & Lumière',
     sub: 'Golden hour, grain, V-Log',
-    refs: refs.filter(r => r.tags.some(t => ['colorimétrie','golden-hour','LUT','V-Log','grain','vintage'].includes(t))),
+    refs: refs.filter(r => (r.tags ?? []).some(t => ['colorimétrie','golden-hour','LUT','V-Log','grain','vintage'].includes(t))),
   },
   {
     id: 'technique',
     label: 'Technique & Workflow',
     sub: 'BTS, slow motion, anamorphique',
-    refs: refs.filter(r => r.tags.some(t => ['BTS','technique','workflow','handheld','slow-motion','anamorphique'].includes(t))),
-  },
-  {
-    id: 'narration',
-    label: 'Narration & Montage',
-    sub: 'Structure narrative et transitions',
-    refs: refs.filter(r => r.tags.some(t => ['narrative','structure','montage','transitions','transition'].includes(t))),
+    refs: refs.filter(r => (r.tags ?? []).some(t => ['BTS','handheld','slow-motion','anamorphique'].includes(t))),
   },
 ]
 
 // ─── Hero Cinema Marquee ──────────────────────────────────────────────────────
 
-function Hero({ reference, onSelect }) {
+function Hero({ reference, allRefs, onSelect }) {
+  const weekCount = useMemo(() => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+    return allRefs.filter(r => new Date(r.publishedAt ?? r.createdAt).getTime() >= cutoff).length
+  }, [allRefs])
   return (
     <div className="relative flex-shrink-0" style={{ height: 360 }}>
       <img
-        src={reference.thumbnail}
+        src={reference.thumbnailUrl}
         alt={reference.title}
         className="absolute inset-0 w-full h-full object-cover"
         style={{ filter: 'brightness(0.52) saturate(1.05)' }}
       />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(12,10,9,0.38) 0%, rgba(12,10,9,0.08) 30%, rgba(12,10,9,0.96) 95%)' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.08) 30%, rgba(0,0,0,0.96) 95%)' }} />
 
       <div className="absolute inset-0 px-8 pb-10 flex flex-col justify-end">
         <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-muted mb-3">
@@ -165,7 +162,7 @@ function Hero({ reference, onSelect }) {
           {reference.title}
         </h1>
         <div className="flex gap-3.5 items-center text-ink-muted text-xs mb-5 font-mono">
-          <span>{reference.author}</span>
+          <span>{reference.channelName}</span>
           <span>·</span>
           <span>{reference.platform}</span>
           <span>·</span>
@@ -193,10 +190,12 @@ function Hero({ reference, onSelect }) {
         </div>
       </div>
 
-      <div className="absolute top-16 right-8 text-right font-mono">
-        <div className="text-[10px] text-ink-muted">CETTE SEMAINE</div>
-        <div className="text-[10px] text-ink">14 nouvelles · 3 dans vos projets</div>
-      </div>
+      {weekCount > 0 && (
+        <div className="absolute top-16 right-8 text-right font-mono">
+          <div className="text-[10px] text-ink-muted">CETTE SEMAINE</div>
+          <div className="text-[10px] text-ink">{weekCount} nouvelle{weekCount > 1 ? 's' : ''}</div>
+        </div>
+      )}
     </div>
   )
 }
@@ -213,9 +212,9 @@ function ShelfCard({ reference, onClick }) {
       onClick={onClick}
     >
       <img
-        src={reference.thumbnail}
+        src={reference.thumbnailUrl}
         alt={reference.title}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+        className="w-full h-full object-cover scale-[1.35] transition-transform duration-500 group-hover:scale-[1.42]"
       />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.88))' }} />
 
@@ -239,7 +238,7 @@ function ShelfCard({ reference, onClick }) {
       {/* Bottom overlay */}
       <div className="absolute left-2.5 right-2.5 bottom-2.5">
         <div className="font-mono text-[8px] text-white/45 uppercase tracking-widest mb-1 truncate">
-          {reference.author}
+          {reference.channelName}
         </div>
         <div className="text-[11px] text-white leading-tight font-medium line-clamp-2 mb-1.5">
           {reference.title}
@@ -259,6 +258,7 @@ function ShelfCard({ reference, onClick }) {
 // ─── Cinema Row ───────────────────────────────────────────────────────────────
 
 function CinemaRow({ category, onSelect }) {
+  const navigate = useNavigate()
   const scrollRef = useRef(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -276,6 +276,12 @@ function CinemaRow({ category, onSelect }) {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
   }
 
+  const handleViewAll = () => {
+    navigate(`/library/section/${category.id}`, {
+      state: { label: category.label, sub: category.sub, refs: category.refs },
+    })
+  }
+
   if (!category.refs.length) return null
 
   return (
@@ -286,9 +292,12 @@ function CinemaRow({ category, onSelect }) {
           <span className="text-[11px] text-ink-muted">{category.sub}</span>
         )}
         <span className="flex-1" />
-        <span className="font-mono text-[10px] text-ink-muted opacity-0 group-hover/row:opacity-100 transition-opacity">
-          VOIR TOUT  →
-        </span>
+        <button
+          onClick={handleViewAll}
+          className="font-mono text-[10px] text-ink-muted hover:text-ink transition-colors opacity-0 group-hover/row:opacity-100"
+        >
+          VOIR TOUT ({category.refs.length}) →
+        </button>
       </div>
 
       <div className="relative">
@@ -308,7 +317,6 @@ function CinemaRow({ category, onSelect }) {
             <ChevronRight size={14} />
           </button>
         )}
-
         <div
           ref={scrollRef}
           onScroll={onScroll}
@@ -438,12 +446,36 @@ function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LibraryPage() {
+  const [allRefs, setAllRefs] = useState([])
+  const [sections, setSections] = useState([]) // sections depuis l'API
+  const [loadingData, setLoadingData] = useState(true)
   const [search, setSearch] = useState('')
   const [activeFilters, setActiveFilters] = useState({})
   const [filterOpen, setFilterOpen] = useState(false)
   const [selectedRef, setSelectedRef] = useState(null)
 
-  const heroRef = mockReferences[0]
+  const fetchData = useCallback(() => {
+    setLoadingData(true)
+    Promise.all([
+      fetch(`${API}/references/sections`).then(r => r.json()).catch(() => ({ sections: [] })),
+      fetch(`${API}/references?limit=2000`).then(r => r.json()).catch(() => ({ references: [] })),
+    ]).then(([sectionsData, refsData]) => {
+      setSections(sectionsData.sections ?? [])
+      setAllRefs(refsData.references ?? [])
+    }).finally(() => setLoadingData(false))
+  }, [])
+
+  // Chargement initial
+  useEffect(() => { fetchData() }, [fetchData])
+
+  // Écoute les publications admin (BroadcastChannel)
+  useEffect(() => {
+    const ch = new BroadcastChannel('cms-publish')
+    ch.onmessage = () => fetchData()
+    return () => ch.close()
+  }, [fetchData])
+
+  const heroRef = allRefs[0] ?? null
 
   const toggleFilter = (groupId, optId) => {
     setActiveFilters(prev => {
@@ -479,13 +511,13 @@ export default function LibraryPage() {
   const totalActiveFilters = activeChips.length
 
   const filtered = useMemo(() => {
-    let refs = mockReferences
+    let refs = allRefs
     if (search) {
       const q = search.toLowerCase()
       refs = refs.filter(r =>
         r.title.toLowerCase().includes(q) ||
-        r.tags.some(t => t.toLowerCase().includes(q)) ||
-        r.author?.toLowerCase().includes(q) ||
+        (r.tags ?? []).some(t => t.toLowerCase().includes(q)) ||
+        r.channelName?.toLowerCase().includes(q) ||
         r.context?.toLowerCase().includes(q)
       )
     }
@@ -500,10 +532,25 @@ export default function LibraryPage() {
       )
     })
     return refs
-  }, [search, activeFilters])
+  }, [search, activeFilters, allRefs])
 
-  const categories = useMemo(() => buildCategories(filtered), [filtered])
   const isFiltering = !!search || totalActiveFilters > 0
+
+  // Si des sections sont configurées, les utiliser ; sinon fallback par tags
+  const categories = useMemo(() => {
+    if (sections.length > 0 && !isFiltering) {
+      return sections
+        .filter(s => s.active !== false)
+        .map(s => ({
+          id: s.id,
+          label: s.title,
+          sub: s.description,
+          refs: (s.references ?? []).filter(r => r.status === 'PUBLISHED'),
+        }))
+        .filter(c => c.refs.length > 0)
+    }
+    return buildFallbackCategories(filtered)
+  }, [sections, filtered, isFiltering])
 
   const isPillActive = (pill) => {
     if (pill.clear) return !isFiltering
@@ -520,12 +567,20 @@ export default function LibraryPage() {
     }
   }
 
+  if (loadingData) {
+    return (
+      <div className="bg-canvas min-h-screen flex items-center justify-center">
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">Chargement…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-canvas min-h-screen animate-fade-in">
 
       {/* ── Cinema Marquee Hero ── */}
-      {!isFiltering && (
-        <Hero reference={heroRef} onSelect={setSelectedRef} />
+      {!isFiltering && heroRef && (
+        <Hero reference={heroRef} allRefs={allRefs} onSelect={setSelectedRef} />
       )}
 
       {/* ── Filter bar ── */}

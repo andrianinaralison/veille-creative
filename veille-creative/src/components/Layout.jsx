@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Bibliothèque', end: true },
-  { to: '/digest', label: 'Digest', dot: true },
   { to: '/projects', label: 'Projets' },
-  { to: '/surprises', label: 'Découvertes' },
+]
+
+const comingSoonItems = [
+  { label: 'Digest' },
+  { label: 'Découvertes' },
 ]
 
 const USER_NAME = 'Andri'
@@ -17,8 +20,8 @@ export default function Layout({ children }) {
   const mainRef = useRef(null)
 
 
-  // Reset scroll position on route change
-  useEffect(() => {
+  // Reset scroll avant le paint — useLayoutEffect garantit l'exécution synchrone
+  useLayoutEffect(() => {
     const el = mainRef.current
     if (!el) return
     el.scrollTop = 0
@@ -92,6 +95,20 @@ export default function Layout({ children }) {
         onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 2)}
       >
         {children}
+
+        {/* ── Footer ── */}
+        <footer className="border-t border-white/[0.06] px-8 py-6 flex items-center gap-6">
+          <span className="text-[11px] font-mono tracking-widest uppercase text-ink-faint">À venir</span>
+          {comingSoonItems.map(({ label }) => (
+            <span
+              key={label}
+              className="text-[13px] text-ink-faint flex items-center gap-1.5 cursor-default select-none"
+            >
+              {label}
+              <span className="font-mono text-[8px] tracking-widest uppercase border border-ink-faint/40 text-ink-faint px-1.5 py-0.5">soon</span>
+            </span>
+          ))}
+        </footer>
       </main>
     </div>
   )

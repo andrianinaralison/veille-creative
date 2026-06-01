@@ -24,12 +24,12 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
   }
 
   return (
-    <div className={`group relative overflow-hidden bg-surface card-cinematic cursor-pointer ${size === 'large' ? 'aspect-[4/3]' : 'aspect-[3/2]'}`}>
+    <div className="group relative overflow-hidden bg-surface card-cinematic cursor-pointer aspect-video">
       {/* Image */}
       <img
-        src={reference.thumbnail}
+        src={reference.thumbnailUrl}
         alt={reference.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
 
       {/* Gradient overlay */}
