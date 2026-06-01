@@ -87,10 +87,11 @@ Plan d'itérations (voir `docs/backlog-180degres.md`) :
 ## Backlog secondaire (post-curation)
 
 - Auth utilisateurs — POST /api/v1/auth/signup, /login, /me
-- Bibliothèque — GET /api/v1/references avec filtres SQL
+- Bibliothèque — GET /api/v1/references avec filtres SQL (remplacer mock data)
 - Projets — CRUD /api/v1/projects
 - Moodboard — CRUD /api/v1/moodboards + export PDF
-- Digest — modèle éditorial
+- Digest — modèle éditorial *(déprioritisé post-MVP)*
+- ~~Découvertes / Surprises~~ — **abandonné**
 
 ## Ce qui existe déjà
 

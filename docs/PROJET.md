@@ -20,6 +20,8 @@ Un moteur de recherche intelligent (propulsé par Claude) permet de fouiller une
 
 **Prix : 39 €/mois.**
 
+> **Périmètre ajusté (2 juin 2026)** : la feature "Découvertes / Surprises" est abandonnée. Le Digest est déprioritisé post-MVP.
+
 ---
 
 ## Stade de développement actuel
@@ -41,7 +43,8 @@ Un moteur de recherche intelligent (propulsé par Claude) permet de fouiller une
 | Authentification utilisateurs | ❌ Non implémentée |
 | Bibliothèque branchée sur API réelle | ❌ Encore sur mock data |
 | Projets & Moodboard | ❌ Non démarré |
-| Digest hebdomadaire | ❌ Non démarré |
+| Digest hebdomadaire | 🔽 Déprioritisé — post-MVP |
+| Découvertes / Surprises | 🚫 Abandonné |
 | Scan sources non-YouTube (IG, Vimeo, Web) | ❌ Stockage profil OK, scan à développer |
 
 ---
@@ -56,7 +59,7 @@ Le MVP couvre les fonctionnalités strictement nécessaires pour valider l'usage
 - **Projets** — création et gestion de projets personnels
 - **Moodboard** — constitution de planches et export PDF
 - **Pipeline d'ingestion** — collecte automatisée via YouTube Data API v3 ✅ livré
-- **Digest hebdomadaire** — envoi email + affichage dans l'app
+- **Digest hebdomadaire** — envoi email + affichage dans l'app *(déprioritisé post-MVP)*
 
 ---
 
@@ -98,10 +101,11 @@ Les étapes sont ordonnées par dépendance technique — chaque bloc débloque 
 - Export PDF (html2canvas + react-pdf)
 - Partage par lien
 
-### Étape 7 — Digest `[⏳ À faire]`
+### Étape 7 — Digest `[⏳ Déprioritisé — post-MVP]`
 - Modèle éditorial de sélection hebdomadaire
 - Interface admin de publication (s'appuie sur le backoffice existant)
 - Envoi email via Resend
+- ⚠️ Déprioritisé : la bibliothèque + projets valident l'usage en premier
 
 ### Étape 8 — Scan multi-sources `[⏳ Backlog secondaire]`
 - Vimeo API (`/users/{id}/videos`) — priorité 1
@@ -111,6 +115,6 @@ Les étapes sont ordonnées par dépendance technique — chaque bloc débloque 
 ---
 
 **Métriques de succès MVP**
-- Digest read-through ≥ 55 % à la semaine 4
+- ~~Digest read-through ≥ 55 % à la semaine 4~~ *(déprioritisé)*
 - Moodboards partagés ≥ 60 % dans les 48 h suivant leur création
 - NPS > 40
