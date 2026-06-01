@@ -99,12 +99,18 @@ Plan d'itérations (voir `docs/backlog-180degres.md`) :
 - ✅ Health check (`GET /health`)
 - ✅ Supabase Storage — bucket `thumbnails` public, CDN opérationnel
 - ✅ `thumbnail.service.js` — DL thumbnail YouTube + upload Supabase CDN (testé)
-- ✅ `server/.env` — SUPABASE_URL, SUPABASE_SERVICE_KEY, YOUTUBE_API_KEY configurés
-- ❌ Base de données (Prisma non configuré — DATABASE_URL manquante)
-- ❌ Routes admin
-- ❌ Agent Claude ingestion
-- ❌ Auth
-- ❌ Requêtes SQL réelles (`results: []` dans search.route.js)
+- ✅ `server/.env` — SUPABASE_URL, SUPABASE_SERVICE_KEY, YOUTUBE_API_KEY, DATABASE_URL configurés
+- ✅ Base de données — Prisma + PostgreSQL 16 Supabase, schéma complet, 2 migrations appliquées
+- ✅ Routes admin — CRUD créateurs, références, sections (`/api/v1/admin/*`)
+- ✅ Pipeline ingestion tri-modal — Topic Discovery, Creator Scan (filtre > 3 min), Liens manuels
+- ✅ Agent Claude enrichissement — tags taxonomie, mood, typeContenu, context (prompt caching, batch 15)
+- ✅ Backoffice `/admin` — CurationPage, monitoring live, tableau validation DRAFT/PUBLISHED/REJECTED
+- ✅ Profils créateurs 4 sources — YouTube (scan auto au submit), Instagram, Vimeo, site web
+- ❌ Auth utilisateurs (JWT)
+- ❌ Bibliothèque branchée sur API réelle (encore sur mock data)
+- ❌ Requêtes SQL réelles dans search.route.js (`results: []`)
+- ❌ Projets & Moodboard
+- ❌ Digest hebdomadaire
 
 ## Métriques north star
 
