@@ -3,8 +3,16 @@
 ## Projet
 
 Plateforme de veille créative pour vidéastes indépendants français.
-Deux piliers : (1) digest éditorial hebdomadaire ~10 références, (2) bibliothèque thématique avec moodboard builder.
+Deux piliers : (1) veille quotidienne + digest éditorial, (2) bibliothèque thématique + création de *treatment* client.
 Prix : 39€/mois. Persona principale : Léa, 31 ans, Lyon, Sony A7SIII.
+
+## ⚙️ Méthode de travail (à lire en premier)
+
+- **Le build se fait UNIQUEMENT dans Claude Code (VS Code).** Le code des features n'est jamais écrit ailleurs (ni en Cowork, qui sert au cadrage/docs/stratégie/git).
+- **Source de vérité du quoi/quand : [`docs/ROADMAP.md`](docs/ROADMAP.md).** Ce CLAUDE.md ne redéfinit pas la roadmap, il pointe dessus.
+- **Process de dev : [`docs/WAY-OF-WORKING.md`](docs/WAY-OF-WORKING.md)** (rôles, DoR/DoD, flux PR, rituels).
+- **État des lieux & dette : [`docs/audit/AUDIT-2026-06-04.md`](docs/audit/AUDIT-2026-06-04.md)** + plan [`docs/audit/PLAN-RESTRUCTURATION.md`](docs/audit/PLAN-RESTRUCTURATION.md).
+- **Flux Git** : une branche `feat|fix|chore/xxx` = un ticket = une PR vers `main` ; commits atomiques conventionnels ; checkpoints = tags (pas de branches `*_Save`).
 
 ## Stack
 
@@ -62,35 +70,25 @@ Prix : 39€/mois. Persona principale : Léa, 31 ans, Lyon, Sony A7SIII.
 
 | Branche | Rôle |
 |---|---|
-| `main` | Production — code stable |
-| `2025-05-05_Save` | Checkpoint du main au 05/05/2026 — rollback si besoin |
-| `feat/admin-curation` | ← **branche active** — tout le développement backoffice curation ici |
+| `main` | Production — toujours déployable, jamais de push direct |
+| `feat\|fix\|chore/xxx` | Travail en cours — une branche = un ticket = une PR, courte durée |
 
-Tout le travail sur le backoffice se fait sur `feat/admin-curation`. Merger dans `main` uniquement quand une itération est validée.
+Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save`. Détail du flux dans `docs/WAY-OF-WORKING.md`.
 
-## Priorité courante — Backoffice Curation
+## Priorité courante — v0.4 « Structure propre »
 
-> ⚠️ Avant toute session de développement sur cette feature, lire : `docs/admin-curation-context.md`
+> ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/ROADMAP.md`** — source de vérité unique.
 
-Feature prioritaire : **backoffice de curation admin** (`/admin/curation`).
-L'admin (Andri) soumet un brief → agent Claude orchestre la découverte YouTube → l'admin valide/publie les références.
+En cours : nettoyer la structure (git, docs, arbo) + **sécuriser la boucle back** (`/admin` + `/ingestion` n'ont aucune auth aujourd'hui — bloquant). Aucune feature de parcours ne démarre avant que ce jalon soit vert.
 
-Plan d'itérations (voir `docs/backlog-180degres.md`) :
-1. Prisma schema + migration Supabase ← **étape courante**
-2. Shell admin — routes `/admin` + layout
-3. Formulaire brief + agent Claude (Topic Discovery)
-4. Review UI — valider / rejeter / éditer les DRAFT
-5. Publish flow — DRAFT → PUBLISHED → LibraryPage branchée sur API
-6. Creator Scan mode
-7. Auth admin JWT
+Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
 
-## Backlog secondaire (post-curation)
+## Backlog (résumé — détail dans `docs/ROADMAP.md`)
 
-- Auth utilisateurs — POST /api/v1/auth/signup, /login, /me
-- Smart search — brancher `/api/v1/search` sur les données réelles (remplacer `results: []`)
-- Projets — CRUD /api/v1/projects
-- Moodboard — CRUD /api/v1/moodboards + export PDF
-- Digest — modèle éditorial *(déprioritisé post-MVP)*
+- 🔧 v0.5 — fiabiliser la boucle back (taxonomie unique, structured output, découpe `ingestion.service`, validation, tests)
+- 🎬 v0.6 — Auth utilisateurs, smart search réel, feed veille, **Digest** (modèle éditorial + email Resend) — *réintégré au scope*
+- 🎨 v0.7 — Projets/treatments CRUD, builder de treatment, export PDF + partage
+- Post-MVP — scan multi-sources (Vimeo → web → Instagram)
 - ~~Découvertes / Surprises~~ — **abandonné**
 
 ## Ce qui existe déjà
