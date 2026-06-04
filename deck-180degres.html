@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>180 Degrés · Pitch Deck</title>
+<style>
+  :root{
+    --bg:#0a0b0f;
+    --bg2:#0f1117;
+    --panel:#14161f;
+    --panel2:#1a1d29;
+    --ink:#f4f3ef;
+    --muted:#9aa0ad;
+    --line:#262a38;
+    --accent:#ff5a3c;       /* orange cinéma */
+    --accent2:#ffb347;      /* ambre */
+    --gold:#e9c46a;
+    --teal:#39d3bb;
+    --violet:#9b8cff;
+    --r:18px;
+    --shadow:0 30px 80px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 80% -10%, #1a1320 0%, transparent 55%),
+               radial-gradient(900px 600px at -10% 110%, #0e1b20 0%, transparent 50%),
+               var(--bg);
+    color:var(--ink);
+    font-family:"Helvetica Neue",Inter,system-ui,Arial,sans-serif;
+    overflow:hidden;
+  }
+  .grain{position:fixed;inset:0;pointer-events:none;opacity:.04;z-index:60;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
+
+  /* deck */
+  .deck{position:relative;height:100vh;width:100vw}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 7vw;opacity:0;transform:translateY(24px) scale(.99);
+    transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1);pointer-events:none;overflow:auto}
+  .slide.active{opacity:1;transform:none;pointer-events:auto;z-index:2}
+  .slide.prev{transform:translateY(-18px) scale(.99)}
+
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--accent2);margin-bottom:18px;font-weight:600}
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+  h1{font-size:clamp(34px,5.4vw,76px);line-height:1.02;margin:0 0 18px;letter-spacing:-.02em;font-weight:800}
+  h2{font-size:clamp(26px,3.6vw,46px);line-height:1.05;margin:0 0 14px;letter-spacing:-.02em;font-weight:800}
+  .lead{font-size:clamp(16px,1.5vw,21px);color:var(--muted);max-width:60ch;line-height:1.55}
+  .accent{color:var(--accent)}
+  .accent2{color:var(--accent2)}
+  .teal{color:var(--teal)}
+  .gold{color:var(--gold)}
+
+  /* reveal items */
+  .r{opacity:0;transform:translateY(16px);transition:all .55s cubic-bezier(.2,.8,.2,1)}
+  .slide.active .r{opacity:1;transform:none}
+  .slide.active .r:nth-child(1){transition-delay:.08s}
+  .slide.active .r:nth-child(2){transition-delay:.16s}
+  .slide.active .r:nth-child(3){transition-delay:.24s}
+  .slide.active .r:nth-child(4){transition-delay:.32s}
+  .slide.active .r:nth-child(5){transition-delay:.40s}
+  .slide.active .r:nth-child(6){transition-delay:.48s}
+  [data-d="1"]{transition-delay:.1s}[data-d="2"]{transition-delay:.2s}[data-d="3"]{transition-delay:.3s}
+  [data-d="4"]{transition-delay:.4s}[data-d="5"]{transition-delay:.5s}[data-d="6"]{transition-delay:.6s}
+
+  .grid{display:grid;gap:18px}
+  .cards3{grid-template-columns:repeat(3,1fr)}
+  .cards2{grid-template-columns:repeat(2,1fr)}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:var(--r);padding:22px 22px;box-shadow:var(--shadow)}
+  .card h3{margin:6px 0 8px;font-size:19px}
+  .card p{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
+  .chip{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700;
+    letter-spacing:.04em;border:1px solid var(--line);color:var(--muted)}
+  .ico{font-size:26px}
+
+  .big{font-size:clamp(40px,7vw,96px);font-weight:900;letter-spacing:-.03em;line-height:1}
+
+  /* cover */
+  .cover-logo{font-weight:900;font-size:clamp(54px,10vw,150px);letter-spacing:-.04em;line-height:.92}
+  .cover-logo .deg{color:var(--accent)}
+  .cover-sub{margin-top:8px;font-size:clamp(15px,1.6vw,20px);color:var(--muted);letter-spacing:.02em}
+  .tagstrip{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+
+  /* problem timeline */
+  .flow{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap}
+  .flow .step{flex:1 1 0;min-width:160px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:16px;position:relative}
+  .flow .step .n{position:absolute;top:-12px;left:14px;width:26px;height:26px;border-radius:50%;
+    background:var(--accent);color:#150b08;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .flow .step h4{margin:8px 0 6px;font-size:15px}
+  .flow .step p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+
+  /* value bridge */
+  .bridge{display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:center}
+  .bridge .arrow{font-size:40px;color:var(--accent);text-align:center}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .line{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:13px 15px}
+  .line .b{color:var(--accent);font-weight:800}
+  .line.bad .b{color:#ff6b6b}
+  .line p{margin:0;font-size:14.5px;color:var(--muted);line-height:1.45}
+  .line p b{color:var(--ink);font-weight:700}
+
+  /* demo / prototype */
+  .demo-wrap{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start}
+  .scenarios{display:flex;flex-direction:column;gap:12px}
+  .scn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;
+    transition:all .25s ease}
+  .scn:hover{border-color:#39414f;transform:translateY(-2px)}
+  .scn.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent), 0 18px 40px rgba(255,90,60,.18)}
+  .scn h4{margin:0 0 6px;font-size:16px}
+  .scn p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+  .scn .tag{font-size:11px;color:var(--accent2);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+
+  .device{background:#06070b;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+  .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0c0e15}
+  .bar .d{width:11px;height:11px;border-radius:50%}
+  .bar .u{margin-left:12px;font-size:12px;color:var(--muted);background:#05060a;border:1px solid var(--line);
+    padding:5px 12px;border-radius:8px;flex:1}
+  .screen{min-height:340px;padding:18px;position:relative}
+
+  .journey{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .jstep{font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--line);
+    color:var(--muted);cursor:pointer;transition:all .2s ease;white-space:nowrap}
+  .jstep.on{background:var(--accent);color:#150b08;border-color:var(--accent)}
+  .jstep.done{color:var(--ink);border-color:#3a4252}
+
+  .frame{display:none;animation:fade .45s ease}
+  .frame.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .lib{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .thumb{aspect-ratio:16/10;border-radius:10px;border:1px solid var(--line);position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#1c1430,#0e1820)}
+  .thumb:nth-child(2){background:linear-gradient(135deg,#2a1810,#101a14)}
+  .thumb:nth-child(3){background:linear-gradient(135deg,#101a2a,#1a1020)}
+  .thumb:nth-child(4){background:linear-gradient(135deg,#1a2410,#101418)}
+  .thumb:nth-child(5){background:linear-gradient(135deg,#241018,#101a22)}
+  .thumb:nth-child(6){background:linear-gradient(135deg,#101f1a,#1c1428)}
+  .thumb:nth-child(7){background:linear-gradient(135deg,#1f1810,#0e1622)}
+  .thumb:nth-child(8){background:linear-gradient(135deg,#181028,#0e1a18)}
+  .thumb .t{position:absolute;bottom:7px;left:8px;right:8px;font-size:10px;color:#d7d4cd;line-height:1.2}
+  .thumb .save{position:absolute;top:7px;right:7px;width:22px;height:22px;border-radius:6px;background:#00000080;
+    display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid #ffffff22}
+  .thumb.saved{box-shadow:0 0 0 2px var(--accent) inset}
+  .thumb.saved .save{background:var(--accent);color:#150b08}
+
+  .annot{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
+  .annot .tag{font-size:11px;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+  .annot textarea{width:100%;margin-top:8px;background:#06070b;border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:10px;font-family:inherit;font-size:13px;min-height:54px;resize:none}
+
+  .chat{display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:78%;padding:12px 14px;border-radius:14px;font-size:13.5px;line-height:1.5}
+  .msg.me{align-self:flex-end;background:var(--accent);color:#150b08;border-bottom-right-radius:4px;font-weight:600}
+  .msg.ai{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.ai .lab{font-size:11px;color:var(--teal);font-weight:800;letter-spacing:.06em;margin-bottom:5px}
+  .drop{border:1.5px dashed #3a4252;border-radius:12px;padding:14px;text-align:center;color:var(--muted);
+    font-size:13px;background:#0c0e15}
+  .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px}
+  .meta .m{background:#0c0e15;border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+  .meta .m .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .meta .m .v{font-size:13px;font-weight:700;margin-top:2px}
+
+  /* market */
+  .funnel{display:flex;flex-direction:column;gap:14px;max-width:680px}
+  .tier{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;display:flex;justify-content:space-between;align-items:center;overflow:hidden}
+  .tier .fill{position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,90,60,.20),rgba(255,90,60,0));z-index:0}
+  .tier.t2 .fill{background:linear-gradient(90deg,rgba(255,179,71,.20),transparent)}
+  .tier.t3 .fill{background:linear-gradient(90deg,rgba(57,211,187,.18),transparent)}
+  .tier>*{position:relative;z-index:1}
+  .tier .lab{font-weight:800;font-size:15px}
+  .tier .lab span{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:3px}
+  .tier .num{text-align:right}
+  .tier .num .big2{font-size:30px;font-weight:900;letter-spacing:-.02em}
+  .tier .num .sub{font-size:12px;color:var(--muted)}
+
+  /* lean canvas */
+  .canvas{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:auto auto;gap:8px}
+  .lc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:0}
+  .lc .h{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);font-weight:800;margin-bottom:6px}
+  .lc ul{margin:0;padding-left:15px}
+  .lc li{font-size:11.5px;color:#cfd2db;line-height:1.4;margin-bottom:3px}
+  .lc.tall{grid-row:span 2}
+  .note{font-size:11px;color:var(--muted);background:#0c0e15;border-left:2px solid var(--accent);
+    padding:8px 11px;border-radius:0 8px 8px 0;margin-top:8px;line-height:1.45}
+
+  /* unit econ table */
+  .ue{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:start}
+  .ue table{width:100%;border-collapse:collapse;font-size:14px}
+  .ue td{padding:9px 6px;border-bottom:1px solid var(--line)}
+  .ue td:last-child{text-align:right;font-weight:800}
+  .ue tr.tot td{border-top:2px solid var(--accent);border-bottom:none;font-size:16px;padding-top:12px}
+  .ue tr.tot td:last-child{color:var(--accent)}
+  .kpis{display:flex;flex-direction:column;gap:12px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi .v{font-size:28px;font-weight:900;letter-spacing:-.02em}
+  .kpi .k{font-size:12px;color:var(--muted);margin-top:2px}
+
+  /* gtm */
+  .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;position:relative}
+  .phase .ph{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);font-weight:800}
+  .phase h3{margin:8px 0 4px;font-size:20px}
+  .phase .when{font-size:12px;color:var(--teal);font-weight:700;margin-bottom:10px}
+  .phase ul{margin:0;padding-left:16px}
+  .phase li{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:5px}
+
+  /* nav */
+  .nav{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:9px;z-index:50;
+    background:#0c0e15cc;backdrop-filter:blur(8px);border:1px solid var(--line);padding:9px 13px;border-radius:999px}
+  .nav button{width:9px;height:9px;border-radius:50%;border:none;background:#39414f;cursor:pointer;padding:0;transition:all .25s}
+  .nav button.on{background:var(--accent);width:26px;border-radius:999px}
+  .arrows{position:fixed;right:22px;bottom:20px;display:flex;gap:8px;z-index:50}
+  .arrows button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:#0c0e15cc;
+    backdrop-filter:blur(8px);color:var(--ink);font-size:18px;cursor:pointer;transition:all .2s}
+  .arrows button:hover{border-color:var(--accent);color:var(--accent)}
+  .counter{position:fixed;left:24px;top:22px;z-index:50;font-size:12px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+  .counter b{color:var(--ink)}
+  .brandmark{position:fixed;right:24px;top:20px;z-index:50;font-weight:900;letter-spacing:-.02em;font-size:16px}
+  .brandmark .deg{color:var(--accent)}
+  .hint{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:40;font-size:11px;color:#5b6273;
+    letter-spacing:.18em;text-transform:uppercase}
+  @media (max-width:860px){
+    .demo-wrap{grid-template-columns:1fr}.canvas{grid-template-columns:repeat(2,1fr)}
+    .cards3,.phases{grid-template-columns:1fr}.ue{grid-template-columns:1fr}.bridge{grid-template-columns:1fr}
+    .lib{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="counter"><b id="cur">01</b> / <span id="tot">08</span></div>
+<div class="brandmark">180<span class="deg">°</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 COVER -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Pitch deck · 2026</span></div>
+    <div class="r cover-logo">180<span class="deg">°</span></div>
+    <div class="r cover-sub">La plateforme de veille créative des vidéastes indépendants</div>
+    <p class="r lead" style="margin-top:22px">Un digest éditorial hebdomadaire et une bibliothèque thématique avec moodboard builder, pour transformer la veille en intention créative.</p>
+    <div class="r tagstrip">
+      <span class="chip">Veille éditoriale</span>
+      <span class="chip">Bibliothèque IA</span>
+      <span class="chip">Moodboard builder</span>
+      <span class="chip">39€ / mois</span>
+    </div>
+  </section>
+
+  <!-- 2 PROBLEME -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Le problème</span></div>
+    <h2 class="r">La veille créative est <span class="accent">chronophage, dispersée et vite oubliée</span></h2>
+    <p class="r lead" style="margin-bottom:26px">Léa, 31 ans, vidéaste indépendante à Lyon. Entre deux tournages, elle doit rester à la pointe des tendances et nourrir chaque brief client. Aujourd'hui son process ressemble à ça :</p>
+    <div class="r flow">
+      <div class="step"><div class="n">1</div><h4>Scroll infini</h4><p>YouTube, Instagram, Vimeo, Behance. Des heures perdues, sans fil conducteur.</p></div>
+      <div class="step"><div class="n">2</div><h4>Captures éparpillées</h4><p>Screenshots dans Photos, liens dans Notes, onglets jamais refermés.</p></div>
+      <div class="step"><div class="n">3</div><h4>Rien de retrouvable</h4><p>La bonne référence existe quelque part, mais impossible de remettre la main dessus.</p></div>
+      <div class="step"><div class="n">4</div><h4>Brief sous pression</h4><p>Le treatment se construit dans l'urgence, à partir de zéro à chaque fois.</p></div>
+    </div>
+    <div class="r grid cards3" style="margin-top:24px">
+      <div class="card"><div class="ico">⏳</div><h3 class="accent2">5 h / semaine perdues</h3><p>Du temps non facturable englouti dans une veille désorganisée.</p></div>
+      <div class="card"><div class="ico">🧩</div><h3 class="accent2">Aucun outil dédié</h3><p>Pinterest n'est pas pensé vidéo, les bookmarks ne curent rien.</p></div>
+      <div class="card"><div class="ico">🎯</div><h3 class="accent2">Valeur créative diluée</h3><p>Moins de temps pour l'idée, donc des treatments génériques.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 PROPOSITION DE VALEUR -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Proposition de valeur</span></div>
+    <h2 class="r">La veille devient un <span class="accent">geste créatif, pas une corvée</span></h2>
+    <p class="r lead" style="margin-bottom:26px">180° rassemble en un seul endroit ce qui était éclaté partout, et le rend exploitable au moment où ça compte : face au brief.</p>
+    <div class="r grid cards2">
+      <div class="card"><div class="ico">🗞️</div><h3>Digest éditorial hebdomadaire</h3><p>Environ 10 références triées sur le volet chaque semaine. Une curation humaine et IA, pas un flux brut. La veille passive devient un rendez vous de 10 minutes.</p></div>
+      <div class="card"><div class="ico">📚</div><h3>Bibliothèque thématique</h3><p>Une base de références vidéo organisée par mood, technique et genre. Recherche intelligente branchée sur Claude pour trouver la bonne image par l'intention.</p></div>
+      <div class="card"><div class="ico">🎨</div><h3>Moodboard builder</h3><p>On sauvegarde, on annote, on assemble. Le moodboard s'exporte en PDF prêt à présenter au client.</p></div>
+      <div class="card"><div class="ico">🤖</div><h3>Projet assisté par IA</h3><p>On glisse le brief client dans la conversation, Claude configure le projet, ses métadonnées et ses pistes créatives.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 EN QUOI CA REPOND -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Problème → Solution</span></div>
+    <h2 class="r">Chaque douleur trouve sa réponse</h2>
+    <div class="r bridge" style="margin-top:24px">
+      <div class="stack">
+        <div class="line bad"><span class="b">✕</span><p><b>Captures éparpillées</b> dans 5 apps</p></div>
+        <div class="line bad"><span class="b">✕</span><p><b>Références introuvables</b> au bon moment</p></div>
+        <div class="line bad"><span class="b">✕</span><p><b>Scroll infini</b> sans fil conducteur</p></div>
+        <div class="line bad"><span class="b">✕</span><p><b>Treatment</b> reparti de zéro à chaque brief</p></div>
+      </div>
+      <div class="arrow">➜</div>
+      <div class="stack">
+        <div class="line"><span class="b">✓</span><p><b>Bibliothèque unique</b> : tout au même endroit, sauvegardable</p></div>
+        <div class="line"><span class="b">✓</span><p><b>Recherche par intention</b> : la bonne réf en une requête</p></div>
+        <div class="line"><span class="b">✓</span><p><b>Digest hebdo</b> : 10 minutes au lieu de 5 heures</p></div>
+        <div class="line"><span class="b">✓</span><p><b>Projet IA</b> : le brief devient un treatment structuré</p></div>
+      </div>
+    </div>
+    <p class="r lead" style="margin-top:24px">Le fil rouge : on ne remplace pas le goût du vidéaste, on lui rend le temps et la matière pour l'exprimer.</p>
+  </section>
+
+  <!-- 5 DEMO / PROTOTYPE -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Démo · ce qui nous différencie</span></div>
+    <h2 class="r" style="margin-bottom:18px">Deux parcours, une même promesse</h2>
+    <div class="r demo-wrap">
+      <div class="scenarios">
+        <div class="scn on" data-scn="1">
+          <div class="tag">Scénario 1 · veille semi-active</div>
+          <h4>Léa veut suivre les tendances</h4>
+          <p>Connexion ▸ Bibliothèque ▸ Sauvegarde ▸ Annotation</p>
+        </div>
+        <div class="scn" data-scn="2">
+          <div class="tag">Scénario 2 · brief client</div>
+          <h4>Léa construit un treatment</h4>
+          <p>Connexion ▸ Création de projet ▸ Brief glissé à l'IA ▸ Projet configuré</p>
+        </div>
+        <div class="card" style="padding:16px">
+          <h3 style="font-size:15px;margin:0 0 8px" class="teal">Ce qui nous différencie</h3>
+          <p style="font-size:13px">Curation éditoriale + recherche par intention (Claude) + export client. Pinterest cure des images, nous curons du sens pour la vidéo.</p>
+        </div>
+      </div>
+
+      <div class="device">
+        <div class="bar">
+          <span class="d" style="background:#ff5f57"></span><span class="d" style="background:#febc2e"></span><span class="d" style="background:#28c840"></span>
+          <span class="u" id="url">app.180degres.fr / bibliotheque</span>
+        </div>
+        <div class="screen">
+          <!-- SCENARIO 1 -->
+          <div class="frame on" id="f1">
+            <div class="journey">
+              <span class="jstep on" data-j="1">1 · Connexion</span>
+              <span class="jstep" data-j="2">2 · Bibliothèque</span>
+              <span class="jstep" data-j="3">3 · Sauvegarde</span>
+              <span class="jstep" data-j="4">4 · Annotation</span>
+            </div>
+            <div id="s1body"></div>
+          </div>
+          <!-- SCENARIO 2 -->
+          <div class="frame" id="f2">
+            <div class="journey">
+              <span class="jstep on" data-j="1">1 · Connexion</span>
+              <span class="jstep" data-j="2">2 · Nouveau projet</span>
+              <span class="jstep" data-j="3">3 · Brief → IA</span>
+              <span class="jstep" data-j="4">4 · Projet configuré</span>
+            </div>
+            <div id="s2body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hint" style="position:static;text-align:center;margin-top:14px;transform:none">Clique les étapes du parcours · change de scénario à gauche</div>
+  </section>
+
+  <!-- 5b MOTEUR DE CURATION -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Notre moteur · ce qui nous différencie vraiment</span></div>
+    <h2 class="r">Un pipeline de curation IA, pas une base figée</h2>
+    <p class="r lead" style="margin-bottom:22px">Derrière la bibliothèque, un backoffice propulsé par un agent Claude qui découvre, enrichit et publie les références. C'est notre avantage défendable : la qualité éditoriale à l'échelle, sans armée de curateurs.</p>
+    <div class="r grid cards2" style="margin-bottom:18px">
+      <div class="card"><div class="ico">🧭</div><h3>Mode Topic Discovery</h3><p>Un brief thématique (type, caméra, ambiance) ▸ l'agent génère les requêtes ▸ YouTube et Vimeo renvoient des vidéos réelles.</p></div>
+      <div class="card"><div class="ico">🛰️</div><h3>Mode Creator Scan</h3><p>Une liste de créateurs ▸ détection auto de la source ▸ chaînes, profils Vimeo et scraping des portfolios web (iframes embarquées).</p></div>
+    </div>
+    <div class="r flow">
+      <div class="step"><div class="n">1</div><h4>Découverte</h4><p>Agent Claude + API YouTube / Vimeo / scraping.</p></div>
+      <div class="step"><div class="n">2</div><h4>Enrichissement</h4><p>Tags, mood, contexte éditorial via la taxonomie 180°.</p></div>
+      <div class="step"><div class="n">3</div><h4>Thumbnail CDN</h4><p>Upload Supabase, dédoublonnage sur l'URL.</p></div>
+      <div class="step"><div class="n">4</div><h4>Validation</h4><p>L'admin valide ou rejette les cartes en DRAFT.</p></div>
+      <div class="step"><div class="n">5</div><h4>Publication</h4><p>PUBLISHED ▸ alimente bibliothèque et digest.</p></div>
+    </div>
+    <div class="r grid cards3" style="margin-top:22px">
+      <div class="card"><div class="ico">⚡</div><h3 class="accent2">3 h ▸ 15 min</h3><p>Le temps de production d'un lot de 20 références, divisé par douze.</p></div>
+      <div class="card"><div class="ico">📈</div><h3 class="accent2">200 à 500 réfs / mois</h3><p>Le volume de contenu frais nécessaire pour tenir la promesse d'abonnement.</p></div>
+      <div class="card"><div class="ico">💸</div><h3 class="accent2">≤ 30 € / mois d'API</h3><p>Coût d'ingestion maîtrisé grâce au prompt caching et au calibrage des tokens.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 MARCHE -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Taille de marché</span></div>
+    <h2 class="r">Une vague de fond : la creator economy</h2>
+    <p class="r lead" style="margin-bottom:18px">Creator economy française : <b class="accent2">7 Md€ en 2025</b> (+19% sur un an), projetée vers <b class="accent2">33 Md€ en 2032</b>. La France est le 3e pôle européen, et la vidéo pèse à elle seule <b class="accent2">57% du marché</b>. Au niveau mondial : 250 Md$ aujourd'hui, cap des 480 Md$ visé en 2027 (Goldman Sachs).</p>
+    <div class="r funnel">
+      <div class="tier"><div class="fill"></div>
+        <div class="lab">TAM<span>Créateurs monétisés en France (vidéo dominante)</span></div>
+        <div class="num"><div class="big2">348 000</div><div class="sub">créateurs FR en 2025 ▸ 7 Md€ de revenus</div></div>
+      </div>
+      <div class="tier t2"><div class="fill"></div>
+        <div class="lab">SAM<span>Vidéastes semi-pros à pros produisant du livrable client</span></div>
+        <div class="num"><div class="big2">≈ 40 000</div><div class="sub">cible prioritaire payante en France</div></div>
+      </div>
+      <div class="tier t3"><div class="fill"></div>
+        <div class="lab">SOM<span>Objectif réaliste à 3 ans (≈ 7,5% du SAM)</span></div>
+        <div class="num"><div class="big2">3 000</div><div class="sub">abonnés ▸ ≈ 1,4 M€ ARR</div></div>
+      </div>
+    </div>
+    <p class="r" style="font-size:11.5px;color:#5b6273;margin-top:16px;max-width:90ch">Hypothèses : TAM = 348 058 créateurs monétisés FR en 2025 (source : étude Creator Economy Europe 2025-2032), dont la vidéo capte 57% des usages. SAM = sous ensemble semi-pro à pro produisant du livrable client et susceptible de payer un outil métier. SOM = pénétration prudente à 3 ans. Repère : YouTube revendique 1 Md€ de PIB et 24 000 emplois en France en 2024.</p>
+  </section>
+
+  <!-- 7 BUSINESS MODEL : LEAN CANVAS + UNIT ECONOMICS -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Business model · Lean Canvas</span></div>
+    <h2 class="r" style="font-size:clamp(22px,3vw,34px);margin-bottom:12px">Modèle économique commenté</h2>
+    <div class="r canvas">
+      <div class="lc tall"><div class="h">Problème</div><ul><li>Veille chronophage et dispersée</li><li>Références introuvables au bon moment</li><li>Treatment reparti de zéro</li></ul><div class="note">Hypothèse : la douleur est récurrente (hebdo + par brief), donc justifie un abonnement.</div></div>
+      <div class="lc"><div class="h">Solution</div><ul><li>Digest hebdo curé</li><li>Bibliothèque + recherche IA</li><li>Moodboard export PDF</li><li>Pipeline d'ingestion IA (agent Claude)</li></ul></div>
+      <div class="lc tall"><div class="h">Proposition de valeur unique</div><ul><li>La veille devient un geste créatif</li><li>De l'intention à l'image en une requête</li><li>Du brief au treatment assisté par IA</li></ul><div class="note">Choix : curation éditoriale (défendable) plutôt que flux automatique brut.</div></div>
+      <div class="lc"><div class="h">Avantage déloyal</div><ul><li>Ligne éditoriale et taste</li><li>Moteur de curation propriétaire : 200 à 500 réfs / mois pour moins de 30 €</li><li>Recherche par intention (Claude)</li></ul></div>
+      <div class="lc tall"><div class="h">Segments clients</div><ul><li>Cible : vidéaste indé. FR (persona Léa)</li><li>Cible périphérique : studios de créa (petits)</li><li>Early adopters : les gens de notre réseau, via une levée de fond communautaire et l'animation de communauté</li><li>Expansion : marché EU puis US</li></ul></div>
+      <div class="lc"><div class="h">Indicateurs clés</div><ul><li>Digest read-through ≥ 55%</li><li>Moodboards partagés ≥ 60% / 48h</li><li>Prod batch 20 réfs ≤ 15 min</li><li>NPS &gt; 40</li></ul></div>
+      <div class="lc"><div class="h">Canaux</div><ul><li>Contenu (YouTube, newsletter)</li><li>Bouche à oreille créatif</li><li>Partenariats écoles / loueurs</li></ul></div>
+      <div class="lc"><div class="h">Structure de coûts</div><ul><li>Temps humain : fondateur + curation éditoriale (poste n°1)</li><li>Acquisition : contenu, partenariats, paid</li><li>API Claude + infra (Supabase, Vercel, Railway, Resend)</li></ul></div>
+      <div class="lc"><div class="h">Revenus</div><ul><li>Abonnement 39€ / mois</li><li>Annuel remisé à venir</li><li>Option équipe (futur)</li></ul></div>
+    </div>
+    <p class="r" style="font-size:11.5px;color:#5b6273;margin-top:10px">Choix structurant : un prix unique simple (39€) plutôt qu'une grille freemium complexe, pour valider la disposition à payer d'une niche pro dès le départ.</p>
+  </section>
+
+  <!-- 7b is folded into nav as separate? we keep unit econ as own logical part of slide 7 via extra slide -->
+
+  <!-- 8 UNIT ECONOMICS -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Business model · économie unitaire</span></div>
+    <h2 class="r" style="margin-bottom:18px">Économie par abonné, hypothèses commentées</h2>
+    <div class="r ue">
+      <table>
+        <tr><td>Prix mensuel (ARPU)</td><td>39,00 €</td></tr>
+        <tr><td>Commission paiement (≈ 3%)</td><td>-1,17 €</td></tr>
+        <tr><td>Coût IA Claude (search + ingestion / user)</td><td>-3,50 €</td></tr>
+        <tr><td>Infra, stockage CDN, email</td><td>-2,30 €</td></tr>
+        <tr class="tot"><td>Marge de contribution</td><td>32,03 € · 82%</td></tr>
+      </table>
+      <div class="kpis">
+        <div class="kpi"><div class="v gold">≈ 640 €</div><div class="k">LTV (churn 5% / mois ▸ durée de vie ≈ 20 mois)</div></div>
+        <div class="kpi"><div class="v teal">≈ 150 €</div><div class="k">CAC réaliste (contenu + partenariats + un peu de paid)</div></div>
+        <div class="kpi"><div class="v accent">≈ 4×</div><div class="k">Ratio LTV / CAC · payback ≈ 5 mois</div></div>
+      </div>
+    </div>
+    <p class="r note" style="max-width:none;margin-top:18px">Attention : ces 32 € sont une marge de <b>contribution</b>, pas un profit. Elle ne couvre ni les salaires, ni la curation, ni le marketing : ces coûts fixes sont traités dans la slide suivante. Churn de 5% par mois (prudent pour un outil prosumer où l'on teste puis se désabonne). CAC à 150 € car une niche pro de vidéastes coûte cher à atteindre, même avec le digest comme produit d'appel. Un ratio LTV / CAC autour de 4× reste sain, mais loin du 10× d'un pitch optimiste.</p>
+  </section>
+
+  <!-- 8b CHIFFRAGE -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Business model · chiffrage</span></div>
+    <h2 class="r" style="margin-bottom:18px">Coût de production du contenu et run rate</h2>
+    <div class="r ue">
+      <div>
+        <div style="font-size:13px;color:var(--accent2);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Production d'un lot de 20 références</div>
+        <table>
+          <tr><td>Avant pipeline (temps fondateur)</td><td>180 min</td></tr>
+          <tr><td>Après pipeline (run agent + review)</td><td>≈ 15 min</td></tr>
+          <tr><td>Coût API Claude du lot</td><td>≈ 1,20 €</td></tr>
+          <tr class="tot"><td>Gain de temps</td><td>-92%</td></tr>
+        </table>
+        <p class="note" style="max-width:none">À ce rythme, 500 réfs par mois coûtent moins de 30 € d'API. Le scraping des portfolios et les API YouTube / Vimeo restent dans les quotas gratuits.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;color:var(--accent2);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Charges mensuelles réelles au démarrage</div>
+        <table>
+          <tr><td>Temps humain : fondateur (PM, dev, curation)</td><td>≈ 3 500 €</td></tr>
+          <tr><td>Curation éditoriale (review, ligne édito)</td><td>≈ 700 €</td></tr>
+          <tr><td>Acquisition (contenu, partenariats, paid)</td><td>≈ 1 000 €</td></tr>
+          <tr><td>Infra (Anthropic, Supabase, Vercel, Railway, Resend)</td><td>≈ 135 €</td></tr>
+          <tr class="tot"><td>Total charges</td><td>≈ 5 300 € / mois</td></tr>
+        </table>
+        <p class="note" style="max-width:none">Le poste n°1 n'est pas la tech, c'est l'humain. L'infra est dérisoire ; ce sont le temps fondateur et l'acquisition qui structurent le point mort.</p>
+      </div>
+    </div>
+    <div class="r grid cards3" style="margin-top:18px">
+      <div class="card"><div class="ico">⚖️</div><h3 class="accent2">≈ 165 abonnés</h3><p>Seuil de rentabilité : charges de 5 300 € / mois divisées par 32 € de marge de contribution par abonné. Pas 4 abonnés.</p></div>
+      <div class="card"><div class="ico">📅</div><h3 class="accent2">≈ 18 à 24 mois</h3><p>Horizon réaliste pour atteindre ce point mort, en partant des 50 pilotes vers quelques centaines d'abonnés.</p></div>
+      <div class="card"><div class="ico">🪙</div><h3 class="accent2">Levée communautaire</h3><p>Financer les charges humaines avant rentabilité via le réseau et la communauté d'early adopters.</p></div>
+    </div>
+    <p class="r" style="font-size:11.5px;color:#5b6273;margin-top:12px">Hypothèses : temps fondateur valorisé même s'il n'est pas payé cash au départ (coût d'opportunité réel). Curation et acquisition partiellement externalisables. Chiffres à affiner avec ton exemple de chiffrage et tes relevés de consommation.</p>
+  </section>
+
+  <!-- 8c ROADMAP PRODUIT -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Roadmap produit</span></div>
+    <h2 class="r" style="margin-bottom:20px">Du socle au produit complet</h2>
+    <div class="r phases">
+      <div class="phase"><div class="ph">Fait · en cours</div><h3>Le socle</h3><div class="when">Itérations 1 et 2</div>
+        <ul><li>Schéma Prisma + migration Supabase</li><li>Shell admin et routes /admin</li><li>Smart search Claude (prompt caching)</li><li>Storage CDN thumbnails opérationnel</li></ul></div>
+      <div class="phase"><div class="ph">Ensuite</div><h3>La curation</h3><div class="when">Itérations 3 à 5</div>
+        <ul><li>Agent Topic Discovery (YouTube + Vimeo)</li><li>Review UI : valider, rejeter, éditer les DRAFT</li><li>Publish flow ▸ bibliothèque branchée sur l'API</li></ul></div>
+      <div class="phase"><div class="ph">Plus tard</div><h3>Le produit complet</h3><div class="when">Itérations 6, 7 et au-delà</div>
+        <ul><li>Creator Scan + scraping portfolios web</li><li>Auth (admin JWT puis comptes abonnés)</li><li>Projets, moodboard et export PDF</li><li>Digest éditorial par email (Resend)</li></ul></div>
+    </div>
+    <p class="r lead" style="margin-top:22px">Chaque bloc débloque le suivant : la curation alimente la bibliothèque réelle, qui rend le digest et les moodboards crédibles, et donc l'abonnement.</p>
+  </section>
+
+  <!-- 9 GO TO MARKET -->
+  <section class="slide">
+    <div class="r"><span class="kicker"><span class="dot"></span>Go to market</span></div>
+    <h2 class="r" style="margin-bottom:20px">Du noyau de niche à la communauté</h2>
+    <div class="r phases">
+      <div class="phase"><div class="ph">Phase 1</div><h3>Amorçage</h3><div class="when">Mois 0 à 3</div>
+        <ul><li>Digest gratuit en newsletter comme produit d'appel</li><li>50 vidéastes pilotes (Lyon, Paris)</li><li>Boucle de feedback serrée sur la curation</li></ul></div>
+      <div class="phase"><div class="ph">Phase 2</div><h3>Traction</h3><div class="when">Mois 3 à 9</div>
+        <ul><li>Ouverture de l'abonnement 39€</li><li>Contenu YouTube : coulisses de treatments</li><li>Partenariats écoles audiovisuel & loueurs matériel</li></ul></div>
+      <div class="phase"><div class="ph">Phase 3</div><h3>Échelle</h3><div class="when">Mois 9 à 24</div>
+        <ul><li>Référencement par les pairs (parrainage)</li><li>Offre équipe / studio</li><li>Élargissement vers motion et photo</li></ul></div>
+    </div>
+    <p class="r lead" style="margin-top:24px">Le digest est à la fois le produit et le moteur d'acquisition : il prouve la curation avant tout paiement, et nourrit le bouche à oreille dans une communauté très connectée.</p>
+  </section>
+
+</div>
+
+<div class="nav" id="nav"></div>
+<div class="arrows"><button id="prev">‹</button><button id="next">›</button></div>
+<div class="hint" id="globalhint">← → pour naviguer</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const nav=document.getElementById('nav');
+const cur=document.getElementById('cur'), tot=document.getElementById('tot');
+let i=0;
+tot.textContent=String(slides.length).padStart(2,'0');
+slides.forEach((_,k)=>{const b=document.createElement('button');b.onclick=()=>go(k);nav.appendChild(b);});
+const dots=[...nav.children];
+function go(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('prev',k<i);});
+  dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+  cur.textContent=String(i+1).padStart(2,'0');
+  document.getElementById('globalhint').style.opacity=i===0?1:0;
+}
+document.getElementById('next').onclick=()=>go(i+1);
+document.getElementById('prev').onclick=()=>go(i-1);
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(i+1);
+  if(e.key==='ArrowLeft'||e.key==='PageUp')go(i-1);
+});
+go(0);
+
+/* ---------- DEMO interactivity ---------- */
+const url=document.getElementById('url');
+const s1body=document.getElementById('s1body');
+const s2body=document.getElementById('s2body');
+let scn=1, j=1;
+
+const lib=`<div class="lib">
+  ${[['Lumière dorée, contre-jour','x'],['Plan séquence urbain','x'],['Grain argentique nuit','x'],['Slow motion eau','x'],['Portrait clair-obscur','x'],['Drone côtier','x'],['Néons cyberpunk','x'],['Macro texture','x']]
+  .map((t,k)=>`<div class="thumb" data-th="${k}"><div class="save">+</div><div class="t">${t[0]}</div></div>`).join('')}
+</div>`;
+
+function renderS1(){
+  url.textContent='app.180degres.fr / '+({1:'connexion',2:'bibliotheque',3:'bibliotheque',4:'bibliotheque'})[j];
+  if(j===1){
+    s1body.innerHTML=`<div class="card" style="max-width:340px;margin:40px auto;text-align:center">
+      <div class="ico">🎬</div><h3>Bon retour, Léa</h3>
+      <p>Connexion à ton espace de veille.</p>
+      <div style="margin-top:14px;background:#06070b;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;color:var(--muted)">lea@studio.fr</div>
+      <div style="margin-top:8px;background:var(--accent);color:#150b08;border-radius:8px;padding:10px;font-weight:800;font-size:13px">Entrer dans la bibliothèque</div>
+    </div>`;
+  } else if(j===2){
+    s1body.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Feed curé · cette semaine</div>${lib}`;
+    bindThumbs();
+  } else if(j===3){
+    s1body.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Référence sauvegardée dans ton moodboard</div>${lib}`;
+    bindThumbs(); document.querySelector('[data-th="0"]').classList.add('saved');
+    document.querySelector('[data-th="0"] .save').textContent='✓';
+    document.querySelector('[data-th="4"]').classList.add('saved');
+    document.querySelector('[data-th="4"] .save').textContent='✓';
+  } else {
+    s1body.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Annotation de la référence</div>
+      <div class="lib" style="grid-template-columns:repeat(2,1fr);max-width:360px">
+        <div class="thumb saved"><div class="save" style="background:var(--accent);color:#150b08">✓</div><div class="t">Lumière dorée, contre-jour</div></div>
+        <div class="thumb saved"><div class="save" style="background:var(--accent);color:#150b08">✓</div><div class="t">Portrait clair-obscur</div></div>
+      </div>
+      <div class="annot"><div class="tag">Ma note</div>
+      <textarea>Garder pour le brief parfum : transition contre-jour + flare 35mm. Tester au golden hour.</textarea></div>`;
+  }
+}
+function bindThumbs(){
+  s1body.querySelectorAll('.thumb').forEach(t=>{
+    t.onclick=()=>{t.classList.toggle('saved');t.querySelector('.save').textContent=t.classList.contains('saved')?'✓':'+';};
+  });
+}
+
+function renderS2(){
+  url.textContent='app.180degres.fr / '+({1:'connexion',2:'projets/nouveau',3:'projets/nouveau',4:'projets/parfum-aurore'})[j];
+  if(j===1){
+    s2body.innerHTML=`<div class="card" style="max-width:340px;margin:40px auto;text-align:center">
+      <div class="ico">🎬</div><h3>Bon retour, Léa</h3><p>Nouveau brief reçu ? On crée le projet.</p>
+      <div style="margin-top:14px;background:var(--accent);color:#150b08;border-radius:8px;padding:10px;font-weight:800;font-size:13px">Créer un projet</div></div>`;
+  } else if(j===2){
+    s2body.innerHTML=`<div class="chat">
+      <div class="msg ai"><div class="lab">CLAUDE · ASSISTANT PROJET</div>Bonjour Léa. Glisse le brief de ton client ici, je configure le projet pour toi.</div>
+      <div class="drop">📎 Glisse le PDF du brief dans la conversation</div></div>`;
+  } else if(j===3){
+    s2body.innerHTML=`<div class="chat">
+      <div class="msg me">brief-parfum-aurore.pdf 📄</div>
+      <div class="msg me">Pub parfum, ambiance lever de soleil, sensuel et lumineux, format 30s + cuts réseaux.</div>
+      <div class="msg ai"><div class="lab">CLAUDE</div>J'analyse le brief et je configure le projet… mood, format, pistes de plans et références.</div></div>`;
+  } else {
+    s2body.innerHTML=`<div class="chat">
+      <div class="msg ai"><div class="lab">CLAUDE · PROJET CONFIGURÉ</div>Projet « Parfum Aurore » créé. Voici les métadonnées extraites :
+        <div class="meta">
+          <div class="m"><div class="k">Mood</div><div class="v">Golden hour, sensuel</div></div>
+          <div class="m"><div class="k">Format</div><div class="v">30s + 3 cuts 9:16</div></div>
+          <div class="m"><div class="k">Palette</div><div class="v">Ambre, rose poudré</div></div>
+          <div class="m"><div class="k">Réfs pré-remplies</div><div class="v">8 du feed</div></div>
+        </div></div>
+      <div class="msg ai"><div class="lab">CLAUDE</div>J'ai pré-rempli ton moodboard avec 8 références cohérentes. Tu peux affiner, annoter et exporter le treatment en PDF.</div></div>`;
+  }
+}
+function render(){scn===1?renderS1():renderS2();}
+
+document.querySelectorAll('.scn').forEach(s=>{
+  s.onclick=()=>{
+    document.querySelectorAll('.scn').forEach(x=>x.classList.remove('on'));
+    s.classList.add('on');
+    scn=+s.dataset.scn; j=1;
+    document.getElementById('f1').classList.toggle('on',scn===1);
+    document.getElementById('f2').classList.toggle('on',scn===2);
+    syncJ(); render();
+  };
+});
+function syncJ(){
+  const frame=scn===1?document.getElementById('f1'):document.getElementById('f2');
+  frame.querySelectorAll('.jstep').forEach(st=>{
+    const n=+st.dataset.j;
+    st.classList.toggle('on',n===j);
+    st.classList.toggle('done',n<j);
+  });
+}
+document.querySelectorAll('.jstep').forEach(st=>{
+  st.onclick=()=>{j=+st.dataset.j;syncJ();render();};
+});
+syncJ();render();
+</script>
+</body>
+</html>

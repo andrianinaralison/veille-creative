@@ -78,6 +78,8 @@ model Creator {
   websiteUrl      String?
   active          Boolean  @default(true)
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
+
+  // Partial index on active creators: creator_active_name_idx — managed via 20260604_partial_indexes migration
 }
 
 enum Platform {
