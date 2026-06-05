@@ -14,6 +14,35 @@ Prix : 39€/mois. Persona principale : Léa, 31 ans, Lyon, Sony A7SIII.
 - **État des lieux & dette : [`docs/audit/AUDIT-2026-06-04.md`](docs/audit/AUDIT-2026-06-04.md)** + plan [`docs/audit/PLAN-RESTRUCTURATION.md`](docs/audit/PLAN-RESTRUCTURATION.md).
 - **Flux Git** : une branche `feat|fix|chore/xxx` = un ticket = une PR vers `main` ; commits atomiques conventionnels ; checkpoints = tags (pas de branches `*_Save`).
 
+## 📝 Documentation obligatoire à chaque ticket
+
+**Règle** : tout ticket clôturé doit être documenté. C'est non négociable — sans trace, le travail n'existe pas.
+
+### Commit (obligatoire)
+Format Conventional Commits avec corps détaillé si le changement touche plusieurs fichiers :
+```
+feat(scope): description courte
+
+- Fichier A : ce qui change et pourquoi
+- Fichier B : ce qui change et pourquoi
+- Packages ajoutés / supprimés
+- Comportement avant → après
+```
+
+### Commentaire Linear (obligatoire à la clôture)
+Poster un commentaire sur le ticket avec :
+- **Ce qui a été fait** : liste des fichiers créés/modifiés avec leur rôle
+- **Décisions techniques** : pourquoi cette approche (si non évidente)
+- **Comportement avant → après** : ce qui change concrètement
+- **Hash du commit** et message complet
+- **DoD partiels reportés** : si un critère dépend d'un autre ticket, le noter explicitement
+
+### PR (quand `feat/admin-curation` est mergée)
+Description PR avec :
+- Résumé en 3 bullets max
+- Liste des tickets couverts (ex: `Closes #180-5, #180-6, #180-7, #180-8`)
+- Test plan : comment vérifier que ça marche
+
 ## Stack
 
 | Couche | Techno |
