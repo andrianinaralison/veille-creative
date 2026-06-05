@@ -77,22 +77,41 @@ async function enrichVideosBatch(videos) {
           cache_control: { type: 'ephemeral', ttl: '1h' },
         },
       ],
+      output_config: {
+        format: {
+          type: 'json_schema',
+          schema: {
+            type: 'object',
+            properties: {
+              enriched: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    videoId:     { type: 'string' },
+                    tags:        { type: 'array', items: { type: 'string' } },
+                    mood:        { type: ['string', 'null'] },
+                    typeContenu: { type: ['string', 'null'] },
+                    context:     { type: 'string' },
+                  },
+                  required: ['videoId', 'tags', 'mood', 'typeContenu', 'context'],
+                },
+              },
+            },
+            required: ['enriched'],
+          },
+        },
+      },
       messages: [
         {
           role: 'user',
-          content: `Enrichis ces ${batch.length} vidéos :\n\n${videoList}\n\nRéponds UNIQUEMENT avec du JSON valide :\n{"enriched": [{"videoId": "...", "tags": [], "mood": null, "typeContenu": null, "context": "..."}]}`,
+          content: `Enrichis ces ${batch.length} vidéos :\n\n${videoList}`,
         },
       ],
     });
 
     const text = response.content[0]?.text ?? '';
-    let enriched = [];
-    try {
-      enriched = JSON.parse(text).enriched ?? [];
-    } catch {
-      const match = text.match(/\{[\s\S]*"enriched"[\s\S]*\}/);
-      if (match) enriched = JSON.parse(match[0]).enriched ?? [];
-    }
+    const enriched = JSON.parse(text).enriched ?? [];
 
     for (const entry of enriched) {
       result[entry.videoId] = {
@@ -129,40 +148,33 @@ Query strategies to combine:
 
 Also extract from the brief:
 - publishedAfter: ISO date string (e.g. "2025-01-01T00:00:00Z"). Use the earliest acceptable date. Default to one year ago if not specified.
-- minViews: minimum view count as integer. Default to 1000 if not specified.
-
-Respond ONLY with valid JSON, no text before or after:
-{"queries": ["query1", "query2", ...], "publishedAfter": "ISO_DATE", "minViews": NUMBER}`,
+- minViews: minimum view count as integer. Default to 1000 if not specified.`,
         cache_control: { type: 'ephemeral' },
       },
     ],
+    output_config: {
+      format: {
+        type: 'json_schema',
+        schema: {
+          type: 'object',
+          properties: {
+            queries:       { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 8 },
+            publishedAfter: { type: 'string' },
+            minViews:      { type: 'number' },
+          },
+          required: ['queries', 'publishedAfter', 'minViews'],
+        },
+      },
+    },
     messages: [{ role: 'user', content: brief }],
   });
 
-  const text = response.content[0]?.text ?? '';
-  try {
-    const parsed = JSON.parse(text);
-    if (Array.isArray(parsed.queries) && parsed.queries.length > 0) {
-      return {
-        queries: parsed.queries.slice(0, 8),
-        publishedAfter: parsed.publishedAfter ?? oneYearAgo(),
-        minViews: typeof parsed.minViews === 'number' ? parsed.minViews : 1000,
-      };
-    }
-  } catch {
-    const match = text.match(/\{[\s\S]*"queries"[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      if (Array.isArray(parsed.queries)) {
-        return {
-          queries: parsed.queries.slice(0, 8),
-          publishedAfter: parsed.publishedAfter ?? oneYearAgo(),
-          minViews: typeof parsed.minViews === 'number' ? parsed.minViews : 1000,
-        };
-      }
-    }
-  }
-  throw new Error(`Claude n'a pas retourné de JSON valide : ${text}`);
+  const parsed = JSON.parse(response.content[0]?.text ?? '{}');
+  return {
+    queries: (parsed.queries ?? []).slice(0, 8),
+    publishedAfter: parsed.publishedAfter ?? oneYearAgo(),
+    minViews: typeof parsed.minViews === 'number' ? parsed.minViews : 1000,
+  };
 }
 
 function oneYearAgo() {
@@ -279,6 +291,29 @@ async function scoreVideosWithClaude(brief, videos) {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
+      output_config: {
+        format: {
+          type: 'json_schema',
+          schema: {
+            type: 'object',
+            properties: {
+              scores: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    videoId: { type: 'string' },
+                    score:   { type: 'number', minimum: 0, maximum: 100 },
+                    reason:  { type: 'string' },
+                  },
+                  required: ['videoId', 'score', 'reason'],
+                },
+              },
+            },
+            required: ['scores'],
+          },
+        },
+      },
       messages: [
         {
           role: 'user',
@@ -290,25 +325,12 @@ High score = professional cinematic video matching the brief (right type, right 
 Low score = tutorials, tips, behind-the-scenes, commercials, unrelated content.
 
 Videos:
-${videoList}
-
-Respond ONLY with valid JSON:
-{"scores": [{"videoId": "...", "score": 0-100, "reason": "one line"}]}`,
+${videoList}`,
         },
       ],
     });
 
-    const text = response.content[0]?.text ?? '';
-    let scores = [];
-    try {
-      const parsed = JSON.parse(text);
-      scores = parsed.scores ?? [];
-    } catch {
-      const match = text.match(/\{[\s\S]*"scores"[\s\S]*\}/);
-      if (match) {
-        scores = JSON.parse(match[0]).scores ?? [];
-      }
-    }
+    const scores = JSON.parse(response.content[0]?.text ?? '{}').scores ?? [];
 
     for (const video of batch) {
       const entry = scores.find(s => s.videoId === video.videoId);
