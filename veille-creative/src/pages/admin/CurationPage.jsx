@@ -151,12 +151,44 @@ function TriageCard({ ref: r, busy, onDecide }) {
 // ─── TriageView ────────────────────────────────────────────────────────────────
 
 function TriageView({ session, onNewImport }) {
-  const [refs, setRefs]   = useState((session.references ?? []).filter(r => r.status === 'TRIAGE'))
-  const [busy, setBusy]   = useState({})
-  const [bulkBusy, setBulkBusy] = useState(false)
-  const { markDirty }     = useAdminStore()
+  const allTriage                = (session.references ?? []).filter(r => r.status === 'TRIAGE')
+  const [refs, setRefs]          = useState(allTriage)
+  const [busy, setBusy]          = useState({})
+  const [bulkBusy, setBulkBusy]  = useState(false)
+  const [nlQuery, setNlQuery]    = useState('')
+  const [searching, setSearching]= useState(false)
+  const [searchActive, setSearchActive] = useState(false)
+  const { markDirty }            = useAdminStore()
 
   const count = refs.length
+
+  async function handleNlSearch(e) {
+    e.preventDefault()
+    if (!nlQuery.trim()) {
+      setRefs(allTriage.filter(r => r.status === 'TRIAGE'))
+      setSearchActive(false)
+      return
+    }
+    setSearching(true)
+    try {
+      const result = await apiFetch(`${ADMIN_API}/search`, {
+        method: 'POST',
+        body: JSON.stringify({ query: nlQuery, status: 'TRIAGE', sessionId: session.id }),
+      })
+      setRefs(result.references ?? [])
+      setSearchActive(true)
+    } catch (err) {
+      console.error('[TriageView] smart search error', err)
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  function clearSearch() {
+    setNlQuery('')
+    setRefs(allTriage.filter(r => r.status === 'TRIAGE'))
+    setSearchActive(false)
+  }
 
   async function decide(id, status) {
     setBusy(b => ({ ...b, [id]: true }))
@@ -211,7 +243,30 @@ function TriageView({ session, onNewImport }) {
         <p className="font-editorial text-8xl text-ink leading-none">{count}</p>
         <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">à trier</p>
       </div>
-      <p className="font-mono text-[9px] text-ink-faint mb-6 tracking-wide">Session · {session.id?.slice(0, 8)}…</p>
+      <p className="font-mono text-[9px] text-ink-faint mb-4 tracking-wide">Session · {session.id?.slice(0, 8)}…</p>
+
+      {/* Smart search NL */}
+      <form onSubmit={handleNlSearch} className="flex gap-2 mb-4 max-w-xl">
+        <input
+          value={nlQuery}
+          onChange={e => setNlQuery(e.target.value)}
+          placeholder="Recherche NL — ex: « vlogs perso de cette chaîne »"
+          className="flex-1 bg-surface border border-surface-border text-ink text-sm px-3 py-2 outline-none focus:border-ink placeholder-ink-faint font-mono text-[11px]"
+        />
+        <button type="submit" disabled={searching}
+          className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 disabled:opacity-40">
+          {searching ? '…' : 'Filtrer'}
+        </button>
+        {searchActive && (
+          <button type="button" onClick={clearSearch}
+            className="px-3 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">
+            Tout
+          </button>
+        )}
+      </form>
+      {searchActive && (
+        <p className="font-mono text-[9px] text-ink-muted mb-4">{count} résultat{count !== 1 ? 's' : ''} — <button type="button" onClick={clearSearch} className="underline hover:text-ink">voir tout</button></p>
+      )}
 
       <div className="flex gap-2 mb-6">
         <button type="button" onClick={() => decideAll('DRAFT')} disabled={bulkBusy}

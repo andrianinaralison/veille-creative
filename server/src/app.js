@@ -8,6 +8,7 @@ import referencesRoute from './routes/references.route.js';
 import ingestionRoute from './routes/ingestion.route.js';
 import authRoute from './routes/auth.route.js';
 import filterRulesRoute from './routes/filter-rules.route.js';
+import adminSearchRoute from './routes/admin-search.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
 
 export function createApp() {
@@ -25,6 +26,7 @@ export function createApp() {
   app.use('/api/v1/admin', requireAdmin, adminRoute);
   app.use('/api/v1/admin/sections', requireAdmin, adminSectionsRoute);
   app.use('/api/v1/admin/filter-rules', requireAdmin, filterRulesRoute);
+  app.use('/api/v1/admin/search', requireAdmin, adminSearchRoute);
 
   // ── Routes ingestion (protégées + rate-limit 10 req/15 min) ────────────────
   const ingestionLimiter = rateLimit({

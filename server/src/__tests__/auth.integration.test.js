@@ -84,3 +84,12 @@ describe('Statut TRIAGE — validation backend', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('Admin smart search — 401 sans token', () => {
+  it('POST /api/v1/admin/search sans token → 401', async () => {
+    const res = await request(app)
+      .post('/api/v1/admin/search')
+      .send({ query: 'vlogs perso' })
+    expect(res.status).toBe(401)
+  })
+})
