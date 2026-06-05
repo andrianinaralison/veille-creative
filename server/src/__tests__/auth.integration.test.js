@@ -68,3 +68,19 @@ describe('Login admin', () => {
     expect(typeof res.body.token).toBe('string')
   })
 })
+
+describe('Route TRIAGE — 401 sans token', () => {
+  it('GET /api/v1/admin/triage/count sans token → 401', async () => {
+    const res = await request(app).get('/api/v1/admin/triage/count')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('Statut TRIAGE — validation backend', () => {
+  it('PATCH /references/:id/status avec TRIAGE invalide sans token → 401 (auth avant validation)', async () => {
+    const res = await request(app)
+      .patch('/api/v1/admin/references/any-id/status')
+      .send({ status: 'TRIAGE' })
+    expect(res.status).toBe(401)
+  })
+})

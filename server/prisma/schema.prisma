@@ -95,6 +95,7 @@ enum SourceMode {
 }
 
 enum RefStatus {
+  TRIAGE
   DRAFT
   PUBLISHED
   REJECTED

@@ -3,8 +3,8 @@ import { useAdminStore } from '../../store/useAdminStore'
 import { adminFetch } from '../../lib/admin-api'
 
 const API_PATH = '/api/v1/admin'
-const STATUSES = ['', 'DRAFT', 'PUBLISHED', 'REJECTED']
-const STATUS_LABEL = { DRAFT: 'Draft', PUBLISHED: 'Publié', REJECTED: 'Rejeté' }
+const STATUSES = ['', 'TRIAGE', 'DRAFT', 'PUBLISHED', 'REJECTED']
+const STATUS_LABEL = { TRIAGE: 'À trier', DRAFT: 'Draft', PUBLISHED: 'Publié', REJECTED: 'Rejeté' }
 const MOODS = ['romantique', 'épique', 'intime', 'dynamique', 'élégant', 'professionnel', 'vivant', 'sérieux']
 
 // ─── Utilitaires vidéo ────────────────────────────────────────────────────────

@@ -40,7 +40,7 @@ router.patch('/references/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  const allowed = ['DRAFT', 'PUBLISHED', 'REJECTED'];
+  const allowed = ['TRIAGE', 'DRAFT', 'PUBLISHED', 'REJECTED'];
   if (!allowed.includes(status)) {
     return res.status(400).json({ error: `Statut invalide. Valeurs : ${allowed.join(', ')}` });
   }
@@ -80,7 +80,7 @@ router.post('/references/batch', async (req, res) => {
 
   try {
     if (action === 'status') {
-      const allowed = ['DRAFT', 'PUBLISHED', 'REJECTED'];
+      const allowed = ['TRIAGE', 'DRAFT', 'PUBLISHED', 'REJECTED'];
       if (!allowed.includes(value)) {
         return res.status(400).json({ error: 'Statut invalide' });
       }
@@ -120,6 +120,23 @@ router.post('/references/batch', async (req, res) => {
     return res.status(400).json({ error: 'action invalide : status | addTags | delete' });
   } catch (err) {
     console.error('[admin] POST /references/batch', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+/**
+ * GET /api/v1/admin/triage/count
+ * Compteur de références en TRIAGE, global et par session.
+ * Query params : ?sessionId=xxx (optionnel)
+ */
+router.get('/triage/count', async (req, res) => {
+  const { sessionId } = req.query;
+  const where = { status: 'TRIAGE', ...(sessionId ? { ingestionSessionId: sessionId } : {}) };
+  try {
+    const count = await prisma.reference.count({ where });
+    res.json({ count });
+  } catch (err) {
+    console.error('[admin] GET /triage/count', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

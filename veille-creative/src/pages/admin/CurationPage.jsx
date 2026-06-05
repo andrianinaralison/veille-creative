@@ -105,10 +105,131 @@ function StatusDropdown({ status, onChange }) {
   return (
     <select value={status} onChange={e => onChange(e.target.value)}
       className={`w-full bg-canvas border text-[10px] font-mono tracking-widest uppercase px-2 py-1 outline-none focus:border-ink appearance-none cursor-pointer ${status === 'PUBLISHED' ? 'border-ink text-ink' : status === 'REJECTED' ? 'border-surface-border text-ink-faint' : 'border-surface-border text-ink-muted'}`}>
+      <option value="TRIAGE">Triage</option>
       <option value="DRAFT">Draft</option>
       <option value="PUBLISHED">Publier</option>
       <option value="REJECTED">Rejeter</option>
     </select>
+  )
+}
+
+// ─── TriageCard ────────────────────────────────────────────────────────────────
+
+function TriageCard({ ref: r, busy, onDecide }) {
+  return (
+    <div className="border border-surface-border bg-surface flex flex-col overflow-hidden">
+      {r.thumbnailUrl
+        ? <img src={r.thumbnailUrl} alt={r.title} className="w-full aspect-video object-cover" loading="lazy" />
+        : <div className="w-full aspect-video bg-surface-raised flex items-center justify-center"><span className="font-mono text-[9px] text-ink-faint">—</span></div>
+      }
+      <div className="p-2 flex flex-col gap-2 flex-1">
+        <p className="text-[11px] text-ink leading-snug line-clamp-2 font-medium">{r.title}</p>
+        <p className="font-mono text-[9px] text-ink-muted truncate">{r.channelName}</p>
+        <div className="flex gap-1 mt-auto pt-1">
+          <button
+            type="button"
+            onClick={() => onDecide(r.id, 'DRAFT')}
+            disabled={busy}
+            className="flex-1 py-1 text-[9px] font-mono tracking-widest uppercase border border-ink text-ink hover:bg-ink hover:text-canvas transition-colors disabled:opacity-30"
+          >
+            Garder
+          </button>
+          <button
+            type="button"
+            onClick={() => onDecide(r.id, 'REJECTED')}
+            disabled={busy}
+            className="flex-1 py-1 text-[9px] font-mono tracking-widest uppercase border border-surface-border text-ink-faint hover:border-ink hover:text-ink transition-colors disabled:opacity-30"
+          >
+            Rejeter
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── TriageView ────────────────────────────────────────────────────────────────
+
+function TriageView({ session, onNewImport }) {
+  const [refs, setRefs]   = useState((session.references ?? []).filter(r => r.status === 'TRIAGE'))
+  const [busy, setBusy]   = useState({})
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const { markDirty }     = useAdminStore()
+
+  const count = refs.length
+
+  async function decide(id, status) {
+    setBusy(b => ({ ...b, [id]: true }))
+    try {
+      await apiFetch(`${ADMIN_API}/references/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      })
+      setRefs(prev => prev.filter(r => r.id !== id))
+      if (status === 'DRAFT') markDirty()
+    } finally {
+      setBusy(b => { const n = { ...b }; delete n[id]; return n })
+    }
+  }
+
+  async function decideAll(status) {
+    if (!refs.length) return
+    setBulkBusy(true)
+    try {
+      await apiFetch(`${ADMIN_API}/references/batch`, {
+        method: 'POST',
+        body: JSON.stringify({ ids: refs.map(r => r.id), action: 'status', value: status }),
+      })
+      setRefs([])
+      if (status === 'DRAFT') markDirty()
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  if (count === 0) {
+    return (
+      <div className="border border-surface-border p-12 max-w-md text-center mt-8">
+        <p className="font-editorial text-4xl text-ink mb-3">✓</p>
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink mb-2">Lot propre</p>
+        <p className="text-[11px] text-ink-muted mb-6">Toutes les références ont été triées. Les gardées sont prêtes pour la qualification dans la Médiathèque.</p>
+        <div className="flex gap-3 justify-center">
+          <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">
+            Qualifier →
+          </a>
+          <button type="button" onClick={onNewImport} className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">
+            Nouvel import
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="flex items-baseline gap-4 mb-2">
+        <p className="font-editorial text-8xl text-ink leading-none">{count}</p>
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">à trier</p>
+      </div>
+      <p className="font-mono text-[9px] text-ink-faint mb-6 tracking-wide">Session · {session.id?.slice(0, 8)}…</p>
+
+      <div className="flex gap-2 mb-6">
+        <button type="button" onClick={() => decideAll('DRAFT')} disabled={bulkBusy}
+          className="px-4 py-1.5 text-[10px] font-mono tracking-widest uppercase border border-ink text-ink hover:bg-ink hover:text-canvas transition-colors disabled:opacity-30">
+          Tout garder ({count})
+        </button>
+        <button type="button" onClick={() => decideAll('REJECTED')} disabled={bulkBusy}
+          className="px-4 py-1.5 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-faint hover:border-ink hover:text-ink transition-colors disabled:opacity-30">
+          Tout rejeter ({count})
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+        {refs.map(r => (
+          <TriageCard key={r.id} ref={r} busy={!!busy[r.id] || bulkBusy} onDecide={decide} />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -316,7 +437,7 @@ function ResultsTable({ session, sections, onNewImport }) {
         <div className="flex flex-col items-end gap-2">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Titre, créateur…" className="bg-surface border border-surface-border text-ink text-sm px-3 py-1.5 w-48 outline-none focus:border-ink placeholder-ink-faint" />
           <div className="flex gap-1">
-            {[['', 'Tous'], ['DRAFT', 'Draft'], ['PUBLISHED', 'Publiés'], ['REJECTED', 'Rejetés']].map(([val, label]) => (
+            {[['', 'Tous'], ['TRIAGE', 'À trier'], ['DRAFT', 'Draft'], ['PUBLISHED', 'Publiés'], ['REJECTED', 'Rejetés']].map(([val, label]) => (
               <button key={val} onClick={() => setFilterStatus(val)} aria-pressed={filterStatus === val}
                 className={`px-2.5 py-1 text-[10px] font-mono tracking-widest uppercase border transition-colors ${filterStatus === val ? 'border-ink text-ink' : 'border-surface-border text-ink-muted hover:text-ink'}`}>
                 {label}{val && counts[val] > 0 ? <span className="ml-1 opacity-40">{counts[val]}</span> : null}
@@ -830,7 +951,7 @@ export default function CurationPage() {
         </div>
       )}
 
-      {/* ── Phase résultats ── */}
+      {/* ── Phase résultats : tri rapide ── */}
       {phase === 'results' && completedSession && (
         <div>
           <div className="flex items-center gap-2 mb-6">
@@ -838,9 +959,12 @@ export default function CurationPage() {
               ← Retour
             </button>
             <span className="text-ink-faint text-[10px]">/</span>
-            <span className="font-mono text-[10px] tracking-widest uppercase text-ink">Résultats</span>
+            <span className="font-mono text-[10px] tracking-widest uppercase text-ink">Tri</span>
           </div>
-          <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+          {(completedSession.references ?? []).some(r => r.status === 'TRIAGE')
+            ? <TriageView session={completedSession} onNewImport={handleNewImport} />
+            : <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+          }
         </div>
       )}
 
