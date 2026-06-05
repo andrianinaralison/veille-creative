@@ -531,7 +531,7 @@ function MonitoringView({ sessionId, onCompleted }) {
 
       {isFailed && (
         <p className="text-[11px] text-ink-muted mt-4 border border-surface-border px-3 py-2">
-          Erreur — vérifiez les logs serveur.
+          {session?.errorMessage ?? 'Erreur inattendue — vérifiez les logs serveur.'}
         </p>
       )}
     </div>

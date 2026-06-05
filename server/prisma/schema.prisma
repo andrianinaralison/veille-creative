@@ -64,6 +64,7 @@ model IngestionSession {
   totalFilteredByDuration Int           @default(0)
   totalFilteredByRules    Int           @default(0)
   totalAlreadyPublished   Int           @default(0)
+  errorMessage            String?
   createdAt   DateTime      @default(now()) @db.Timestamptz(6)
   completedAt DateTime?     @db.Timestamptz(6)
   references  Reference[]

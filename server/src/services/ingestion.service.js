@@ -18,6 +18,15 @@ import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '../lib/prisma.js';
 import { downloadAndStore } from './thumbnail.service.js';
 
+function readableError(err) {
+  const msg = err?.message ?? String(err)
+  if (msg.includes('quotaExceeded') || msg.includes('403'))   return 'Quota API YouTube dépassé — réessaie demain.'
+  if (msg.includes('ENOTFOUND') || msg.includes('ECONNRESET')) return 'Erreur réseau — vérifie ta connexion et réessaie.'
+  if (msg.includes('Anthropic') || msg.includes('claude'))    return 'Erreur Claude API — vérifie ta clé ANTHROPIC_API_KEY.'
+  if (msg.includes('Prisma') || msg.includes('P2'))           return 'Erreur base de données — vérifie la connexion Supabase.'
+  return `Erreur inattendue : ${msg.slice(0, 120)}`
+}
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const YT_BASE = 'https://www.googleapis.com/youtube/v3';
 const YT_KEY = process.env.YOUTUBE_API_KEY;
@@ -570,7 +579,7 @@ export async function runIngestionAgent(sessionId, brief) {
     console.log(`[ingestion:${sessionId}] Completed — ${saved} saved (${scored.length} scored, ${enriched.length} found)`);
   } catch (err) {
     console.error(`[ingestion:${sessionId}] Agent failed:`, err);
-    await updateSession({ status: 'FAILED' });
+    await updateSession({ status: 'FAILED', errorMessage: readableError(err) });
   }
 }
 
@@ -746,7 +755,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
     console.log(`[creator-scan:${sessionId}] Completed — ${saved}/${enriched.length} saved`);
   } catch (err) {
     console.error(`[creator-scan:${sessionId}] Agent failed:`, err);
-    await updateSession({ status: 'FAILED' });
+    await updateSession({ status: 'FAILED', errorMessage: readableError(err) });
   }
 }
 
@@ -845,6 +854,6 @@ export async function fetchAndSaveLinks(sessionId, urls) {
     console.log(`[links:${sessionId}] Completed — ${saved}/${enriched.length} saved`);
   } catch (err) {
     console.error(`[links:${sessionId}] Agent failed:`, err);
-    await updateSession({ status: 'FAILED' });
+    await updateSession({ status: 'FAILED', errorMessage: readableError(err) });
   }
 }
