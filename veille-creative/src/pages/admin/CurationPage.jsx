@@ -614,6 +614,17 @@ function FilterRulesPanel({ creator, onClose }) {
   )
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isScanneable(creator) {
+  return creator.platform === 'YOUTUBE' && !!(creator.youtubeHandle || creator.url)
+}
+
+function scanTooltip(creator) {
+  if (creator.platform !== 'YOUTUBE') return 'Scan automatique disponible uniquement pour les créateurs YouTube'
+  return 'Aucune chaîne YouTube configurée — modifie le profil pour activer le scan'
+}
+
 // ─── Tab Créateurs ────────────────────────────────────────────────────────────
 
 function CreatorsTab({ onSessionStarted }) {
@@ -903,13 +914,28 @@ function CreatorsTab({ onSessionStarted }) {
                 </div>
               </div>
 
+              {/* Badge non-scannable */}
+              {!isScanneable(creator) && (
+                <span
+                  title={scanTooltip(creator)}
+                  className="flex-shrink-0 font-mono text-[9px] tracking-wide border border-amber-800/50 text-amber-600/80 px-1.5 py-0.5 cursor-help"
+                >
+                  ⚠ Handle YouTube manquant
+                </span>
+              )}
+
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => startScan([creator.id], creator.name)}
-                  disabled={!!scanning}
-                  className="px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors disabled:opacity-40"
+                  onClick={() => isScanneable(creator) ? startScan([creator.id], creator.name) : undefined}
+                  disabled={!!scanning || !isScanneable(creator)}
+                  title={!isScanneable(creator) ? scanTooltip(creator) : undefined}
+                  className={`px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase border transition-colors ${
+                    !isScanneable(creator)
+                      ? 'border-surface-border text-ink-faint opacity-30 cursor-not-allowed'
+                      : 'border-surface-border text-ink-muted hover:text-ink hover:border-ink disabled:opacity-40'
+                  }`}
                 >
                   {scanning === creator.id ? '…' : 'Scrapper'}
                 </button>
