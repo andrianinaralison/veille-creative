@@ -28,13 +28,17 @@ export function createApp() {
   app.use('/api/v1/admin/filter-rules', requireAdmin, filterRulesRoute);
   app.use('/api/v1/admin/search', requireAdmin, adminSearchRoute);
 
-  // ── Routes ingestion (protégées + rate-limit 10 req/15 min) ────────────────
+  // ── Routes ingestion (protégées) ────────────────────────────────────────────
+  // Rate-limit sur les POST uniquement (lancement de scan) — les GET de polling
+  // s'exécutent toutes les 2 s et ne doivent pas être limités.
   const ingestionLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { error: 'Trop de requêtes, réessaie dans 15 minutes.' },
   });
-  app.use('/api/v1/ingestion', requireAdmin, ingestionLimiter, ingestionRoute);
+  const postOnlyLimiter = (req, res, next) =>
+    req.method === 'POST' ? ingestionLimiter(req, res, next) : next();
+  app.use('/api/v1/ingestion', requireAdmin, postOnlyLimiter, ingestionRoute);
 
   // ── Health check ────────────────────────────────────────────────────────────
   app.get('/health', (_req, res) => res.json({ ok: true }));
