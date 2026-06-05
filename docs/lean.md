@@ -114,4 +114,43 @@ Commit `f74ff5c`.
 
 **Standard à ajouter dans CLAUDE.md** : tout `rateLimit` sur un préfixe de routes → documenter les méthodes exclues.
 
-*Prochaine fiche : 5C #003*
+---
+
+## 5C #003 — 0 références après scan (ingestionSessionId manquant dans upsert)
+
+**Date** : 2026-06-05
+**Détecté par** : Andrianina (front après scan creator — screenshot console)
+**Ticket Linear** : 180-34 (Done)
+
+### 1. Constater
+
+Scan complété côté serveur (log : `8/8 saved`), mais le front affiche `ResultsTable` avec "0 références" au lieu de `TriageView` avec les 8 cards.
+
+### 2. Contenir
+
+Ajout de `ingestionSessionId: sessionId` dans les 3 blocs `update` des upserts Prisma (topic discovery, creator scan, liens manuels). Commit `91ec323`.
+
+### 3. Comprendre — 5 Pourquoi
+
+| # | Pourquoi ? | Réponse |
+|---|-----------|---------|
+| 1 | Pourquoi 0 refs à l'écran ? | `completedSession.references` est vide → condition TRIAGE échoue → ResultsTable vide |
+| 2 | Pourquoi `references` vide ? | `include: { references }` filtre par `ingestionSessionId` = session courante, mais les refs upsertées gardaient l'ancien sessionId |
+| 3 | Pourquoi ancien sessionId ? | Le bloc `update` de l'upsert ne mettait pas à jour `ingestionSessionId` — seul le bloc `create` le renseignait |
+| 4 | Pourquoi oublié dans `update` ? | Lors de l'ajout du statut TRIAGE, le `status: 'TRIAGE'` a été ajouté au `create` mais `ingestionSessionId` dans `update` n'a pas été vérifié |
+| 5 | Pourquoi non détecté lors des tests ? | Les tests d'intégration ne couvrent pas le cycle scan complet avec des refs déjà en BDD (scénario N+1) |
+
+**Cause racine** : Absence de test de régression sur le scénario "re-scan d'un créateur déjà scanné".
+
+### 4. Corriger
+
+| Action | Responsable | Statut |
+|--------|------------|--------|
+| `ingestionSessionId: sessionId` ajouté dans les 3 blocs `update` | Dev | ✅ Fait |
+| Test de régression : scan N+1 → les refs apparaissent bien dans la nouvelle session | Dev | ⬜ À ajouter (T-02 suite) |
+
+### 5. Consolider
+
+**Règle** : pour tout upsert Prisma, vérifier que le bloc `update` contient tous les champs qui doivent changer entre deux upserts successifs (notamment les relations `sessionId`).
+
+*Prochaine fiche : 5C #004*
