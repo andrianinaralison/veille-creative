@@ -230,7 +230,7 @@ async function searchYouTube(query, publishedAfter, maxResults = 10) {
 
 // ─── YouTube videos.list — détails complets ───────────────────────────────────
 
-function parseDurationSeconds(iso) {
+export function parseDurationSeconds(iso) {
   if (!iso) return 0;
   const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!m) return 0;
@@ -425,7 +425,7 @@ async function getAllVideoIdsFromPlaylist(playlistId) {
 }
 
 // Extrait le videoId d'une URL YouTube (formats court, long, embed)
-function extractYouTubeId(url) {
+export function extractYouTubeId(url) {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/\s]{11})/);
   return m?.[1] ?? null;
 }
