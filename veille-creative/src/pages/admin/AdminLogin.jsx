@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setToken } from '../../lib/admin-api'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
 export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -13,7 +15,7 @@ export default function AdminLogin() {
     setError(null)
     setLoading(true)
     try {
-      const r = await fetch('http://localhost:3001/api/v1/admin/login', {
+      const r = await fetch(`${BASE}/api/v1/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
