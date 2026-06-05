@@ -8,8 +8,7 @@ const navItems = [
 ]
 
 const comingSoonItems = [
-  { label: 'Digest' },
-  { label: 'Découvertes' },
+  { label: 'Digest' }, // v0.6
 ]
 
 const USER_NAME = 'Andri'
