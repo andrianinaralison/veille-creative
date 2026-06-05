@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Zap, BookmarkCheck, Clock } from 'lucide-react'
-import { mockProjects, mockReferences, mockDigest } from '../data/mockData'
+import { mockProjects, mockDigest } from '../data/mockData'
+import { api } from '../lib/api'
 import ReferenceModal from '../components/ReferenceModal'
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
@@ -60,12 +61,19 @@ function PortraitThumb({ reference, onClick }) {
 
 export default function Dashboard() {
   const [selectedRef, setSelectedRef] = useState(null)
+  const [references, setReferences] = useState([])
+  const [refCount, setRefCount] = useState(0)
   const now = useClock()
+
+  useEffect(() => {
+    api.references.list({ limit: 9 })
+      .then(d => { setReferences(d.references ?? []); setRefCount(d.total ?? 0) })
+      .catch(console.error)
+  }, [])
 
   const activeProjects = mockProjects.filter(p => p.status !== 'terminé')
   const activeProject = activeProjects[0]
   const digestItem = mockDigest.sections[0]?.items[0]
-  const savedCount = mockReferences.filter(r => r.saved || r.savedAt).length
 
   const dateLabel = `· ${DAYS_FR[now.getDay()].toUpperCase()} · ${now.getDate()} ${MONTHS_FR[now.getMonth()].toUpperCase()} · ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   const daysLeft = activeProject ? Math.ceil((new Date(activeProject.deadline) - now) / (1000 * 60 * 60 * 24)) : null
@@ -125,10 +133,10 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-9 gap-2">
-          {mockReferences.slice(0, 9).map(ref => (
+          {references.map(ref => (
             <PortraitThumb
               key={ref.id}
-              reference={ref}
+              reference={{ ...ref, thumbnail: ref.thumbnailUrl }}
               onClick={() => setSelectedRef(ref)}
             />
           ))}
@@ -139,7 +147,7 @@ export default function Dashboard() {
       <div className="px-8 py-6 border-t border-surface-border">
         <div className="grid grid-cols-4 gap-8">
           {[
-            { value: mockReferences.length, label: 'Références' },
+            { value: refCount, label: 'Références' },
             { value: activeProjects.length, label: 'Projets actifs' },
             { value: mockProjects.filter(p => p.moodboard?.generated).length, label: 'Moodboards' },
             { value: `${mockDigest.sections.reduce((a, s) => a + s.items.length, 0)}`, label: 'Cette semaine' },
