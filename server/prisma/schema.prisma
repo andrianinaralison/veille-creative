@@ -58,9 +58,12 @@ model IngestionSession {
   mode        SourceMode
   status      SessionStatus @default(RUNNING)
   brief       String        @default("")
-  totalFound    Int           @default(0)
-  totalFiltered Int           @default(0)
-  totalSaved    Int           @default(0)
+  totalFound              Int           @default(0)
+  totalFiltered           Int           @default(0)
+  totalSaved              Int           @default(0)
+  totalFilteredByDuration Int           @default(0)
+  totalFilteredByRules    Int           @default(0)
+  totalAlreadyPublished   Int           @default(0)
   createdAt   DateTime      @default(now()) @db.Timestamptz(6)
   completedAt DateTime?     @db.Timestamptz(6)
   references  Reference[]

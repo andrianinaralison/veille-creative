@@ -643,6 +643,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
 
     // Filtre : garder uniquement les vidéos > 3 minutes
     const aboveDuration = allDetails.filter(v => v.durationSeconds > 180);
+    const totalFilteredByDuration = allDetails.length - aboveDuration.length;
     console.log(`[creator-scan:${sessionId}] Après filtre > 3 min : ${aboveDuration.length}/${allDetails.length}`);
 
     // Filtre : appliquer les FilterRules persistantes par créateur (anti-pollution)
@@ -661,9 +662,12 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
         return !haystack.includes(rule.pattern);
       });
     });
-    if (aboveDuration.length !== enriched.length) {
+    const totalFilteredByRules = aboveDuration.length - enriched.length;
+    if (totalFilteredByRules > 0) {
       console.log(`[creator-scan:${sessionId}] Après FilterRules : ${enriched.length}/${aboveDuration.length}`);
     }
+
+    await updateSession({ totalFilteredByDuration, totalFilteredByRules });
 
     // 3. Enrichissement Claude — tags taxonomie + mood + typeContenu + context
     const enrichMap = await enrichVideosBatch(enriched);
@@ -727,13 +731,18 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
         });
 
         saved++;
-        if (saved % 10 === 0) await updateSession({ totalSaved: saved });
+        await updateSession({ totalSaved: saved });
       } catch (err) {
         console.error(`[creator-scan:${sessionId}] Save failed for ${video.videoId}:`, err.message);
       }
     }
 
-    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved });
+    // Compter les refs de cette session déjà en PUBLISHED (re-scan de contenu existant)
+    const totalAlreadyPublished = await prisma.reference.count({
+      where: { ingestionSessionId: sessionId, status: 'PUBLISHED' },
+    });
+
+    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved, totalAlreadyPublished });
     console.log(`[creator-scan:${sessionId}] Completed — ${saved}/${enriched.length} saved`);
   } catch (err) {
     console.error(`[creator-scan:${sessionId}] Agent failed:`, err);

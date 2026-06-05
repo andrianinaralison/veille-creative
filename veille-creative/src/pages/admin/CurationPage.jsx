@@ -115,15 +115,53 @@ function StatusDropdown({ status, onChange }) {
 
 // ─── TriageCard ────────────────────────────────────────────────────────────────
 
+function getYtEmbedUrl(url) {
+  const m = url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]{11})/)
+  return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0` : null
+}
+
 function TriageCard({ ref: r, busy, onDecide }) {
+  const [playing, setPlaying] = useState(false)
+  const embedUrl = getYtEmbedUrl(r.url)
+
   return (
     <div className="border border-surface-border bg-surface flex flex-col overflow-hidden">
-      {r.thumbnailUrl
-        ? <img src={r.thumbnailUrl} alt={r.title} className="w-full aspect-video object-cover" loading="lazy" />
-        : <div className="w-full aspect-video bg-surface-raised flex items-center justify-center"><span className="font-mono text-[9px] text-ink-faint">—</span></div>
-      }
+      {/* Zone vidéo — clic → player inline */}
+      <div className="relative w-full aspect-video bg-surface-raised">
+        {playing && embedUrl ? (
+          <iframe
+            src={embedUrl}
+            className="absolute inset-0 w-full h-full"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => embedUrl && setPlaying(true)}
+            className={`absolute inset-0 w-full h-full group ${embedUrl ? 'cursor-pointer' : 'cursor-default'}`}
+            title={embedUrl ? 'Regarder la vidéo' : undefined}
+          >
+            {r.thumbnailUrl
+              ? <img src={r.thumbnailUrl} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
+              : <span className="font-mono text-[9px] text-ink-faint">—</span>
+            }
+            {embedUrl && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-10 h-10 rounded-full bg-black/70 flex items-center justify-center">
+                  <span className="text-white text-lg ml-0.5">▶</span>
+                </div>
+              </div>
+            )}
+          </button>
+        )}
+      </div>
+
       <div className="p-2 flex flex-col gap-2 flex-1">
-        <p className="text-[11px] text-ink leading-snug line-clamp-2 font-medium">{r.title}</p>
+        <a href={r.url} target="_blank" rel="noopener noreferrer"
+          className="text-[11px] text-ink leading-snug line-clamp-2 font-medium hover:opacity-70 transition-opacity">
+          {r.title}
+        </a>
         <p className="font-mono text-[9px] text-ink-muted truncate">{r.channelName}</p>
         <div className="flex gap-1 mt-auto pt-1">
           <button
@@ -220,17 +258,49 @@ function TriageView({ session, onNewImport }) {
   }
 
   if (count === 0) {
+    const byDuration   = session.totalFilteredByDuration ?? 0
+    const byRules      = session.totalFilteredByRules ?? 0
+    const alreadyPub   = session.totalAlreadyPublished ?? 0
+    const wasTriaging  = allTriage.length > 0 // l'utilisateur a trié manuellement
+
+    let icon  = '✓'
+    let title = 'Lot propre'
+    let body  = 'Toutes les références ont été triées. Les gardées sont prêtes pour la qualification dans la Médiathèque.'
+    let cta   = <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">Qualifier →</a>
+
+    if (!wasTriaging) {
+      if (byDuration > 0 && byRules === 0 && alreadyPub === 0) {
+        icon  = '◎'
+        title = `0 à trier · ${byDuration} Shorts écartés`
+        body  = `Toutes les vidéos de ce scan durent moins de 3 minutes. Le système écarte automatiquement les Shorts et formats courts (filtre fixe — non configurable).`
+        cta   = null
+      } else if (byRules > 0 && alreadyPub === 0) {
+        icon  = '◎'
+        title = `0 à trier · ${byRules} vidéo${byRules > 1 ? 's' : ''} filtrée${byRules > 1 ? 's' : ''} par vos règles`
+        body  = "Vos règles anti-pollution ont écarté toutes les vidéos de ce scan. C'est normal si les règles sont larges — vérifie-les si tu t'y attendais pas."
+        cta   = <button type="button" onClick={onNewImport} className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">← Gérer les règles</button>
+      } else if (alreadyPub > 0) {
+        icon  = '◎'
+        title = `0 à trier · ${alreadyPub} déjà publiée${alreadyPub > 1 ? 's' : ''}`
+        body  = 'Tout le contenu de ce scan est déjà dans ta médiathèque. Aucune nouvelle vidéo à décider pour ce créateur.'
+        cta   = <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">Médiathèque →</a>
+      } else {
+        icon  = '—'
+        title = 'Aucune vidéo trouvée'
+        body  = 'Le scan n\'a retourné aucune vidéo pour ce créateur. Vérifie que son handle YouTube est correct ou que sa chaîne est active.'
+        cta   = null
+      }
+    }
+
     return (
       <div className="border border-surface-border p-12 max-w-md text-center mt-8">
-        <p className="font-editorial text-4xl text-ink mb-3">✓</p>
-        <p className="font-mono text-[10px] tracking-widest uppercase text-ink mb-2">Lot propre</p>
-        <p className="text-[11px] text-ink-muted mb-6">Toutes les références ont été triées. Les gardées sont prêtes pour la qualification dans la Médiathèque.</p>
-        <div className="flex gap-3 justify-center">
-          <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">
-            Qualifier →
-          </a>
+        <p className="font-editorial text-4xl text-ink mb-3">{icon}</p>
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink mb-2">{title}</p>
+        <p className="text-[11px] text-ink-muted mb-6">{body}</p>
+        <div className="flex gap-3 justify-center flex-wrap">
+          {cta}
           <button type="button" onClick={onNewImport} className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">
-            Nouvel import
+            ← Nouvel import
           </button>
         </div>
       </div>
@@ -407,7 +477,7 @@ function MonitoringView({ sessionId, onCompleted }) {
 
   useEffect(() => {
     poll()
-    intervalRef.current = setInterval(poll, 2000)
+    intervalRef.current = setInterval(poll, 1000)
     return () => clearInterval(intervalRef.current)
   }, [poll])
 
@@ -430,7 +500,7 @@ function MonitoringView({ sessionId, onCompleted }) {
         </p>
       </div>
 
-      <div className="flex gap-8 mb-4">
+      <div className="flex gap-8 mb-3">
         <div>
           <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Trouvées</p>
           <p className="font-editorial text-3xl text-ink">{found}</p>
@@ -440,6 +510,9 @@ function MonitoringView({ sessionId, onCompleted }) {
           <p className="font-editorial text-3xl text-ink">{saved}</p>
         </div>
       </div>
+      <p className="font-mono text-[9px] text-ink-faint mb-4">
+        Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
+      </p>
 
       {saved > 0 && (
         <div className="border-t border-surface-border pt-4">
@@ -914,14 +987,16 @@ function CreatorsTab({ onSessionStarted }) {
                 </div>
               </div>
 
-              {/* Badge non-scannable */}
+              {/* Badge non-scannable + tooltip CSS */}
               {!isScanneable(creator) && (
-                <span
-                  title={scanTooltip(creator)}
-                  className="flex-shrink-0 font-mono text-[9px] tracking-wide border border-amber-800/50 text-amber-600/80 px-1.5 py-0.5 cursor-help"
-                >
-                  ⚠ Handle YouTube manquant
-                </span>
+                <div className="relative group flex-shrink-0">
+                  <span className="font-mono text-[9px] tracking-wide border border-amber-800/50 text-amber-600/80 px-1.5 py-0.5 cursor-help">
+                    ⚠ Handle YouTube manquant
+                  </span>
+                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 bg-surface border border-surface-border px-3 py-1.5 shadow-lg pointer-events-none w-72">
+                    <p className="font-mono text-[10px] text-ink leading-snug">{scanTooltip(creator)}</p>
+                  </div>
+                </div>
               )}
 
               {/* Actions */}
@@ -930,7 +1005,6 @@ function CreatorsTab({ onSessionStarted }) {
                   type="button"
                   onClick={() => isScanneable(creator) ? startScan([creator.id], creator.name) : undefined}
                   disabled={!!scanning || !isScanneable(creator)}
-                  title={!isScanneable(creator) ? scanTooltip(creator) : undefined}
                   className={`px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase border transition-colors ${
                     !isScanneable(creator)
                       ? 'border-surface-border text-ink-faint opacity-30 cursor-not-allowed'
