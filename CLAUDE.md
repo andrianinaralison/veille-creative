@@ -37,6 +37,13 @@ Poster un commentaire sur le ticket avec :
 - **Hash du commit** et message complet
 - **DoD partiels reportés** : si un critère dépend d'un autre ticket, le noter explicitement
 
+### Tests avant clôture (obligatoire)
+Avant de marquer un ticket Done, vérifier systématiquement les effets de bord :
+- Toute refacto d'imports ou de helpers → `grep` sur les anciens noms dans les fichiers touchés
+- Tout changement de routing backend → tester l'endpoint avec `curl` ou équivalent
+- Tout changement frontend → vérifier dans le navigateur les pages affectées
+**Un ticket non testé n'est pas Done.**
+
 ### PR (quand `feat/admin-curation` est mergée)
 Description PR avec :
 - Résumé en 3 bullets max
