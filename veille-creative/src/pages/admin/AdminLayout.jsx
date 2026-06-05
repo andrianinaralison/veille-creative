@@ -1,5 +1,5 @@
-import { NavLink, Link, Outlet, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { NavLink, Link, Outlet, Navigate, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
 import { adminFetch, getToken, clearToken } from '../../lib/admin-api'
 
@@ -11,9 +11,24 @@ const adminNav = [
 
 export default function AdminLayout() {
   const { isDirty, reset } = useAdminStore()
-  const [publishState, setPublishState] = useState('idle') // idle | loading | done
+  const [publishState, setPublishState] = useState('idle')
+  const [runningSession, setRunningSession] = useState(null)
+  const navigate = useNavigate()
+  const pollRef = useRef(null)
 
   if (!getToken()) return <Navigate to="/admin/login" replace />
+
+  useEffect(() => {
+    async function checkRunning() {
+      try {
+        const { sessions } = await adminFetch('/api/v1/ingestion/sessions?status=RUNNING')
+        setRunningSession(sessions?.[0] ?? null)
+      } catch {}
+    }
+    checkRunning()
+    pollRef.current = setInterval(checkRunning, 30000)
+    return () => clearInterval(pollRef.current)
+  }, [])
 
   function handleLogout() {
     clearToken()
@@ -71,7 +86,7 @@ export default function AdminLayout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `px-3 py-1 text-[13px] transition-colors relative ${
+                  `px-3 py-1 text-[13px] transition-colors relative flex items-center gap-1.5 ${
                     isActive ? 'text-ink font-medium' : 'text-ink-muted hover:text-ink'
                   }`
                 }
@@ -79,6 +94,17 @@ export default function AdminLayout() {
                 {({ isActive }) => (
                   <>
                     {label}
+                    {to === '/admin/curation' && runningSession && (
+                      <button
+                        type="button"
+                        title="Scan en cours — cliquer pour reprendre le monitoring"
+                        onClick={e => { e.preventDefault(); navigate('/admin/curation') }}
+                        className="relative flex h-2 w-2 flex-shrink-0"
+                      >
+                        <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-50" />
+                        <span className="relative inline-flex h-2 w-2 bg-ink" />
+                      </button>
+                    )}
                     {isActive && (
                       <span className="absolute bottom-0 left-3 right-3 h-px bg-ink" />
                     )}

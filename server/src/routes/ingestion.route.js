@@ -52,9 +52,11 @@ router.post('/sessions', async (req, res) => {
  * GET /api/v1/ingestion/sessions
  * Liste les sessions (20 dernières), sans les références.
  */
-router.get('/sessions', async (_req, res) => {
+router.get('/sessions', async (req, res) => {
+  const { status } = req.query;
   try {
     const sessions = await prisma.ingestionSession.findMany({
+      where: status ? { status } : undefined,
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
