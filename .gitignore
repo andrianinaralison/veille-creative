@@ -26,3 +26,13 @@ npm-debug.log*
 
 # Unrelated projects
 Product-Manager-Skills/
+
+# Local thumbnail cache (stocké sur Supabase CDN en prod)
+thumbnails/
+
+# Assets binaires lourds (ne pas versionner)
+assets/*.xlsx
+assets/*.pptx
+assets/*.docx
+assets/*.pdf
+assets/*.csv
