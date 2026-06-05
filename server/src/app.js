@@ -10,6 +10,7 @@ import authRoute from './routes/auth.route.js';
 import filterRulesRoute from './routes/filter-rules.route.js';
 import adminSearchRoute from './routes/admin-search.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
+import { prisma } from './lib/prisma.js';
 
 export function createApp() {
   const app = express();
@@ -40,8 +41,24 @@ export function createApp() {
     req.method === 'POST' ? ingestionLimiter(req, res, next) : next();
   app.use('/api/v1/ingestion', requireAdmin, postOnlyLimiter, ingestionRoute);
 
-  // ── Health check ────────────────────────────────────────────────────────────
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  // ── Health check — teste réellement la connexion DB ────────────────────────
+  app.get('/health', async (_req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ ok: true, db: 'connected' });
+    } catch {
+      res.status(503).json({ ok: false, db: 'unreachable' });
+    }
+  });
+
+  // ── Middleware d'erreur centralisé ──────────────────────────────────────────
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, _next) => {
+    const status = err.status ?? err.statusCode ?? 500;
+    const message = err.message ?? 'Erreur serveur';
+    console.error({ level: 'error', route: req.path, method: req.method, status, message, stack: err.stack });
+    res.status(status).json({ error: message });
+  });
 
   return app;
 }

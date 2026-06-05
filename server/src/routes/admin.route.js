@@ -1,35 +1,30 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { validate, asyncHandler, paginationSchema, refStatusSchema } from '../middleware/validate.js';
 
 const router = Router();
+
+const refsQuerySchema = paginationSchema.extend({
+  status: refStatusSchema.optional(),
+});
 
 /**
  * GET /api/v1/admin/references
  * Liste toutes les références — filtrables par statut.
- * Query params : ?status=DRAFT|PUBLISHED|REJECTED (optionnel)
+ * Query params : ?status=TRIAGE|DRAFT|PUBLISHED|REJECTED, ?limit (max 200), ?offset
  */
-router.get('/references', async (req, res) => {
-  const { status, limit = '50', offset = '0' } = req.query;
-
+router.get('/references', validate({ query: refsQuerySchema }), asyncHandler(async (req, res) => {
+  const { status, limit, offset } = req.query;
   const where = status ? { status } : {};
 
-  try {
-    const [references, total] = await Promise.all([
-      prisma.reference.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: parseInt(limit, 10),
-        skip: parseInt(offset, 10),
-      }),
-      prisma.reference.count({ where }),
-    ]);
+  const [references, total] = await Promise.all([
+    prisma.reference.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit, skip: offset }),
+    prisma.reference.count({ where }),
+  ]);
 
-    res.json({ references, total });
-  } catch (err) {
-    console.error('[admin] GET /references', err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+  res.json({ references, total });
+}));
 
 /**
  * PATCH /api/v1/admin/references/:id/status
