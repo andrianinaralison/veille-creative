@@ -479,11 +479,92 @@ function ResultsTable({ session, sections, onNewImport }) {
   )
 }
 
+// ─── FilterRulesPanel ─────────────────────────────────────────────────────────
+
+function FilterRulesPanel({ creator, onClose }) {
+  const [rules, setRules]       = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [pattern, setPattern]   = useState('')
+  const [type, setType]         = useState('keyword_title')
+  const [saving, setSaving]     = useState(false)
+
+  useEffect(() => {
+    apiFetch(`${ADMIN_API}/filter-rules?creatorId=${creator.id}`)
+      .then(d => setRules(d.rules ?? []))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [creator.id])
+
+  async function addRule(e) {
+    e.preventDefault()
+    if (!pattern.trim()) return
+    setSaving(true)
+    try {
+      const rule = await apiFetch(`${ADMIN_API}/filter-rules`, {
+        method: 'POST',
+        body: JSON.stringify({ creatorId: creator.id, type, pattern }),
+      })
+      setRules(prev => [rule, ...prev])
+      setPattern('')
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteRule(id) {
+    await apiFetch(`${ADMIN_API}/filter-rules/${id}`, { method: 'DELETE' })
+    setRules(prev => prev.filter(r => r.id !== id))
+  }
+
+  return (
+    <div className="border border-surface-border p-4 mt-2 mb-1 bg-surface-raised">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-mono text-[9px] tracking-widest uppercase text-ink">Règles anti-pollution — {creator.name}</p>
+        <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink font-mono text-[11px]">×</button>
+      </div>
+
+      <form onSubmit={addRule} className="flex gap-2 mb-3">
+        <select value={type} onChange={e => setType(e.target.value)}
+          className="bg-canvas border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink appearance-none">
+          <option value="keyword_title">Titre contient</option>
+          <option value="channel_name">Chaîne contient</option>
+        </select>
+        <input value={pattern} onChange={e => setPattern(e.target.value)}
+          placeholder="ex : vlog, behind the scenes…"
+          className="flex-1 bg-canvas border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink placeholder-ink-faint" />
+        <button type="submit" disabled={saving || !pattern.trim()}
+          className="px-3 py-1 text-[9px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 disabled:opacity-30">
+          + Règle
+        </button>
+      </form>
+
+      {loading ? (
+        <p className="font-mono text-[9px] text-ink-faint">Chargement…</p>
+      ) : rules.length === 0 ? (
+        <p className="font-mono text-[9px] text-ink-faint">Aucune règle active.</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {rules.map(r => (
+            <div key={r.id} className="flex items-center gap-2 font-mono text-[9px]">
+              <span className="text-ink-muted border border-surface-border px-1">{r.type === 'keyword_title' ? 'titre' : 'chaîne'}</span>
+              <span className="text-ink flex-1">contient « {r.pattern} »</span>
+              <button type="button" onClick={() => deleteRule(r.id)} className="text-ink-faint hover:text-ink transition-colors">×</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Tab Créateurs ────────────────────────────────────────────────────────────
 
 function CreatorsTab({ onSessionStarted }) {
   const [creators, setCreators]     = useState([])
   const [loading, setLoading]       = useState(true)
+  const [rulesFor, setRulesFor]     = useState(null) // creatorId dont le panel est ouvert
   const [showForm, setShowForm]     = useState(false)
   const [scanning, setScanning]     = useState(null) // creatorId en cours ou 'all'
   const [form, setForm]             = useState({ name: '', youtubeHandle: '', instagramHandle: '', vimeoUrl: '', websiteUrl: '' })
@@ -719,7 +800,8 @@ function CreatorsTab({ onSessionStarted }) {
       ) : (
         <div className="border border-surface-border divide-y divide-surface-border">
           {creators.map(creator => (
-            <div key={creator.id} className={`flex items-center gap-4 px-4 py-3 transition-colors ${creator.active ? '' : 'opacity-40'}`}>
+            <div key={creator.id}>
+            <div className={`flex items-center gap-4 px-4 py-3 transition-colors ${creator.active ? '' : 'opacity-40'}`}>
               {/* Indicateur actif */}
               <span className={`w-1.5 h-1.5 flex-shrink-0 ${creator.active ? 'bg-ink' : 'bg-surface-border'}`} />
 
@@ -778,6 +860,13 @@ function CreatorsTab({ onSessionStarted }) {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setRulesFor(rulesFor === creator.id ? null : creator.id)}
+                  className={`px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase border transition-colors ${rulesFor === creator.id ? 'border-ink text-ink' : 'border-surface-border text-ink-muted hover:text-ink hover:border-ink'}`}
+                >
+                  Règles
+                </button>
+                <button
+                  type="button"
                   onClick={() => toggleActive(creator)}
                   className="px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors"
                   title={creator.active ? 'Désactiver' : 'Activer'}
@@ -793,6 +882,12 @@ function CreatorsTab({ onSessionStarted }) {
                   ×
                 </button>
               </div>
+            </div>
+            {rulesFor === creator.id && (
+              <div className="px-4 pb-3">
+                <FilterRulesPanel creator={creator} onClose={() => setRulesFor(null)} />
+              </div>
+            )}
             </div>
           ))}
         </div>

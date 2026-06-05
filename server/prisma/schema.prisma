@@ -67,19 +67,33 @@ model IngestionSession {
 }
 
 model Creator {
-  id              String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  id              String       @id @default(dbgenerated("(gen_random_uuid())::text"))
   name            String
-  url             String?  @unique
+  url             String?      @unique
   youtubeHandle   String?
-  platform        Platform @default(YOUTUBE)
+  platform        Platform     @default(YOUTUBE)
   channelId       String?
   instagramHandle String?
   vimeoUrl        String?
   websiteUrl      String?
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(6)
+  filterRules     FilterRule[]
 
   // Partial index on active creators: creator_active_name_idx — managed via 20260604_partial_indexes migration
+}
+
+model FilterRule {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  creatorId String
+  type      String   // 'keyword_title' | 'channel_name'
+  pattern   String   // mot-clé ou fragment, insensible à la casse
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([active])
 }
 
 enum Platform {

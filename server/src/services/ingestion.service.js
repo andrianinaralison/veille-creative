@@ -586,7 +586,10 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
       ? { id: { in: creatorIds }, platform: 'YOUTUBE' }
       : { active: true, platform: 'YOUTUBE' };
 
-    const creators = await prisma.creator.findMany({ where });
+    const creators = await prisma.creator.findMany({
+      where,
+      include: { filterRules: { where: { active: true } } },
+    });
     console.log(`[creator-scan:${sessionId}] ${creators.length} creator(s) à scanner`);
 
     // 1. Pour chaque créateur : résoudre channelId → récupérer tous les videoIds
@@ -638,8 +641,28 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
     }
 
     // Filtre : garder uniquement les vidéos > 3 minutes
-    const enriched = allDetails.filter(v => v.durationSeconds > 180);
-    console.log(`[creator-scan:${sessionId}] Après filtre > 3 min : ${enriched.length}/${allDetails.length}`);
+    const aboveDuration = allDetails.filter(v => v.durationSeconds > 180);
+    console.log(`[creator-scan:${sessionId}] Après filtre > 3 min : ${aboveDuration.length}/${allDetails.length}`);
+
+    // Filtre : appliquer les FilterRules persistantes par créateur (anti-pollution)
+    const channelRulesMap = {};
+    for (const creator of creators) {
+      if (creator.channelId && creator.filterRules?.length) {
+        channelRulesMap[creator.channelId] = creator.filterRules;
+      }
+    }
+    const enriched = aboveDuration.filter(v => {
+      const rules = channelRulesMap[v.channelId] ?? [];
+      return rules.every(rule => {
+        const haystack = rule.type === 'channel_name'
+          ? (v.channelName ?? '').toLowerCase()
+          : (v.title ?? '').toLowerCase();
+        return !haystack.includes(rule.pattern);
+      });
+    });
+    if (aboveDuration.length !== enriched.length) {
+      console.log(`[creator-scan:${sessionId}] Après FilterRules : ${enriched.length}/${aboveDuration.length}`);
+    }
 
     // 3. Enrichissement Claude — tags taxonomie + mood + typeContenu + context
     const enrichMap = await enrichVideosBatch(enriched);
