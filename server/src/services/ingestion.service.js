@@ -549,6 +549,7 @@ export async function runIngestionAgent(sessionId, brief) {
             mood: meta.mood ?? null,
             typeContenu: meta.typeContenu ?? null,
             context: meta.context ?? '',
+            ingestionSessionId: sessionId,
           },
         });
 
@@ -721,6 +722,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
             mood: meta.mood ?? null,
             typeContenu: meta.typeContenu ?? null,
             context: meta.context ?? '',
+            ingestionSessionId: sessionId,
           },
         });
 
@@ -819,6 +821,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
             mood: meta.mood ?? null,
             typeContenu: meta.typeContenu ?? null,
             context: meta.context ?? '',
+            ingestionSessionId: sessionId,
           },
         });
 
