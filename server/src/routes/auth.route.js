@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt'
 
 const router = Router()
 
-router.post('/login', async (req, res) => {
+router.post('/', async (req, res) => {
   const { password } = req.body ?? {}
   if (!password) return res.status(400).json({ error: 'Missing password' })
 
