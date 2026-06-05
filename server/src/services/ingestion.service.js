@@ -480,9 +480,10 @@ export async function runIngestionAgent(sessionId, brief) {
     const scored = await scoreVideosWithClaude(brief, aboveMinViews);
     console.log(`[ingestion:${sessionId}] After Claude scoring (>=${SCORE_THRESHOLD}): ${scored.length}/${aboveMinViews.length}`);
 
-    // Utilise executeRaw car totalFiltered est un champ ajouté après la dernière génération du client Prisma.
-    // Lancer `npx prisma generate` dans /server pour l'avoir typé.
-    await prisma.$executeRaw`UPDATE "IngestionSession" SET "totalFiltered" = ${scored.length} WHERE id = ${sessionId}`;
+    await prisma.ingestionSession.update({
+      where: { id: sessionId },
+      data: { totalFiltered: scored.length },
+    });
 
     // 6. Enrichissement Claude — tags taxonomie + mood + typeContenu + context
     const enrichMap = await enrichVideosBatch(scored);
