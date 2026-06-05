@@ -71,4 +71,47 @@
 
 ---
 
-*Prochaine fiche : 5C #002*
+---
+
+## 5C #002 — Polling monitoring 429 (rate-limit ingestion)
+
+**Date** : 2026-06-05
+**Détecté par** : Andrianina (console navigateur lors du lancement d'un import)
+**Ticket Linear** : 180-33 (Done)
+
+### 1. Constater
+
+Dès le lancement d'un import, la console affiche en boucle `[Monitoring] poll error Error: 429 Too Many Requests`. Le monitoring se bloque, l'utilisateur ne voit pas la progression du scan.
+
+### 2. Contenir (action immédiate)
+
+Modification de `app.js` : `postOnlyLimiter` — le rate-limit ne s'applique qu'aux requêtes `POST`, les `GET` passent directement.
+
+Commit `f74ff5c`.
+
+### 3. Comprendre — 5 Pourquoi
+
+| # | Pourquoi ? | Réponse |
+|---|-----------|---------|
+| 1 | Pourquoi 429 sur le monitoring ? | `GET /ingestion/sessions/:id` soumis au rate-limit de 10 req/15 min |
+| 2 | Pourquoi ce GET est rate-limité ? | `ingestionLimiter` monté sur tout `/api/v1/ingestion/*` sans distinction méthode |
+| 3 | Pourquoi sans distinction méthode ? | Le rate-limit a été posé pour protéger les lancements de scan (POST), mais `app.use()` s'applique à toutes les méthodes |
+| 4 | Pourquoi non détecté avant ? | Aucun test de polling existant ; le test d'intégration vérifie uniquement le 401, pas le comportement en session réelle |
+| 5 | Pourquoi aucun test de polling ? | Le DoD de T-01 (auth) ne couvrait pas les effets de bord sur les routes GET de monitoring |
+
+**Cause racine** : `app.use()` ne filtre pas par méthode HTTP — le rate-limit a été appliqué trop largement sans anticipation du cas polling.
+
+### 4. Corriger (actions permanentes)
+
+| Action | Responsable | Statut |
+|--------|------------|--------|
+| `postOnlyLimiter` : rate-limit uniquement sur `req.method === 'POST'` | Dev | ✅ Fait |
+| Ajouter test : `GET /ingestion/sessions/:id` avec token valide → 200 (pas 429) | Dev | ⬜ À faire (T-02 suite) |
+
+### 5. Consolider
+
+**Enseignement** : quand on ajoute un rate-limit sur un préfixe de routes, vérifier explicitement quelles méthodes (GET/POST/PATCH) sont concernées et lesquelles sont des endpoints de lecture à haut débit (polling, health check, etc.).
+
+**Standard à ajouter dans CLAUDE.md** : tout `rateLimit` sur un préfixe de routes → documenter les méthodes exclues.
+
+*Prochaine fiche : 5C #003*
