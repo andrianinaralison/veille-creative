@@ -33,3 +33,5 @@ jobs:
           ANTHROPIC_API_KEY: ci-placeholder
           DATABASE_URL: postgresql://ci:ci@localhost/ci
           YOUTUBE_API_KEY: ci-placeholder
+          SUPABASE_URL: https://ci-placeholder.supabase.co
+          SUPABASE_SERVICE_KEY: ci-placeholder-service-key
