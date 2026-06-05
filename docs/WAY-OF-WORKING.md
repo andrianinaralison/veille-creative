@@ -139,8 +139,18 @@ La PR force le moment où QA, review et DoD s'appliquent. Sans elle, tout se mé
 - [ ] Pas de secret, pas de route non protégée introduite.
 - [ ] La doc impactée est à jour (roadmap, ADR si décision d'archi).
 - [ ] PR mergée, branche supprimée.
+- [ ] **Toute refacto d'imports/helpers** : grep sur les anciens identifiants dans tous les fichiers touchés — aucun usage résiduel.
+- [ ] **Toute modification de routing back ou front** : endpoint testé (`curl` ou navigateur) avant clôture.
+- [ ] **Commentaire Linear posté** avec : fichiers modifiés, décisions techniques, commits, DoD partiels reportés.
 
 > Imprime ces deux listes. Tant qu'une case n'est pas cochée, ce n'est ni prêt, ni fini. C'est ce qui te fait « tenir la main » sur la qualité.
+
+### Incidents détectés en production/environnement
+
+Dès qu'un utilisateur ou membre d'équipe détecte un bug :
+1. **Créer un ticket Linear** `type/bug` dans le cycle courant, assigner au dev responsable.
+2. **Ouvrir une fiche 5C** dans `docs/lean.md` (Constater → Contenir → Comprendre → Corriger → Consolider).
+3. **Mettre à jour le WAY-OF-WORKING** si la cause racine révèle une lacune de process.
 
 ---
 
