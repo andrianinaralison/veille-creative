@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useId } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
+import { adminFetch } from '../../lib/admin-api'
 
-const API = 'http://localhost:3001/api/v1/admin'
+const API_PATH = '/api/v1/admin'
 const STATUSES = ['', 'DRAFT', 'PUBLISHED', 'REJECTED']
 const STATUS_LABEL = { DRAFT: 'Draft', PUBLISHED: 'Publié', REJECTED: 'Rejeté' }
 const MOODS = ['romantique', 'épique', 'intime', 'dynamique', 'élégant', 'professionnel', 'vivant', 'sérieux']
@@ -24,13 +25,8 @@ function getYtThumb(url) {
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
-async function apiFetch(path, opts = {}) {
-  const r = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  })
-  if (!r.ok) throw new Error(await r.text())
-  return r.json()
+function apiFetch(path, opts = {}) {
+  return adminFetch(`${API_PATH}${path}`, opts)
 }
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────

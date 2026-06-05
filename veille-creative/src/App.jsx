@@ -11,6 +11,7 @@ import MoodboardBuilder from './pages/MoodboardBuilder'
 import SurprisesPage from './pages/SurprisesPage'
 import CategoryPage from './pages/CategoryPage'
 import AdminLayout from './pages/admin/AdminLayout'
+import AdminLogin from './pages/admin/AdminLogin'
 import CurationPage from './pages/admin/CurationPage'
 import ReferencesAdminPage from './pages/admin/ReferencesAdminPage'
 import SectionsAdminPage from './pages/admin/SectionsAdminPage'
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/projects/:id/moodboard" element={<MoodboardBuilder />} />
 
         {/* ── Routes admin ── */}
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/curation" replace />} />
           <Route path="curation" element={<CurationPage />} />

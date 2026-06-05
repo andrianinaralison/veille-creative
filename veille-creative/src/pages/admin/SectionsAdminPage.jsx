@@ -1,16 +1,12 @@
 import { useState, useEffect, useId } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
+import { adminFetch } from '../../lib/admin-api'
 
-const API_SECTIONS = 'http://localhost:3001/api/v1/admin/sections'
-const API_REFS     = 'http://localhost:3001/api/v1/admin/references'
+const API_SECTIONS = '/api/v1/admin/sections'
+const API_REFS     = '/api/v1/admin/references'
 
-async function apiFetch(url, opts = {}) {
-  const r = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  })
-  if (!r.ok) throw new Error(await r.text())
-  return r.json()
+function apiFetch(path, opts = {}) {
+  return adminFetch(path, opts)
 }
 
 // ─── Formulaire nouvelle section ─────────────────────────────────────────────

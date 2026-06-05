@@ -1,6 +1,7 @@
-import { NavLink, Link, Outlet } from 'react-router-dom'
+import { NavLink, Link, Outlet, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
+import { adminFetch, getToken, clearToken } from '../../lib/admin-api'
 
 const adminNav = [
   { to: '/admin/curation', label: 'Curation' },
@@ -8,17 +9,22 @@ const adminNav = [
   { to: '/admin/sections', label: 'Sections' },
 ]
 
-const ADMIN_API = 'http://localhost:3001/api/v1/admin'
-
 export default function AdminLayout() {
   const { isDirty, reset } = useAdminStore()
   const [publishState, setPublishState] = useState('idle') // idle | loading | done
+
+  if (!getToken()) return <Navigate to="/admin/login" replace />
+
+  function handleLogout() {
+    clearToken()
+    window.location.href = '/admin/login'
+  }
 
   async function handlePublish() {
     if (!isDirty || publishState === 'loading') return
     setPublishState('loading')
     try {
-      await fetch(`${ADMIN_API}/publish`, { method: 'POST' })
+      await adminFetch('/api/v1/admin/publish', { method: 'POST' })
     } catch {}
     // Notifie la LibraryPage (même navigateur, onglet différent ou même onglet)
     try {
@@ -105,6 +111,13 @@ export default function AdminLayout() {
             >
               ← Plateforme
             </Link>
+
+            <button
+              onClick={handleLogout}
+              className="text-[12px] font-mono tracking-widest uppercase text-ink-faint hover:text-ink transition-colors"
+            >
+              Logout
+            </button>
           </div>
 
         </div>

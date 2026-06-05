@@ -10,10 +10,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
+import { adminFetch } from '../../lib/admin-api'
 
-const API       = 'http://localhost:3001/api/v1'
-const ADMIN_API = `${API}/admin`
-const ING_API   = `${API}/ingestion`
+const ADMIN_API = '/api/v1/admin'
+const ING_API   = '/api/v1/ingestion'
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
@@ -22,13 +22,8 @@ function ytThumb(url) {
   return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null
 }
 
-async function apiFetch(path, opts = {}) {
-  const r = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  })
-  if (!r.ok) throw new Error(await r.text())
-  return r.json()
+function apiFetch(path, opts = {}) {
+  return adminFetch(path, opts)
 }
 
 // ─── Taxonomie tags ───────────────────────────────────────────────────────────
