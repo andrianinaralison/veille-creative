@@ -17,7 +17,7 @@ export function validate({ body, query, params } = {}) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Paramètres invalides',
-          details: err.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
+          details: err.issues.map(e => ({ path: e.path.join('.'), message: e.message })),
         });
       }
       next(err);
