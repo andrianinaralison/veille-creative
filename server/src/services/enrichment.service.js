@@ -52,11 +52,13 @@ export async function enrichVideosBatch(videos) {
           type: 'json_schema',
           schema: {
             type: 'object',
+            additionalProperties: false,
             properties: {
               enriched: {
                 type: 'array',
                 items: {
                   type: 'object',
+                  additionalProperties: false,
                   properties: {
                     videoId:     { type: 'string' },
                     tags:        { type: 'array', items: { type: 'string' } },
@@ -123,6 +125,7 @@ Also extract from the brief:
         type: 'json_schema',
         schema: {
           type: 'object',
+          additionalProperties: false,
           properties: {
             queries:        { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 8 },
             publishedAfter: { type: 'string' },
@@ -163,11 +166,13 @@ export async function scoreVideosWithClaude(brief, videos) {
           type: 'json_schema',
           schema: {
             type: 'object',
+            additionalProperties: false,
             properties: {
               scores: {
                 type: 'array',
                 items: {
                   type: 'object',
+                  additionalProperties: false,
                   properties: {
                     videoId: { type: 'string' },
                     score:   { type: 'number', minimum: 0, maximum: 100 },
