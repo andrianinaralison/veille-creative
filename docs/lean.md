@@ -154,3 +154,84 @@ Ajout de `ingestionSessionId: sessionId` dans les 3 blocs `update` des upserts P
 **Règle** : pour tout upsert Prisma, vérifier que le bloc `update` contient tous les champs qui doivent changer entre deux upserts successifs (notamment les relations `sessionId`).
 
 *Prochaine fiche : 5C #004*
+
+---
+
+## 5C #004 — Contrats API externes non validés au DoD (Zod v4 + Anthropic schema)
+
+**Date** : 2026-06-07
+**Détecté par** : Andrianina (session live — backoffice totalement KO)
+**Tickets source** : 180-11 (enrichissement structured output), 180-13 (validate middleware Zod)
+**Commits correctifs** : `b45cc45` (Zod), `5251cb0` (Anthropic schema)
+
+---
+
+### 1. Constater
+
+Deux bugs critiques découverts simultanément en session live :
+
+**Bug A** — `GET /api/v1/admin/references` → 500 TypeError  
+```
+Cannot read properties of undefined (reading 'map')
+  at validate.js:20
+```
+`err.errors` utilisé au lieu de `err.issues` — API Zod v4 (installé en `^4.4.3`).
+
+**Bug B** — Toute session d'ingestion → statut `FAILED` immédiatement  
+```
+BadRequestError: 400 — output_config.format.schema: For 'object' type,
+'additionalProperties' must be explicitly set to false
+```
+5 schémas `output_config.format` dans `enrichment.service.js` sans `additionalProperties: false`.
+
+**Impact combiné** : backoffice totalement KO — tableau de curation vide, aucune ingestion possible.
+
+---
+
+### 2. Contenir (action immédiate)
+
+| Action | Commit |
+|--------|--------|
+| `err.errors` → `err.issues` dans `validate.js:20` | `b45cc45` |
+| `additionalProperties: false` ajouté sur les 5 objets dans `enrichment.service.js` | `5251cb0` |
+
+---
+
+### 3. Comprendre — 5 Pourquoi
+
+*(Cause racine commune aux deux bugs)*
+
+| # | Pourquoi ? | Réponse |
+|---|-----------|---------|
+| 1 | Pourquoi les deux bugs ont-ils atteint la production ? | Les chemins d'erreur n'ont jamais été exercés — le code compilait et les tests unitaires passaient |
+| 2 | Pourquoi le chemin d'erreur n'a pas été testé ? | Le DoD de 180-11 et 180-13 ne demandait pas de tester les appels réels vers les APIs externes (Anthropic, Zod v4) |
+| 3 | Pourquoi le DoD ne l'exigeait pas ? | Aucune règle dans WAY-OF-WORKING ni CLAUDE.md ne distingue les tests de compilation des tests de contrat externe |
+| 4 | Pourquoi les contraintes de ces APIs n'étaient pas connues ? | `additionalProperties: false` n'était documenté nulle part dans le projet ; Zod v4 vs v3 n'était pas signalé dans les conventions |
+| 5 | Pourquoi ces invariants n'étaient pas documentés ? | Le projet n'a pas de règle obligeant à consulter le changelog ou la doc officielle lors de l'installation/upgrade d'une lib externe ou lors d'un premier appel à un nouveau provider |
+
+**Cause racine** : Le DoD ne couvre pas la validation des contrats d'API externes. Le code passe en "Done" dès que ça compile et que les tests unitaires sont verts — sans jamais exercer le chemin réel contre la vraie API.
+
+---
+
+### 4. Corriger (actions permanentes)
+
+| Action | Responsable | Statut |
+|--------|------------|--------|
+| Ajouter dans `CLAUDE.md` : règle invariable `additionalProperties: false` sur tous les objets `output_config.format` | Dev | ✅ À faire ce sprint |
+| Ajouter dans `CLAUDE.md` : utiliser `err.issues` (Zod v4) — jamais `err.errors` | Dev | ✅ À faire ce sprint |
+| Ajouter dans le DoD du WAY-OF-WORKING : "tout middleware externe → tester le chemin d'erreur avec une requête invalide réelle avant clôture" | Tech Lead | ⬜ À faire ce sprint |
+| Ajouter dans le DoD : "tout appel Claude API avec `output_config` → vérifier `additionalProperties:false` + exécuter un appel réel avant clôture" | Tech Lead | ⬜ À faire ce sprint |
+| Écrire un test Vitest qui envoie une requête invalide sur une route `validate()` et vérifie le 400 | Dev | ⬜ À faire (T-02 suite — 180-9) |
+
+---
+
+### 5. Consolider
+
+**Enseignement** : "Ça compile" ≠ "Ça fonctionne". Toute intégration avec une API externe (lib tierce ou provider cloud) a un contrat comportemental qui ne se vérifie qu'à l'exécution réelle. Sans test de ce contrat au DoD, la dette est garantie.
+
+**Standards mis à jour** :
+- `CLAUDE.md` — règles invariables Zod v4 et Anthropic schema (voir section "Claude API — règles invariables" et nouvelle section "Zod — règles invariables")
+- `docs/WAY-OF-WORKING.md` — DoD enrichi de deux critères sur les contrats d'API externes
+
+**Signal de validation** : une PR qui modifie `validate.js` ou `enrichment.service.js` ne peut merger que si les tests couvrent le chemin d'erreur (400 sur requête invalide, BadRequest Anthropic simulé).
+
