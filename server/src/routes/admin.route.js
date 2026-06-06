@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
-import { validate, asyncHandler, paginationSchema, refStatusSchema } from '../middleware/validate.js';
+import { validate, asyncHandler, adminPaginationSchema, refStatusSchema } from '../middleware/validate.js';
 
 const router = Router();
 
-const refsQuerySchema = paginationSchema.extend({
+const refsQuerySchema = adminPaginationSchema.extend({
   status: refStatusSchema.optional(),
 });
 

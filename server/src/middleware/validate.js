@@ -39,4 +39,10 @@ export const paginationSchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+// Variante admin — plafond 2000 pour les pages de curation qui chargent tout le catalogue
+export const adminPaginationSchema = z.object({
+  limit:  z.coerce.number().int().min(1).max(2000).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 export const refStatusSchema = z.enum(['TRIAGE', 'DRAFT', 'PUBLISHED', 'REJECTED']);
