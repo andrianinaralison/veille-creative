@@ -100,7 +100,14 @@ Description PR avec :
 - Modèle : `claude-sonnet-4-6` (spécifié dans la doc technique)
 - Prompt caching : `cache_control: { type: 'ephemeral', ttl: '1h' }` sur tout system prompt stable
 - Structured output : `output_config.format` avec `json_schema` — jamais de prefill (interdit sur Sonnet 4.6)
+- **`additionalProperties: false` obligatoire** sur chaque objet `type: 'object'` dans tout schéma `output_config.format`, y compris les objets imbriqués dans des tableaux — sans ça, Anthropic retourne 400 BadRequest (5C #004)
 - `max_tokens` calibré à la réponse réelle — 256 pour du JSON compact
+
+## Zod — règles invariables
+
+- Version installée : **Zod v4** (`^4.4.3`) — API différente de v3
+- Erreurs de validation : `err.issues` (v4) — jamais `err.errors` (propriété supprimée en v4, retourne `undefined`) (5C #004)
+- Tout middleware `validate()` : tester le chemin d'erreur (requête invalide → 400) avant clôture de ticket
 
 ## Git — Branches
 
@@ -115,7 +122,7 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 > ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/ROADMAP.md`** — source de vérité unique.
 
-En cours : nettoyer la structure (git, docs, arbo) + **sécuriser la boucle back** (`/admin` + `/ingestion` n'ont aucune auth aujourd'hui — bloquant). Aucune feature de parcours ne démarre avant que ce jalon soit vert.
+✅ v0.4 et v0.5 Done — auth `requireAdmin` (JWT jose) en place sur `/admin` + `/ingestion`, CI Vitest, taxonomie centralisée, structured output. Prochain jalon : **v0.6** (auth utilisateurs, feed veille, digest éditorial + email).
 
 Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
 

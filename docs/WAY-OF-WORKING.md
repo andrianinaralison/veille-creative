@@ -141,6 +141,8 @@ La PR force le moment où QA, review et DoD s'appliquent. Sans elle, tout se mé
 - [ ] PR mergée, branche supprimée.
 - [ ] **Toute refacto d'imports/helpers** : grep sur les anciens identifiants dans tous les fichiers touchés — aucun usage résiduel.
 - [ ] **Toute modification de routing back ou front** : endpoint testé (`curl` ou navigateur) avant clôture.
+- [ ] **Tout middleware ou service intégrant une lib externe** (Zod, jose, etc.) : tester le chemin d'erreur avec une requête invalide réelle avant clôture — "ça compile" ≠ "le contrat est respecté" (5C #004).
+- [ ] **Tout appel Claude API avec `output_config.format`** : vérifier `additionalProperties: false` sur chaque objet + exécuter un appel réel avant clôture (5C #004).
 - [ ] **Commentaire Linear posté** avec : fichiers modifiés, décisions techniques, commits, DoD partiels reportés.
 
 > Imprime ces deux listes. Tant qu'une case n'est pas cochée, ce n'est ni prêt, ni fini. C'est ce qui te fait « tenir la main » sur la qualité.
