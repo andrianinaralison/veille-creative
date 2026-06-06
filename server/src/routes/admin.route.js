@@ -138,32 +138,36 @@ router.get('/triage/count', async (req, res) => {
 
 /**
  * PATCH /api/v1/admin/references/:id
- * Édite les champs éditoriaux : title, tags, mood, context, typeContenu.
+ * Édite les champs éditoriaux + status + sectionId en une seule transaction atomique.
+ * Body (tous optionnels) : { title, tags, mood, context, typeContenu, status, sectionId }
  */
-router.patch('/references/:id', async (req, res) => {
+router.patch('/references/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, tags, mood, context, typeContenu } = req.body;
+  const { title, tags, mood, context, typeContenu, status, sectionId } = req.body;
 
   const data = {};
-  if (title !== undefined) data.title = title;
-  if (tags !== undefined) data.tags = tags;
-  if (mood !== undefined) data.mood = mood;
-  if (context !== undefined) data.context = context;
+  if (title !== undefined)       data.title = title;
+  if (tags !== undefined)        data.tags = tags;
+  if (mood !== undefined)        data.mood = mood;
+  if (context !== undefined)     data.context = context;
   if (typeContenu !== undefined) data.typeContenu = typeContenu;
+  if (sectionId !== undefined)   data.sectionId = sectionId; // null = désassigner
+  if (status !== undefined) {
+    const parsed = refStatusSchema.safeParse(status);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Statut invalide', details: parsed.error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) });
+    }
+    data.status = parsed.data;
+    if (parsed.data === 'PUBLISHED') data.publishedAt = new Date();
+  }
 
   if (Object.keys(data).length === 0) {
     return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
   }
 
-  try {
-    const updated = await prisma.reference.update({ where: { id }, data });
-    res.json(updated);
-  } catch (err) {
-    if (err.code === 'P2025') return res.status(404).json({ error: 'Référence introuvable' });
-    console.error('[admin] PATCH /references/:id', err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+  const updated = await prisma.reference.update({ where: { id }, data });
+  res.json(updated);
+}));
 
 /**
  * DELETE /api/v1/admin/references/:id

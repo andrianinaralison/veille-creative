@@ -379,17 +379,10 @@ function RefRow({ ref, sections, onSaved }) {
     if (saving) return
     setSaving(true)
     try {
-      await apiFetch(`${ADMIN_API}/references/${ref.id}`, { method: 'PATCH', body: JSON.stringify({ tags }) })
-      if (status !== ref.status) {
-        await apiFetch(`${ADMIN_API}/references/${ref.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
-      }
-      if (sectionId !== ref.sectionId) {
-        if (sectionId) {
-          await apiFetch(`${ADMIN_API}/sections/${sectionId}/assign`, { method: 'POST', body: JSON.stringify({ refIds: [ref.id] }) })
-        } else {
-          await apiFetch(`${ADMIN_API}/sections/unassign`, { method: 'POST', body: JSON.stringify({ refIds: [ref.id] }) })
-        }
-      }
+      const patch = { tags }
+      if (status !== ref.status) patch.status = status
+      if (sectionId !== (ref.sectionId ?? null)) patch.sectionId = sectionId ?? null
+      await apiFetch(`${ADMIN_API}/references/${ref.id}`, { method: 'PATCH', body: JSON.stringify(patch) })
       markDirty()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
