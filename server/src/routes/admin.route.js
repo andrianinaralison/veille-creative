@@ -31,32 +31,19 @@ router.get('/references', validate({ query: refsQuerySchema }), asyncHandler(asy
  * Met à jour le statut d'une référence (DRAFT → PUBLISHED | REJECTED).
  * Body : { status: 'PUBLISHED' | 'REJECTED' | 'DRAFT' }
  */
-router.patch('/references/:id/status', async (req, res) => {
+router.patch('/references/:id/status', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
-
-  const allowed = ['TRIAGE', 'DRAFT', 'PUBLISHED', 'REJECTED'];
-  if (!allowed.includes(status)) {
-    return res.status(400).json({ error: `Statut invalide. Valeurs : ${allowed.join(', ')}` });
+  const parsed = refStatusSchema.safeParse(req.body.status);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Paramètres invalides', details: parsed.error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) });
   }
-
-  try {
-    const updated = await prisma.reference.update({
-      where: { id },
-      data: {
-        status,
-        ...(status === 'PUBLISHED' ? { publishedAt: new Date() } : {}),
-      },
-    });
-    res.json(updated);
-  } catch (err) {
-    if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Référence introuvable' });
-    }
-    console.error('[admin] PATCH /references/:id/status', err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
+  const status = parsed.data;
+  const updated = await prisma.reference.update({
+    where: { id },
+    data: { status, ...(status === 'PUBLISHED' ? { publishedAt: new Date() } : {}) },
+  });
+  res.json(updated);
+}));
 
 /**
  * POST /api/v1/admin/references/batch
