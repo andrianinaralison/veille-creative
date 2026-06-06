@@ -93,7 +93,8 @@ router.post('/references/batch', async (req, res) => {
       if (!Array.isArray(value) || value.length === 0) {
         return res.status(400).json({ error: 'value doit être un tableau de tags' });
       }
-      // Prisma n'a pas d'opérateur "array append" en updateMany → boucle
+      // Prisma n'expose pas d'opérateur array-append pour updateMany.
+      // $transaction(array) envoie N updates en un seul round-trip réseau.
       const refs = await prisma.reference.findMany({
         where: { id: { in: ids } },
         select: { id: true, tags: true },

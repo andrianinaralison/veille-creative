@@ -191,7 +191,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
         try {
           const t = await downloadAndStore({ platform: 'youtube', videoId: video.videoId });
           thumbnailUrl = t.thumbnailUrl; thumbnailStorageKey = t.thumbnailStorageKey; thumbnailSourceUrl = t.thumbnailSourceUrl;
-        } catch {}
+        } catch (err) { console.warn(`[creator-scan:${sessionId}] Thumbnail failed for ${video.videoId}:`, err.message); }
 
         const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
         const meta = enrichMap[video.videoId] ?? {};
@@ -251,7 +251,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
         try {
           const t = await downloadAndStore({ platform: 'youtube', videoId: video.videoId });
           thumbnailUrl = t.thumbnailUrl; thumbnailStorageKey = t.thumbnailStorageKey; thumbnailSourceUrl = t.thumbnailSourceUrl;
-        } catch {}
+        } catch (err) { console.warn(`[creator-scan:${sessionId}] Thumbnail failed for ${video.videoId}:`, err.message); }
 
         const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
         const meta = enrichMap[video.videoId] ?? {};
