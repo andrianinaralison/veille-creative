@@ -38,7 +38,8 @@ Règles d'extraction :
 - Détecte "search" si c'est une recherche directe de contenu technique ou thématique
 - Extrais maximum 6 tags, uniquement ceux explicitement ou clairement implicites dans la requête
 - Utilise exactement les slugs de la taxonomie ci-dessus (minuscules, tirets)
-- Mets null pour les champs non mentionnés`;
+- Mets null pour les champs non mentionnés
+- Pour les dates : si une plage temporelle est mentionnée ("depuis juin 2025", "entre X et Y", "cette année"), extrais date_from et/ou date_to au format YYYY-MM-DD. "aujourd'hui" = date du jour.`;
 
 // ─── SCHÉMA DE SORTIE ────────────────────────────────────────────────────────
 
@@ -70,8 +71,16 @@ const OUTPUT_SCHEMA = {
       ],
       description: 'Plateforme si mentionnée ou null',
     },
+    date_from: {
+      anyOf: [{ type: 'string' }, { type: 'null' }],
+      description: 'Date de début ISO 8601 (YYYY-MM-DD) si une plage temporelle est demandée, sinon null',
+    },
+    date_to: {
+      anyOf: [{ type: 'string' }, { type: 'null' }],
+      description: 'Date de fin ISO 8601 (YYYY-MM-DD) si une plage temporelle est demandée, sinon null',
+    },
   },
-  required: ['mode', 'tags', 'type_contenu', 'mood', 'platform'],
+  required: ['mode', 'tags', 'type_contenu', 'mood', 'platform', 'date_from', 'date_to'],
   additionalProperties: false,
 };
 

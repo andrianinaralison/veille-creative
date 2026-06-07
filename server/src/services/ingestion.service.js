@@ -94,6 +94,7 @@ export async function runIngestionAgent(sessionId, brief) {
           tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
+          videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
         };
 
         const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });
@@ -210,6 +211,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
           tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
+          videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
         };
 
         const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });
@@ -274,6 +276,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
           tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
+          videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
         };
 
         const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });

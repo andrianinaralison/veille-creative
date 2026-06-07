@@ -51,6 +51,17 @@ router.post('/', async (req, res) => {
       ? { platform: filters.platform.toUpperCase() }
       : null;
 
+    // Filtre date sur videoPublishedAt (date de mise en ligne YouTube) — appliqué en AND
+    if (filters.date_from || filters.date_to) {
+      where.videoPublishedAt = {};
+      if (filters.date_from) where.videoPublishedAt.gte = new Date(filters.date_from);
+      if (filters.date_to) {
+        const d = new Date(filters.date_to);
+        d.setHours(23, 59, 59, 999);
+        where.videoPublishedAt.lte = d;
+      }
+    }
+
     // OR entre les filtres sémantiques — si aucun filtre extrait, renvoie tout le scope
     const semanticFilters = [tagFilter, moodFilter, typeFilter, platformFilter].filter(Boolean);
     if (semanticFilters.length > 0) {
@@ -74,6 +85,7 @@ router.post('/', async (req, res) => {
         status: true,
         ingestionSessionId: true,
         createdAt: true,
+        videoPublishedAt: true,
       },
     });
 
@@ -86,6 +98,8 @@ router.post('/', async (req, res) => {
         type_contenu: filters.type_contenu,
         mood: filters.mood,
         platform: filters.platform,
+        date_from: filters.date_from ?? null,
+        date_to: filters.date_to ?? null,
       },
       total: references.length,
       references,

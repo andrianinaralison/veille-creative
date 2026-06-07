@@ -43,6 +43,7 @@ model Reference {
   ingestionSessionId  String?
   createdAt           DateTime          @default(now()) @db.Timestamptz(6)
   publishedAt         DateTime?         @db.Timestamptz(6)
+  videoPublishedAt    DateTime?         @db.Timestamptz(6)
   section             Section?          @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   ingestionSession    IngestionSession? @relation(fields: [ingestionSessionId], references: [id], onUpdate: NoAction)
 
