@@ -64,8 +64,10 @@ const OUTPUT_SCHEMA = {
       description: 'Ambiance dominante ou null',
     },
     platform: {
-      type: ['string', 'null'],
-      enum: ['youtube', 'vimeo', null],
+      anyOf: [
+        { type: 'string', enum: ['youtube', 'vimeo'] },
+        { type: 'null' },
+      ],
       description: 'Plateforme si mentionnée ou null',
     },
   },

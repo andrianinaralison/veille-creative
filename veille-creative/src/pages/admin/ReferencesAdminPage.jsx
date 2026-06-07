@@ -543,9 +543,13 @@ export default function ReferencesAdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
-  const [activeTags, setActiveTags] = useState([])
+  const [activeTags, setActiveTags] = useState(() => {
+    const tag = new URLSearchParams(window.location.search).get('tag')
+    return tag ? [tag] : []
+  })
   const [selected, setSelected] = useState(new Set())
   const [modalRef, setModalRef] = useState(null)
+  const [tagsOpen, setTagsOpen] = useState(() => !!new URLSearchParams(window.location.search).get('tag'))
   const searchId = useId()
 
   const load = useCallback(() => {
@@ -664,25 +668,41 @@ export default function ReferencesAdminPage() {
           </div>
         </div>
 
-        {/* ── Filtre par tags ── */}
+        {/* ── Filtre par tags (accordéon, fermé par défaut) ── */}
         {!loading && !error && allTags.length > 0 && (
-          <div role="group" aria-label="Filtrer par tags" className="flex flex-wrap items-center gap-1.5 mb-6">
-            {allTags.map(([tag, n]) => {
-              const active = activeTags.includes(tag)
-              return (
-                <button key={tag} onClick={() => toggleTag(tag)} aria-pressed={active}
-                  className={`px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase border transition-colors ${
-                    active ? 'border-ink text-ink bg-surface-raised' : 'border-surface-border text-ink-muted hover:border-ink hover:text-ink'
-                  }`}>
-                  {tag}<span className="ml-1 opacity-40">{n}</span>
-                </button>
-              )
-            })}
-            {activeTags.length > 0 && (
-              <button onClick={() => setActiveTags([])}
-                className="px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase text-ink-faint hover:text-ink transition-colors underline underline-offset-2">
-                Réinitialiser
-              </button>
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => setTagsOpen(v => !v)}
+              aria-expanded={tagsOpen}
+              className="flex items-center gap-2 font-mono text-[9px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors mb-2"
+            >
+              <span className="text-[8px]">{tagsOpen ? '▼' : '▶'}</span>
+              Filtrer par tag ({allTags.length})
+              {activeTags.length > 0 && (
+                <span className="ml-1 text-ink">— {activeTags.length} actif{activeTags.length > 1 ? 's' : ''}</span>
+              )}
+            </button>
+            {tagsOpen && (
+              <div role="group" aria-label="Filtrer par tags" className="flex flex-wrap items-center gap-1.5">
+                {allTags.map(([tag, n]) => {
+                  const active = activeTags.includes(tag)
+                  return (
+                    <button key={tag} onClick={() => toggleTag(tag)} aria-pressed={active}
+                      className={`px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase border transition-colors ${
+                        active ? 'border-ink text-ink bg-surface-raised' : 'border-surface-border text-ink-muted hover:border-ink hover:text-ink'
+                      }`}>
+                      {tag}<span className="ml-1 opacity-40">{n}</span>
+                    </button>
+                  )
+                })}
+                {activeTags.length > 0 && (
+                  <button onClick={() => setActiveTags([])}
+                    className="px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase text-ink-faint hover:text-ink transition-colors underline underline-offset-2">
+                    Réinitialiser
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

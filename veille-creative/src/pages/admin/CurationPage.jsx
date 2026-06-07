@@ -452,25 +452,39 @@ function RefRow({ ref, sections, onSaved }) {
 // ─── MonitoringView ───────────────────────────────────────────────────────────
 
 function MonitoringView({ sessionId, onCompleted }) {
-  const [session, setSession] = useState(null)
-  const intervalRef = useRef(null)
+  const [session, setSession]         = useState(null)
+  const [netErrCount, setNetErrCount] = useState(0)
+  const [netLost, setNetLost]         = useState(false)
+  const intervalRef                   = useRef(null)
 
   const poll = useCallback(async () => {
     try {
       const data = await apiFetch(`${ING_API}/sessions/${sessionId}`)
       setSession(data)
+      setNetErrCount(0)
+      setNetLost(false)
       if (data.status === 'COMPLETED' || data.status === 'FAILED') {
         clearInterval(intervalRef.current)
         if (data.status === 'COMPLETED') onCompleted(data)
       }
     } catch (err) {
       console.error('[Monitoring] poll error', err)
+      setNetErrCount(c => {
+        const next = c + 1
+        if (next >= 10) {
+          clearInterval(intervalRef.current)
+          setNetLost(true)
+        } else if (next >= 3) {
+          setNetLost(true)
+        }
+        return next
+      })
     }
   }, [sessionId, onCompleted])
 
   useEffect(() => {
     poll()
-    intervalRef.current = setInterval(poll, 1000)
+    intervalRef.current = setInterval(poll, 5000)
     return () => clearInterval(intervalRef.current)
   }, [poll])
 
@@ -478,55 +492,71 @@ function MonitoringView({ sessionId, onCompleted }) {
   const isRunning  = session?.status === 'RUNNING' || !session
   const found      = session?.totalFound ?? 0
   const saved      = session?.totalSaved ?? 0
+  const stopped    = netErrCount >= 10
 
   return (
-    <div className="border border-surface-border p-8 max-w-lg mt-8">
-      <div className="flex items-center gap-3 mb-6">
-        {isRunning && !isFailed && (
+    <div className="border border-surface-border max-w-lg mt-8">
+      {/* 180-42 L1: sticky header avec compteur de progression */}
+      <div className="sticky top-0 z-10 bg-surface border-b border-surface-border px-8 py-4 flex items-center gap-4">
+        {isRunning && !isFailed && !stopped && (
           <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-40" />
             <span className="relative inline-flex h-2 w-2 bg-ink" />
           </span>
         )}
         <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">
-          {isFailed ? 'Échec' : session?.status === 'COMPLETED' ? 'Terminé' : 'En cours…'}
+          {isFailed ? 'Échec' : stopped ? 'Serveur injoignable' : session?.status === 'COMPLETED' ? 'Terminé' : 'En cours…'}
         </p>
-      </div>
-
-      <div className="flex gap-8 mb-3">
-        <div>
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Trouvées</p>
-          <p className="font-editorial text-3xl text-ink">{found}</p>
-        </div>
-        <div>
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Sauvegardées</p>
-          <p className="font-editorial text-3xl text-ink">{saved}</p>
-        </div>
-      </div>
-      <p className="font-mono text-[9px] text-ink-faint mb-4">
-        Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
-      </p>
-
-      {saved > 0 && (
-        <div className="border-t border-surface-border pt-4">
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-2">Dernières références</p>
-          <div className="flex flex-col gap-2">
-            {(session?.references ?? []).slice(0, 5).map(r => (
-              <div key={r.id} className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-ink flex-shrink-0" />
-                <p className="text-[11px] text-ink truncate">{r.title}</p>
-              </div>
-            ))}
-            {saved > 5 && <p className="text-[10px] text-ink-faint font-mono">+{saved - 5} autres…</p>}
+        <div className="ml-auto flex gap-6">
+          <div className="text-right">
+            <p className="font-mono text-[8px] tracking-widest uppercase text-ink-muted">Trouvées</p>
+            <p className="font-editorial text-xl text-ink">{found}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-[8px] tracking-widest uppercase text-ink-muted">Sauvegardées</p>
+            <p className="font-editorial text-xl text-ink">{saved}</p>
           </div>
         </div>
-      )}
+      </div>
 
-      {isFailed && (
-        <p className="text-[11px] text-ink-muted mt-4 border border-surface-border px-3 py-2">
-          {session?.errorMessage ?? 'Erreur inattendue — vérifiez les logs serveur.'}
+      <div className="px-8 py-6">
+        {/* 180-43 M3: bandeau erreur réseau */}
+        {netLost && !stopped && (
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted border border-surface-border px-3 py-2 mb-4">
+            Connexion perdue, nouvelle tentative…
+          </p>
+        )}
+        {stopped && (
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted border border-surface-border px-3 py-2 mb-4">
+            Le serveur ne répond plus. Vérifiez Railway.
+          </p>
+        )}
+
+        <p className="font-mono text-[9px] text-ink-faint mb-4">
+          Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
         </p>
-      )}
+
+        {saved > 0 && (
+          <div className="border-t border-surface-border pt-4">
+            <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-2">Dernières références</p>
+            <div className="flex flex-col gap-2">
+              {(session?.references ?? []).slice(0, 5).map(r => (
+                <div key={r.id} className="flex items-center gap-2">
+                  <div className="w-1 h-1 bg-ink flex-shrink-0" />
+                  <p className="text-[11px] text-ink truncate">{r.title}</p>
+                </div>
+              ))}
+              {saved > 5 && <p className="text-[10px] text-ink-faint font-mono">+{saved - 5} autres…</p>}
+            </div>
+          </div>
+        )}
+
+        {isFailed && (
+          <p className="text-[11px] text-ink-muted mt-4 border border-surface-border px-3 py-2">
+            {session?.errorMessage ?? 'Erreur inattendue — vérifiez les logs serveur.'}
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -1116,6 +1146,20 @@ export default function CurationPage() {
   const [scanLabel, setScanLabel]         = useState('')
   const [completedSession, setCompletedSession] = useState(null)
   const [sections, setSections]           = useState([])
+
+  // 180-40: restaurer le polling si une session RUNNING existe au rechargement
+  useEffect(() => {
+    apiFetch(`${ING_API}/sessions?status=RUNNING`)
+      .then(d => {
+        const s = d.sessions?.[0]
+        if (s) {
+          setSessionId(s.id)
+          setScanLabel(s.brief ?? '')
+          setPhase('running')
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     apiFetch(`${ADMIN_API}/sections`)
