@@ -1533,7 +1533,13 @@ export default function CurationPage() {
             <ConflictsPanel
               sessionId={completedSession.id}
               initialConflicts={completedSession.conflicts}
-              onAllResolved={() => setConflictsResolved(true)}
+              onAllResolved={async () => {
+                try {
+                  const updated = await apiFetch(`${ING_API}/sessions/${completedSession.id}`)
+                  setCompletedSession(updated)
+                } catch (e) { /* session déjà en mémoire */ }
+                setConflictsResolved(true)
+              }}
             />
           )}
 

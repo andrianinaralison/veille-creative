@@ -202,7 +202,7 @@ router.post('/sessions/:id/conflicts/resolve-batch', async (req, res) => {
       if (!conflict) continue;
       if (action === 'overwrite') {
         const { ingestionSessionId: _sid, ...enrichFields } = conflict.newData;
-        ops.push(prisma.reference.update({ where: { id: conflict.existingId }, data: { ...enrichFields, ingestionSessionId: id } }));
+        ops.push(prisma.reference.update({ where: { id: conflict.existingId }, data: { ...enrichFields, ingestionSessionId: id, status: 'TRIAGE', publishedAt: null } }));
       } else if (action === 'attach') {
         ops.push(prisma.reference.update({ where: { id: conflict.existingId }, data: { ingestionSessionId: id } }));
       }
