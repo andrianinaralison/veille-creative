@@ -217,7 +217,7 @@ function TriageCard({ ref: r, busy, onDecide }) {
 
 // ─── TriageView ────────────────────────────────────────────────────────────────
 
-function TriageView({ session, onNewImport }) {
+function TriageView({ session, onNewImport, onTriageDone }) {
   const allTriage                = (session.references ?? []).filter(r => r.status === 'TRIAGE')
   const [refs, setRefs]          = useState(allTriage)
   const [busy, setBusy]          = useState({})
@@ -293,30 +293,30 @@ function TriageView({ session, onNewImport }) {
     const wasTriaging  = allTriage.length > 0 // l'utilisateur a trié manuellement
 
     let icon  = '✓'
-    let title = 'Lot propre'
-    let body  = 'Toutes les références ont été triées. Les gardées sont prêtes pour la qualification dans la Médiathèque.'
-    let cta   = <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">Qualifier →</a>
+    let title = 'Triage terminé'
+    let body  = 'Toutes les références ont été triées. Passe à la qualification pour ajouter les tags, la section et les métadonnées éditoriales.'
+    let cta   = <button type="button" onClick={onTriageDone} className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">Qualifier →</button>
 
     if (!wasTriaging) {
       if (byDuration > 0 && byRules === 0 && alreadyPub === 0) {
         icon  = '◎'
         title = `0 à trier · ${byDuration} Shorts écartés`
-        body  = `Toutes les vidéos de ce scan durent moins de 3 minutes. Le système écarte automatiquement les Shorts et formats courts (filtre fixe — non configurable).`
+        body  = `Toutes les vidéos de ce scan durent moins de 3 minutes. Le système écarte automatiquement les Shorts et formats courts.`
         cta   = null
       } else if (byRules > 0 && alreadyPub === 0) {
         icon  = '◎'
         title = `0 à trier · ${byRules} vidéo${byRules > 1 ? 's' : ''} filtrée${byRules > 1 ? 's' : ''} par vos règles`
-        body  = "Vos règles anti-pollution ont écarté toutes les vidéos de ce scan. C'est normal si les règles sont larges — vérifie-les si tu t'y attendais pas."
+        body  = "Vos règles anti-pollution ont écarté toutes les vidéos de ce scan. C'est normal si les règles sont larges."
         cta   = <button type="button" onClick={onNewImport} className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">← Gérer les règles</button>
       } else if (alreadyPub > 0) {
         icon  = '◎'
         title = `0 à trier · ${alreadyPub} déjà publiée${alreadyPub > 1 ? 's' : ''}`
-        body  = 'Tout le contenu de ce scan est déjà dans ta médiathèque. Aucune nouvelle vidéo à décider pour ce créateur.'
-        cta   = <a href="/admin/references" className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">Médiathèque →</a>
+        body  = 'Tout le contenu de ce scan est déjà dans ta médiathèque. Aucune nouvelle vidéo à décider.'
+        cta   = null
       } else {
         icon  = '—'
         title = 'Aucune vidéo trouvée'
-        body  = 'Le scan n\'a retourné aucune vidéo pour ce créateur. Vérifie que son handle YouTube est correct ou que sa chaîne est active.'
+        body  = "Le scan n'a retourné aucune vidéo. Vérifie que le handle YouTube est correct ou que la chaîne est active."
         cta   = null
       }
     }
@@ -711,10 +711,13 @@ function ResultsTable({ session, sections, onNewImport }) {
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t border-surface-border">
+      <div className="mt-8 pt-6 border-t border-surface-border flex items-center justify-between">
         <button type="button" onClick={onNewImport} className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink border border-surface-border px-4 py-2 transition-colors">
           ← Nouvel import
         </button>
+        <a href="/admin/references" className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors">
+          Médiathèque complète →
+        </a>
       </div>
     </div>
   )
@@ -1418,6 +1421,7 @@ export default function CurationPage() {
   const [completedSession, setCompletedSession] = useState(null)
   const [sections, setSections]           = useState([])
   const [conflictsResolved, setConflictsResolved] = useState(false)
+  const [triageDone, setTriageDone]               = useState(false)
 
   // 180-40: restaurer le polling si une session RUNNING existe au rechargement
   useEffect(() => {
@@ -1450,11 +1454,20 @@ export default function CurationPage() {
     setPhase('results')
   }, [])
 
+  const handleTriageDone = useCallback(async () => {
+    try {
+      const updated = await apiFetch(`${ING_API}/sessions/${completedSession.id}`)
+      setCompletedSession(updated)
+    } catch (e) { /* garde le snapshot en mémoire */ }
+    setTriageDone(true)
+  }, [completedSession])
+
   function handleNewImport() {
     setPhase('idle')
     setSessionId(null)
     setCompletedSession(null)
     setConflictsResolved(false)
+    setTriageDone(false)
   }
 
   return (
@@ -1544,9 +1557,9 @@ export default function CurationPage() {
           )}
 
           {(conflictsResolved || !(completedSession.conflicts ?? []).length) && (
-            (completedSession.references ?? []).some(r => r.status === 'TRIAGE')
-              ? <TriageView session={completedSession} onNewImport={handleNewImport} />
-              : <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+            triageDone || !(completedSession.references ?? []).some(r => r.status === 'TRIAGE')
+              ? <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+              : <TriageView session={completedSession} onNewImport={handleNewImport} onTriageDone={handleTriageDone} />
           )}
         </div>
       )}
