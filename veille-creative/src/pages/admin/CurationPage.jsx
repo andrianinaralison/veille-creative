@@ -1411,55 +1411,83 @@ function ConflictsPanel({ sessionId, initialConflicts, onAllResolved }) {
   )
 }
 
-// ─── Page principale ───────────────────────────────────────────────────────────
+// ─── Utilitaire URL ───────────────────────────────────────────────────────────
 
-export default function CurationPage() {
-  const [tab, setTab]                     = useState('creators')  // 'creators' | 'links'
-  const [phase, setPhase]                 = useState('idle')      // 'idle' | 'running' | 'results'
-  const [sessionId, setSessionId]         = useState(null)
-  const [scanLabel, setScanLabel]         = useState('')
+function syncUrl(sessionId, phase) {
+  const url = new URL(window.location)
+  sessionId ? url.searchParams.set('session', sessionId) : url.searchParams.delete('session')
+  phase && phase !== 'idle' ? url.searchParams.set('phase', phase) : url.searchParams.delete('phase')
+  window.history.replaceState({}, '', url)
+}
+
+// ─── IngestionModal ────────────────────────────────────────────────────────────
+// La grande fenêtre qui recouvre tout pendant un import.
+// Comme l'écran d'upload YouTube : on sort du contexte normal, on fait son truc, on ferme.
+
+function IngestionModal({ isOpen, onClose }) {
+  const [tab, setTab]                           = useState('creators')
+  const [phase, setPhase]                       = useState('idle')
+  const [sessionId, setSessionId]               = useState(null)
+  const [scanLabel, setScanLabel]               = useState('')
   const [completedSession, setCompletedSession] = useState(null)
-  const [sections, setSections]           = useState([])
+  const [sections, setSections]                 = useState([])
   const [conflictsResolved, setConflictsResolved] = useState(false)
-  const [triageDone, setTriageDone]               = useState(false)
+  const [triageDone, setTriageDone]             = useState(false)
+  const [exitRequested, setExitRequested]       = useState(false)
+  const [discarding, setDiscarding]             = useState(false)
 
-  // 180-40: restaurer le polling si une session RUNNING existe au rechargement
+  // Au chargement de la modale : restaurer depuis l'URL si une session y est enregistrée
   useEffect(() => {
-    apiFetch(`${ING_API}/sessions?status=RUNNING`)
-      .then(d => {
-        const s = d.sessions?.[0]
-        if (s) {
-          setSessionId(s.id)
-          setScanLabel(s.brief ?? '')
+    if (!isOpen) return
+    const params = new URLSearchParams(window.location.search)
+    const sid = params.get('session')
+    const ph  = params.get('phase')
+    if (!sid) return
+
+    apiFetch(`${ING_API}/sessions/${sid}`)
+      .then(session => {
+        setSessionId(sid)
+        setCompletedSession(session)
+        setScanLabel(session.brief ?? '')
+        if (session.status === 'RUNNING') {
           setPhase('running')
+        } else if (session.status === 'COMPLETED') {
+          if (ph === 'qualifying') setTriageDone(true)
+          if (!(session.conflicts ?? []).length) setConflictsResolved(true)
+          setPhase('results')
         }
       })
-      .catch(() => {})
-  }, [])
+      .catch(() => syncUrl(null, null))
+  }, [isOpen])
 
+  // Charger les sections pour la qualification
   useEffect(() => {
+    if (!isOpen) return
     apiFetch(`${ADMIN_API}/sections`)
       .then(d => setSections(d.sections ?? []))
       .catch(console.error)
-  }, [])
+  }, [isOpen])
 
   function handleSessionStarted(id, label = '') {
     setSessionId(id)
     setScanLabel(label)
     setPhase('running')
+    syncUrl(id, 'running')
   }
 
   const handleCompleted = useCallback((session) => {
     setCompletedSession(session)
     setPhase('results')
+    syncUrl(session.id, 'triage')
   }, [])
 
   const handleTriageDone = useCallback(async () => {
     try {
       const updated = await apiFetch(`${ING_API}/sessions/${completedSession.id}`)
       setCompletedSession(updated)
-    } catch (e) { /* garde le snapshot en mémoire */ }
+    } catch (e) {}
     setTriageDone(true)
+    syncUrl(completedSession?.id, 'qualifying')
   }, [completedSession])
 
   function handleNewImport() {
@@ -1468,102 +1496,225 @@ export default function CurationPage() {
     setCompletedSession(null)
     setConflictsResolved(false)
     setTriageDone(false)
+    syncUrl(null, null)
   }
+
+  // Clic sur le X : si on est en idle, on ferme directement. Sinon, on demande confirmation.
+  function handleCloseRequest() {
+    if (phase === 'idle') { doClose(); return }
+    setExitRequested(true)
+  }
+
+  // Fermeture propre : remet tout à zéro et nettoie l'URL
+  function doClose() {
+    setExitRequested(false)
+    setPhase('idle')
+    setSessionId(null)
+    setCompletedSession(null)
+    setConflictsResolved(false)
+    setTriageDone(false)
+    syncUrl(null, null)
+    onClose()
+  }
+
+  // "Supprimer cet import" : supprime les refs TRIAGE en base puis ferme
+  async function handleDiscard() {
+    setDiscarding(true)
+    try {
+      if (sessionId) {
+        await apiFetch(`${ING_API}/sessions/${sessionId}/discard`, { method: 'POST' })
+      }
+      doClose()
+    } catch (e) {
+      console.error('[IngestionModal] discard error:', e)
+    } finally {
+      setDiscarding(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  const triageCount = (completedSession?.references ?? []).filter(r => r.status === 'TRIAGE').length
+
+  return (
+    // La modale recouvre toute la page comme un écran plein écran
+    <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
+
+      {/* ── Header fixe en haut ── */}
+      <div className="flex items-center justify-between px-8 py-4 border-b border-surface-border flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {phase === 'running' && (
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-40" />
+              <span className="relative inline-flex h-2 w-2 bg-ink" />
+            </span>
+          )}
+          <span className="font-mono text-[10px] tracking-widest uppercase text-ink">
+            {phase === 'idle'    ? 'Nouvelle ingestion'
+            : phase === 'running' ? (scanLabel ? `Scan — ${scanLabel}` : 'Scan en cours')
+            : scanLabel || 'Ingestion terminée'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCloseRequest}
+          aria-label="Fermer"
+          className="w-8 h-8 flex items-center justify-center text-xl text-ink-muted hover:text-ink transition-colors"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* ── Contenu scrollable ── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-8 py-10 max-w-5xl mx-auto">
+
+          {/* Phase idle : onglets import */}
+          {phase === 'idle' && (
+            <>
+              <div className="mb-8">
+                <h1 className="font-editorial text-3xl text-ink">Import de références</h1>
+                <p className="text-[11px] text-ink-muted mt-1">Choisis un mode d'import puis lance l'ingestion.</p>
+              </div>
+              <div className="flex gap-0 mb-8 border-b border-surface-border">
+                {[{ id: 'creators', label: 'Créateurs' }, { id: 'links', label: 'Liens manuels' }].map(({ id, label }) => (
+                  <button key={id} type="button" onClick={() => setTab(id)}
+                    className={`px-5 py-2.5 font-mono text-[10px] tracking-widest uppercase border-b-2 transition-colors -mb-px ${tab === id ? 'border-ink text-ink' : 'border-transparent text-ink-muted hover:text-ink'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {tab === 'creators' && <CreatorsTab onSessionStarted={handleSessionStarted} />}
+              {tab === 'links'    && <LinksTab    onSessionStarted={handleSessionStarted} />}
+            </>
+          )}
+
+          {/* Phase monitoring */}
+          {phase === 'running' && sessionId && (
+            <>
+              <h1 className="font-editorial text-3xl text-ink mb-2">
+                {scanLabel ? `Scan — ${scanLabel}` : 'Récupération en cours'}
+              </h1>
+              <MonitoringView sessionId={sessionId} onCompleted={handleCompleted} />
+            </>
+          )}
+
+          {/* Phase résultats : conflits → triage → qualification */}
+          {phase === 'results' && completedSession && (
+            <div>
+              <div className="mb-6">
+                <button type="button" onClick={handleNewImport}
+                  className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors">
+                  ← Nouvel import
+                </button>
+              </div>
+
+              {!conflictsResolved && (completedSession.conflicts ?? []).length > 0 && (
+                <ConflictsPanel
+                  sessionId={completedSession.id}
+                  initialConflicts={completedSession.conflicts}
+                  onAllResolved={async () => {
+                    try {
+                      const updated = await apiFetch(`${ING_API}/sessions/${completedSession.id}`)
+                      setCompletedSession(updated)
+                    } catch (e) {}
+                    setConflictsResolved(true)
+                  }}
+                />
+              )}
+
+              {(conflictsResolved || !(completedSession.conflicts ?? []).length) && (
+                triageDone || !(completedSession.references ?? []).some(r => r.status === 'TRIAGE')
+                  ? <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+                  : <TriageView session={completedSession} onNewImport={handleNewImport} onTriageDone={handleTriageDone} />
+              )}
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* ── Dialog de sortie (comme YouTube "Enregistrer en brouillon ?") ── */}
+      {exitRequested && (
+        <div className="absolute inset-0 bg-canvas/95 z-10 flex items-center justify-center">
+          <div className="border border-surface-border p-8 max-w-sm w-full mx-4 bg-canvas">
+            <h3 className="font-editorial text-xl text-ink mb-3">Quitter l'ingestion ?</h3>
+            {phase === 'running' ? (
+              <p className="text-[11px] text-ink-muted mb-6 leading-relaxed">
+                L'ingestion continue en arrière-plan sur le serveur. Les références seront disponibles en TRIAGE une fois terminée. Tu peux rouvrir cette modale plus tard pour les trier.
+              </p>
+            ) : (
+              <p className="text-[11px] text-ink-muted mb-6 leading-relaxed">
+                {triageCount > 0
+                  ? `${triageCount} référence${triageCount > 1 ? 's' : ''} en attente de triage. `
+                  : ''}
+                Les références importées restent en TRIAGE dans la base — tu peux les retrouver dans la médiathèque plus tard.
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <button type="button" onClick={doClose}
+                className="px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">
+                Garder en brouillon
+              </button>
+              <button type="button" disabled={discarding || phase === 'running'} onClick={handleDiscard}
+                className="px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={phase === 'running' ? 'Attends la fin de l\'ingestion pour supprimer' : ''}>
+                {discarding ? 'Suppression…' : 'Supprimer cet import'}
+              </button>
+              <button type="button" onClick={() => setExitRequested(false)}
+                className="px-4 py-1.5 font-mono text-[9px] tracking-widests uppercase text-ink-faint hover:text-ink-muted transition-colors">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Page principale ───────────────────────────────────────────────────────────
+// Page shell simple. L'ingestion se passe dans la modale au-dessus.
+
+export default function CurationPage() {
+  const [modalOpen, setModalOpen] = useState(false)
+
+  // Ouvre la modale automatiquement si l'URL contient une session (survie au refresh)
+  // ou si une session RUNNING traîne en base (180-40)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('session')) { setModalOpen(true); return }
+
+    apiFetch(`${ING_API}/sessions?status=RUNNING`)
+      .then(d => {
+        const s = d.sessions?.[0]
+        if (s) {
+          syncUrl(s.id, 'running')
+          setModalOpen(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="px-8 py-10">
+      <div className="mb-8">
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted mb-1">Admin · Curation</p>
+        <h1 className="font-editorial text-3xl text-ink">Ingestion</h1>
+        <p className="text-[11px] text-ink-muted mt-1">
+          Importe de nouvelles références depuis YouTube via tes créateurs ou en collant des liens.
+        </p>
+      </div>
 
-      {/* ── Header + tabs ── */}
-      {phase === 'idle' && (
-        <>
-          <div className="mb-8">
-            <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted mb-1">Admin · Curation</p>
-            <h1 className="font-editorial text-3xl text-ink">Import de références</h1>
-          </div>
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        className="px-6 py-3 font-mono text-[10px] tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity"
+      >
+        + Nouvelle ingestion
+      </button>
 
-          <div className="flex gap-0 mb-8 border-b border-surface-border">
-            {[
-              { id: 'creators', label: 'Créateurs' },
-              { id: 'links',    label: 'Liens manuels' },
-            ].map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`px-5 py-2.5 font-mono text-[10px] tracking-widest uppercase border-b-2 transition-colors -mb-px ${
-                  tab === id
-                    ? 'border-ink text-ink'
-                    : 'border-transparent text-ink-muted hover:text-ink'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {tab === 'creators' && <CreatorsTab onSessionStarted={handleSessionStarted} />}
-          {tab === 'links'    && <LinksTab    onSessionStarted={handleSessionStarted} />}
-        </>
-      )}
-
-      {/* ── Phase monitoring ── */}
-      {phase === 'running' && sessionId && (
-        <div>
-          {/* 180-42 L1 : bandeau sticky — reste visible au scroll */}
-          <div className="sticky top-0 z-10 bg-canvas border-b border-surface-border -mx-8 px-8 py-3 flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-40" />
-                <span className="relative inline-flex h-2 w-2 bg-ink" />
-              </span>
-              <span className="font-mono text-[10px] tracking-widest uppercase text-ink">
-                {scanLabel ? `Scan — ${scanLabel}` : 'Scan en cours'}
-              </span>
-            </div>
-            <span className="font-mono text-[9px] text-ink-faint truncate max-w-xs">{sessionId}</span>
-          </div>
-
-          <h1 className="font-editorial text-3xl text-ink mb-2">
-            {scanLabel ? `Scan — ${scanLabel}` : 'Récupération en cours'}
-          </h1>
-          <MonitoringView sessionId={sessionId} onCompleted={handleCompleted} />
-        </div>
-      )}
-
-      {/* ── Phase résultats : tri rapide ── */}
-      {phase === 'results' && completedSession && (
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <button type="button" onClick={handleNewImport} className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors">
-              ← Retour
-            </button>
-            <span className="text-ink-faint text-[10px]">/</span>
-            <span className="font-mono text-[10px] tracking-widest uppercase text-ink">Tri</span>
-          </div>
-
-          {/* Conflits à résoudre en premier */}
-          {!conflictsResolved && (completedSession.conflicts ?? []).length > 0 && (
-            <ConflictsPanel
-              sessionId={completedSession.id}
-              initialConflicts={completedSession.conflicts}
-              onAllResolved={async () => {
-                try {
-                  const updated = await apiFetch(`${ING_API}/sessions/${completedSession.id}`)
-                  setCompletedSession(updated)
-                } catch (e) { /* session déjà en mémoire */ }
-                setConflictsResolved(true)
-              }}
-            />
-          )}
-
-          {(conflictsResolved || !(completedSession.conflicts ?? []).length) && (
-            triageDone || !(completedSession.references ?? []).some(r => r.status === 'TRIAGE')
-              ? <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
-              : <TriageView session={completedSession} onNewImport={handleNewImport} onTriageDone={handleTriageDone} />
-          )}
-        </div>
-      )}
-
+      <IngestionModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   )
 }

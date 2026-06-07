@@ -224,4 +224,25 @@ router.post('/sessions/:id/conflicts/resolve-batch', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/v1/ingestion/sessions/:id/discard
+ * Supprime toutes les références TRIAGE de cette session (import annulé).
+ */
+router.post('/sessions/:id/discard', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { count } = await prisma.reference.deleteMany({
+      where: { ingestionSessionId: id, status: 'TRIAGE' },
+    });
+    await prisma.ingestionSession.update({
+      where: { id },
+      data: { status: 'FAILED', errorMessage: 'Import supprimé manuellement' },
+    }).catch(() => {}); // session peut déjà être FAILED/COMPLETED, on ignore
+    res.json({ ok: true, deleted: count });
+  } catch (err) {
+    console.error('[ingestion] POST /sessions/:id/discard', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 export default router;
