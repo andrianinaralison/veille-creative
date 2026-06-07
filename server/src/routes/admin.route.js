@@ -7,6 +7,7 @@ const router = Router();
 
 const refsQuerySchema = adminPaginationSchema.extend({
   status: refStatusSchema.optional(),
+  page:   z.coerce.number().int().min(1).optional(),
 });
 
 /**
@@ -15,15 +16,24 @@ const refsQuerySchema = adminPaginationSchema.extend({
  * Query params : ?status=TRIAGE|DRAFT|PUBLISHED|REJECTED, ?limit (max 200), ?offset
  */
 router.get('/references', validate({ query: refsQuerySchema }), asyncHandler(async (req, res) => {
-  const { status, limit, offset } = req.query;
+  const { status, limit, offset, page } = req.query;
   const where = status ? { status } : {};
 
+  // 180-46 M5 : si page fourni → pagination 1-indexed, sinon offset classique
+  const skip = page ? (page - 1) * limit : offset;
+
   const [references, total] = await Promise.all([
-    prisma.reference.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit, skip: offset }),
+    prisma.reference.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit, skip }),
     prisma.reference.count({ where }),
   ]);
 
-  res.json({ references, total });
+  res.json({
+    references,
+    total,
+    page: page ?? null,
+    limit,
+    totalPages: page ? Math.ceil(total / limit) : null,
+  });
 }));
 
 /**

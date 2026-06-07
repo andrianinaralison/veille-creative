@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js';
 
 const router = Router();
 
-const VALID_TYPES = ['keyword_title', 'channel_name'];
+const VALID_TYPES = ['keyword_title', 'channel_name', 'duration_max'];
 
 /**
  * GET /api/v1/admin/filter-rules?creatorId=xxx
@@ -36,6 +36,12 @@ router.post('/', async (req, res) => {
   }
   if (!VALID_TYPES.includes(type)) {
     return res.status(400).json({ error: `type invalide. Valeurs : ${VALID_TYPES.join(', ')}` });
+  }
+  if (type === 'duration_max') {
+    const dur = parseInt(pattern, 10);
+    if (isNaN(dur) || dur <= 0) {
+      return res.status(400).json({ error: 'duration_max doit être un entier positif (secondes)' });
+    }
   }
   try {
     const rule = await prisma.filterRule.create({

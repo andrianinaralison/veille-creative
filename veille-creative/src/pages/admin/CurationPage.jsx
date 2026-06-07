@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAdminStore } from '../../store/useAdminStore'
 import { adminFetch } from '../../lib/admin-api'
+import { TAXONOMY_AXES } from '../../config/taxonomy.js'
 
 const ADMIN_API = '/api/v1/admin'
 const ING_API   = '/api/v1/ingestion'
@@ -26,21 +27,12 @@ function apiFetch(path, opts = {}) {
   return adminFetch(path, opts)
 }
 
-// ─── Taxonomie tags ───────────────────────────────────────────────────────────
-
-const ALLOWED_TAGS = [
-  'Sony-FX3','Sony-A7SIII','Sony-A1','Canon-C70','Canon-C80','Lumix-S5ii','Lumix-S1','Blackmagic','RED','ARRI',
-  'slow-motion','handheld','travelling','drone','stabilisé','anamorphique','BTS',
-  'golden-hour','basse-lumière','lumière-naturelle','V-Log','LUT','grain','vintage','S-Cinetone',
-  'transitions','montage-rythmé','narrative','cut-on-beat',
-  'mariage','corporate','B2B','événementiel','gala','awards','startup','portrait','clip','documentaire',
-]
-
-// ─── TagEditor ────────────────────────────────────────────────────────────────
+// ─── TagEditor (180-44) ───────────────────────────────────────────────────────
 
 function TagEditor({ tags, onChange }) {
-  const [open, setOpen] = useState(false)
-  const [custom, setCustom] = useState('')
+  const [open, setOpen]             = useState(false)
+  const [custom, setCustom]         = useState('')
+  const [activeAxis, setActiveAxis] = useState(null)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -49,7 +41,15 @@ function TagEditor({ tags, onChange }) {
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    const h = e => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [open])
+
   const toggle = tag => onChange(tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag])
+
   const addCustom = () => {
     const v = custom.trim().toLowerCase().replace(/\s+/g, '-')
     if (v && !tags.includes(v)) onChange([...tags, v])
@@ -65,21 +65,50 @@ function TagEditor({ tags, onChange }) {
             <button type="button" onClick={() => toggle(t)} className="text-ink-faint hover:text-ink transition-colors leading-none">×</button>
           </span>
         ))}
-        <button type="button" onClick={() => setOpen(v => !v)} className="font-mono text-[9px] tracking-widest uppercase text-ink-muted hover:text-ink border border-dashed border-surface-border px-1.5 py-0.5 transition-colors">+ tag</button>
+        <button type="button" onClick={() => setOpen(v => !v)}
+          className="font-mono text-[9px] tracking-widest uppercase text-ink-muted hover:text-ink border border-dashed border-surface-border px-1.5 py-0.5 transition-colors">
+          + tag
+        </button>
       </div>
+
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 bg-surface border border-surface-border p-3 w-72 shadow-xl">
-          <div className="flex flex-wrap gap-1 mb-2">
-            {ALLOWED_TAGS.map(t => (
-              <button key={t} type="button" onClick={() => toggle(t)}
-                className={`font-mono text-[9px] tracking-widest uppercase px-1.5 py-0.5 border transition-colors ${tags.includes(t) ? 'border-ink text-ink bg-surface-raised' : 'border-surface-border text-ink-muted hover:border-ink hover:text-ink'}`}>
-                {t}
+        <div className="absolute left-0 top-full mt-1 z-30 bg-surface border border-surface-border shadow-xl w-80 max-h-96 overflow-y-auto">
+          {TAXONOMY_AXES.map(axis => (
+            <div key={axis.id} className="border-b border-surface-border last:border-0">
+              <button
+                type="button"
+                onClick={() => setActiveAxis(activeAxis === axis.id ? null : axis.id)}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-raised transition-colors"
+              >
+                <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted">{axis.label}</span>
+                <span className="font-mono text-[9px] text-ink-faint flex items-center gap-1">
+                  {axis.tags.filter(t => tags.includes(t)).length > 0 && (
+                    <span className="border border-ink text-ink px-1">{axis.tags.filter(t => tags.includes(t)).length}</span>
+                  )}
+                  {activeAxis === axis.id ? '▾' : '▸'}
+                </span>
               </button>
-            ))}
-          </div>
-          <div className="flex gap-1 border-t border-surface-border pt-2">
-            <input value={custom} onChange={e => setCustom(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }} placeholder="Tag custom…" className="flex-1 bg-canvas border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink placeholder-ink-faint" />
-            <button type="button" onClick={addCustom} className="px-2 py-1 text-[10px] font-mono bg-ink text-canvas hover:opacity-80 transition-opacity">↵</button>
+              {activeAxis === axis.id && (
+                <div className="flex flex-wrap gap-1 px-3 pb-3">
+                  {axis.tags.map(t => (
+                    <button key={t} type="button" onClick={() => toggle(t)}
+                      className={`font-mono text-[9px] tracking-widest uppercase px-1.5 py-0.5 border transition-colors ${
+                        tags.includes(t) ? 'border-ink text-ink bg-surface-raised' : 'border-surface-border text-ink-muted hover:border-ink hover:text-ink'
+                      }`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          <div className="flex gap-1 p-3 border-t border-surface-border bg-canvas sticky bottom-0">
+            <input value={custom} onChange={e => setCustom(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
+              placeholder="Tag custom (hors taxonomie)…"
+              className="flex-1 bg-surface border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink placeholder-ink-faint" />
+            <button type="button" onClick={addCustom} disabled={!custom.trim()}
+              className="px-2 py-1 text-[10px] font-mono bg-ink text-canvas hover:opacity-80 disabled:opacity-30 transition-opacity">↵</button>
           </div>
         </div>
       )}
@@ -323,9 +352,20 @@ function TriageView({ session, onNewImport }) {
           placeholder="Recherche NL — ex: « vlogs perso de cette chaîne »"
           className="flex-1 bg-surface border border-surface-border text-ink text-sm px-3 py-2 outline-none focus:border-ink placeholder-ink-faint font-mono text-[11px]"
         />
-        <button type="submit" disabled={searching}
-          className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 disabled:opacity-40">
-          {searching ? '…' : 'Filtrer'}
+        <button
+          type="submit"
+          disabled={searching}
+          aria-busy={searching}
+          aria-label={searching ? 'Filtrage en cours…' : 'Filtrer'}
+          className="px-4 py-2 text-[10px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {searching
+            ? <span className="flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 border border-canvas border-t-transparent rounded-full animate-spin" />
+                <span>Filtrage…</span>
+              </span>
+            : 'Filtrer'
+          }
         </button>
         {searchActive && (
           <button type="button" onClick={clearSearch}
@@ -362,12 +402,14 @@ function TriageView({ session, onNewImport }) {
 
 function RefRow({ ref, sections, onSaved }) {
   const { markDirty } = useAdminStore()
-  const [tags, setTags] = useState(ref.tags ?? [])
-  const [sectionId, setSectionId] = useState(ref.sectionId ?? null)
-  const [status, setStatus] = useState(ref.status ?? 'DRAFT')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [descOpen, setDescOpen] = useState(false)
+  const [tags, setTags]               = useState(ref.tags ?? [])
+  const [sectionId, setSectionId]     = useState(ref.sectionId ?? null)
+  const [status, setStatus]           = useState(ref.status ?? 'DRAFT')
+  const [saving, setSaving]           = useState(false)
+  const [saved, setSaved]             = useState(false)
+  const [descOpen, setDescOpen]       = useState(false)
+  const [confirmPublish, setConfirmPublish] = useState(false)
+  const confirmTimeoutRef             = useRef(null)
 
   const thumb = ref.thumbnailUrl?.startsWith('http') ? ref.thumbnailUrl : ytThumb(ref.url)
   const isDirtyLocal =
@@ -377,6 +419,14 @@ function RefRow({ ref, sections, onSaved }) {
 
   async function handleSave() {
     if (saving) return
+    // 180-45 M1 : confirmation inline avant publication
+    if (status === 'PUBLISHED' && ref.status !== 'PUBLISHED' && !confirmPublish) {
+      setConfirmPublish(true)
+      confirmTimeoutRef.current = setTimeout(() => setConfirmPublish(false), 3000)
+      return
+    }
+    clearTimeout(confirmTimeoutRef.current)
+    setConfirmPublish(false)
     setSaving(true)
     try {
       const patch = { tags }
@@ -394,8 +444,9 @@ function RefRow({ ref, sections, onSaved }) {
     }
   }
 
+  // 180-45 M4 : dirty indicator — bordure gauche ambrée
   return (
-    <tr className="border-b border-surface-border hover:bg-surface-raised transition-colors group">
+    <tr className={`border-b border-surface-border hover:bg-surface-raised transition-colors group ${isDirtyLocal ? 'border-l-2 border-l-amber-600' : ''}`}>
       <td className="p-2 w-28 flex-shrink-0">
         <a href={ref.url} target="_blank" rel="noopener noreferrer" className="block relative">
           {thumb ? (
@@ -436,14 +487,25 @@ function RefRow({ ref, sections, onSaved }) {
       <td className="p-2 w-40"><SectionSelector sectionId={sectionId} sections={sections} onChange={setSectionId} /></td>
       <td className="p-2 w-32"><StatusDropdown status={status} onChange={setStatus} /></td>
       <td className="p-2 w-24">
-        {saved ? (
-          <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted" role="status">✓ Enreg.</span>
-        ) : (
-          <button type="button" onClick={handleSave} disabled={saving || !isDirtyLocal}
-            className={`px-3 py-1.5 text-[10px] font-mono tracking-widest uppercase border transition-colors ${isDirtyLocal ? 'border-ink bg-ink text-canvas hover:opacity-80' : 'border-surface-border text-ink-faint cursor-default'} disabled:opacity-40`}>
-            {saving ? '…' : 'Sauver'}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {isDirtyLocal && (
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" title="Modifications non sauvegardées" aria-label="Modifications non sauvegardées" />
+          )}
+          {saved ? (
+            <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted" role="status">✓ Enreg.</span>
+          ) : confirmPublish ? (
+            <button type="button" onClick={handleSave}
+              className="px-3 py-1.5 text-[10px] font-mono tracking-widest uppercase border border-ink bg-ink text-canvas hover:opacity-80 animate-pulse"
+              aria-live="polite">
+              Confirmer ?
+            </button>
+          ) : (
+            <button type="button" onClick={handleSave} disabled={saving || !isDirtyLocal}
+              className={`px-3 py-1.5 text-[10px] font-mono tracking-widest uppercase border transition-colors ${isDirtyLocal ? 'border-ink bg-ink text-canvas hover:opacity-80' : 'border-surface-border text-ink-faint cursor-default'} disabled:opacity-40`}>
+              {saving ? '…' : 'Sauver'}
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   )
@@ -452,111 +514,122 @@ function RefRow({ ref, sections, onSaved }) {
 // ─── MonitoringView ───────────────────────────────────────────────────────────
 
 function MonitoringView({ sessionId, onCompleted }) {
-  const [session, setSession]         = useState(null)
-  const [netErrCount, setNetErrCount] = useState(0)
-  const [netLost, setNetLost]         = useState(false)
-  const intervalRef                   = useRef(null)
+  const [session, setSession]   = useState(null)
+  const [netError, setNetError] = useState(false)
+  const intervalRef             = useRef(null)
+  const errCountRef             = useRef(0)
+
+  const POLL_MS = 5000
+  const WARN_AT = 3
+  const STOP_AT = 10
 
   const poll = useCallback(async () => {
     try {
       const data = await apiFetch(`${ING_API}/sessions/${sessionId}`)
+      errCountRef.current = 0
+      setNetError(false)
       setSession(data)
-      setNetErrCount(0)
-      setNetLost(false)
       if (data.status === 'COMPLETED' || data.status === 'FAILED') {
         clearInterval(intervalRef.current)
         if (data.status === 'COMPLETED') onCompleted(data)
       }
     } catch (err) {
-      console.error('[Monitoring] poll error', err)
-      setNetErrCount(c => {
-        const next = c + 1
-        if (next >= 10) {
-          clearInterval(intervalRef.current)
-          setNetLost(true)
-        } else if (next >= 3) {
-          setNetLost(true)
-        }
-        return next
-      })
+      errCountRef.current += 1
+      console.warn(`[Monitoring] poll error #${errCountRef.current}:`, err)
+      if (errCountRef.current >= WARN_AT) setNetError(true)
+      if (errCountRef.current >= STOP_AT) {
+        clearInterval(intervalRef.current)
+        console.error('[Monitoring] polling stopped after', STOP_AT, 'consecutive errors')
+      }
     }
   }, [sessionId, onCompleted])
 
   useEffect(() => {
     poll()
-    intervalRef.current = setInterval(poll, 5000)
+    intervalRef.current = setInterval(poll, POLL_MS)
     return () => clearInterval(intervalRef.current)
   }, [poll])
 
-  const isFailed   = session?.status === 'FAILED'
-  const isRunning  = session?.status === 'RUNNING' || !session
-  const found      = session?.totalFound ?? 0
-  const saved      = session?.totalSaved ?? 0
-  const stopped    = netErrCount >= 10
+  const isFailed  = session?.status === 'FAILED'
+  const isRunning = session?.status === 'RUNNING' || !session
+  const found     = session?.totalFound ?? 0
+  const saved     = session?.totalSaved ?? 0
+  const isStopped = errCountRef.current >= STOP_AT
+
+  function resumePolling() {
+    errCountRef.current = 0
+    setNetError(false)
+    poll()
+    intervalRef.current = setInterval(poll, POLL_MS)
+  }
 
   return (
-    <div className="border border-surface-border max-w-lg mt-8">
-      {/* 180-42 L1: sticky header avec compteur de progression */}
-      <div className="sticky top-0 z-10 bg-surface border-b border-surface-border px-8 py-4 flex items-center gap-4">
-        {isRunning && !isFailed && !stopped && (
+    <div className="border border-surface-border p-8 max-w-lg mt-8">
+      {netError && !isStopped && (
+        <div className="mb-4 border border-surface-border px-3 py-2 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-amber-500 flex-shrink-0" />
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted">
+            Connexion instable — nouvelle tentative dans {POLL_MS / 1000} s
+          </p>
+        </div>
+      )}
+      {isStopped && (
+        <div className="mb-4 border border-surface-border px-3 py-2">
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted">
+            Polling interrompu après {STOP_AT} erreurs réseau.{' '}
+            <button type="button" onClick={resumePolling} className="underline hover:text-ink">
+              Reprendre
+            </button>
+          </p>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 mb-6">
+        {isRunning && !isFailed && !isStopped && (
           <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-40" />
             <span className="relative inline-flex h-2 w-2 bg-ink" />
           </span>
         )}
         <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">
-          {isFailed ? 'Échec' : stopped ? 'Serveur injoignable' : session?.status === 'COMPLETED' ? 'Terminé' : 'En cours…'}
+          {isStopped ? 'Polling interrompu' : isFailed ? 'Échec' : session?.status === 'COMPLETED' ? 'Terminé' : 'En cours…'}
         </p>
-        <div className="ml-auto flex gap-6">
-          <div className="text-right">
-            <p className="font-mono text-[8px] tracking-widest uppercase text-ink-muted">Trouvées</p>
-            <p className="font-editorial text-xl text-ink">{found}</p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-[8px] tracking-widest uppercase text-ink-muted">Sauvegardées</p>
-            <p className="font-editorial text-xl text-ink">{saved}</p>
-          </div>
+      </div>
+
+      <div className="flex gap-8 mb-3">
+        <div>
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Trouvées</p>
+          <p className="font-editorial text-3xl text-ink">{found}</p>
+        </div>
+        <div>
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Sauvegardées</p>
+          <p className="font-editorial text-3xl text-ink">{saved}</p>
         </div>
       </div>
+      <p className="font-mono text-[9px] text-ink-faint mb-4">
+        Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
+      </p>
 
-      <div className="px-8 py-6">
-        {/* 180-43 M3: bandeau erreur réseau */}
-        {netLost && !stopped && (
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted border border-surface-border px-3 py-2 mb-4">
-            Connexion perdue, nouvelle tentative…
-          </p>
-        )}
-        {stopped && (
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted border border-surface-border px-3 py-2 mb-4">
-            Le serveur ne répond plus. Vérifiez Railway.
-          </p>
-        )}
-
-        <p className="font-mono text-[9px] text-ink-faint mb-4">
-          Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
-        </p>
-
-        {saved > 0 && (
-          <div className="border-t border-surface-border pt-4">
-            <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-2">Dernières références</p>
-            <div className="flex flex-col gap-2">
-              {(session?.references ?? []).slice(0, 5).map(r => (
-                <div key={r.id} className="flex items-center gap-2">
-                  <div className="w-1 h-1 bg-ink flex-shrink-0" />
-                  <p className="text-[11px] text-ink truncate">{r.title}</p>
-                </div>
-              ))}
-              {saved > 5 && <p className="text-[10px] text-ink-faint font-mono">+{saved - 5} autres…</p>}
-            </div>
+      {saved > 0 && (
+        <div className="border-t border-surface-border pt-4">
+          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-2">Dernières références</p>
+          <div className="flex flex-col gap-2">
+            {(session?.references ?? []).slice(0, 5).map(r => (
+              <div key={r.id} className="flex items-center gap-2">
+                <div className="w-1 h-1 bg-ink flex-shrink-0" />
+                <p className="text-[11px] text-ink truncate">{r.title}</p>
+              </div>
+            ))}
+            {saved > 5 && <p className="text-[10px] text-ink-faint font-mono">+{saved - 5} autres…</p>}
           </div>
-        )}
+        </div>
+      )}
 
-        {isFailed && (
-          <p className="text-[11px] text-ink-muted mt-4 border border-surface-border px-3 py-2">
-            {session?.errorMessage ?? 'Erreur inattendue — vérifiez les logs serveur.'}
-          </p>
-        )}
-      </div>
+      {isFailed && (
+        <p className="text-[11px] text-ink-muted mt-4 border border-surface-border px-3 py-2">
+          {session?.errorMessage ?? 'Erreur inattendue — vérifiez les logs serveur.'}
+        </p>
+      )}
     </div>
   )
 }
@@ -564,9 +637,19 @@ function MonitoringView({ sessionId, onCompleted }) {
 // ─── ResultsTable ─────────────────────────────────────────────────────────────
 
 function ResultsTable({ session, sections, onNewImport }) {
-  const [refs, setRefs] = useState(session.references ?? [])
+  const [refs, setRefs]             = useState(session.references ?? [])
   const [filterStatus, setFilterStatus] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch]         = useState('')
+  const [dirtyIds, setDirtyIds]     = useState(new Set())
+
+  // 180-45 — navigation guard si des lignes ont des modifs non sauvées
+  useEffect(() => {
+    const handler = e => {
+      if (dirtyIds.size > 0) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirtyIds])
 
   const q        = search.trim().toLowerCase()
   const filtered = refs.filter(r => {
@@ -681,9 +764,16 @@ function FilterRulesPanel({ creator, onClose }) {
           className="bg-canvas border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink appearance-none">
           <option value="keyword_title">Titre contient</option>
           <option value="channel_name">Chaîne contient</option>
+          <option value="duration_max">Durée max (sec)</option>
         </select>
         <input value={pattern} onChange={e => setPattern(e.target.value)}
-          placeholder="ex : vlog, behind the scenes…"
+          placeholder={
+            type === 'duration_max' ? 'ex : 180 (3 min)' :
+            type === 'channel_name' ? 'ex : Léa Martin' :
+            'ex : vlog, behind the scenes…'
+          }
+          type={type === 'duration_max' ? 'number' : 'text'}
+          min={type === 'duration_max' ? 1 : undefined}
           className="flex-1 bg-canvas border border-surface-border text-ink text-[10px] font-mono px-2 py-1 outline-none focus:border-ink placeholder-ink-faint" />
         <button type="submit" disabled={saving || !pattern.trim()}
           className="px-3 py-1 text-[9px] font-mono tracking-widest uppercase bg-ink text-canvas hover:opacity-80 disabled:opacity-30">
@@ -1223,17 +1313,23 @@ export default function CurationPage() {
       {/* ── Phase monitoring ── */}
       {phase === 'running' && sessionId && (
         <div>
-          <div className="flex items-center gap-2 mb-6">
-            <button type="button" onClick={handleNewImport} className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors">
-              ← Retour
-            </button>
-            <span className="text-ink-faint text-[10px]">/</span>
-            <span className="font-mono text-[10px] tracking-widest uppercase text-ink">Agent en cours</span>
+          {/* 180-42 L1 : bandeau sticky — reste visible au scroll */}
+          <div className="sticky top-0 z-10 bg-canvas border-b border-surface-border -mx-8 px-8 py-3 flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full bg-ink opacity-40" />
+                <span className="relative inline-flex h-2 w-2 bg-ink" />
+              </span>
+              <span className="font-mono text-[10px] tracking-widest uppercase text-ink">
+                {scanLabel ? `Scan — ${scanLabel}` : 'Scan en cours'}
+              </span>
+            </div>
+            <span className="font-mono text-[9px] text-ink-faint truncate max-w-xs">{sessionId}</span>
           </div>
+
           <h1 className="font-editorial text-3xl text-ink mb-2">
             {scanLabel ? `Scan — ${scanLabel}` : 'Récupération en cours'}
           </h1>
-          <p className="font-mono text-[9px] tracking-widest uppercase text-ink-faint">Session · {sessionId}</p>
           <MonitoringView sessionId={sessionId} onCompleted={handleCompleted} />
         </div>
       )}

@@ -171,6 +171,10 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
     const enriched = aboveDuration.filter(v => {
       const rules = channelRulesMap[v.channelId] ?? [];
       return rules.every(rule => {
+        if (rule.type === 'duration_max') {
+          const maxSec = parseInt(rule.pattern, 10);
+          return isNaN(maxSec) || v.durationSeconds <= maxSec;
+        }
         const haystack = rule.type === 'channel_name' ? (v.channelName ?? '').toLowerCase() : (v.title ?? '').toLowerCase();
         return !haystack.includes(rule.pattern);
       });

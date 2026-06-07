@@ -543,26 +543,36 @@ export default function ReferencesAdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
-  const [activeTags, setActiveTags] = useState(() => {
-    const tag = new URLSearchParams(window.location.search).get('tag')
-    return tag ? [tag] : []
-  })
-  const [selected, setSelected] = useState(new Set())
-  const [modalRef, setModalRef] = useState(null)
-  const [tagsOpen, setTagsOpen] = useState(() => !!new URLSearchParams(window.location.search).get('tag'))
+  const [activeTags, setActiveTags] = useState([])
+  const [tagsOpen, setTagsOpen]     = useState(false)
+  const [selected, setSelected]     = useState(new Set())
+  const [modalRef, setModalRef]     = useState(null)
+  const [page, setPage]             = useState(1)
+  const PAGE_SIZE = 50
   const searchId = useId()
+
+  // 180-47 : initialiser depuis URL ?tag=X au montage
+  useEffect(() => {
+    const tag = new URLSearchParams(window.location.search).get('tag')
+    if (tag) { setActiveTags([tag]); setTagsOpen(true) }
+  }, [])
+
+  // 180-47 : auto-ouvrir si tag actif
+  useEffect(() => { if (activeTags.length > 0) setTagsOpen(true) }, [activeTags])
 
   const load = useCallback(() => {
     setLoading(true); setError(null)
-    const p = new URLSearchParams({ limit: '2000' })
+    const p = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) })
     if (status) p.set('status', status)
     apiFetch(`/references?${p}`)
       .then(d => { setReferences(d.references ?? []); setTotal(d.total ?? 0) })
       .catch(() => setError('Impossible de charger les références.'))
       .finally(() => setLoading(false))
-  }, [status])
+  }, [status, page])
 
   useEffect(() => { load() }, [load])
+  // reset page quand le filtre status change
+  useEffect(() => { setPage(1) }, [status])
 
   // Ferme la modale si la ref a été supprimée
   useEffect(() => {
@@ -668,24 +678,28 @@ export default function ReferencesAdminPage() {
           </div>
         </div>
 
-        {/* ── Filtre par tags (accordéon, fermé par défaut) ── */}
-        {!loading && !error && allTags.length > 0 && (
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={() => setTagsOpen(v => !v)}
-              aria-expanded={tagsOpen}
-              className="flex items-center gap-2 font-mono text-[9px] tracking-widest uppercase text-ink-muted hover:text-ink transition-colors mb-2"
-            >
-              <span className="text-[8px]">{tagsOpen ? '▼' : '▶'}</span>
-              Filtrer par tag ({allTags.length})
-              {activeTags.length > 0 && (
-                <span className="ml-1 text-ink">— {activeTags.length} actif{activeTags.length > 1 ? 's' : ''}</span>
-              )}
-            </button>
-            {tagsOpen && (
+        {/* ── Filtre par tags (accordéon — 20 tags preview) ── */}
+        {!loading && !error && allTags.length > 0 && (() => {
+          const TAGS_PREVIEW = 20
+          return (
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => setTagsOpen(v => !v)}
+                className="flex items-center gap-2 mb-2 group"
+                aria-expanded={tagsOpen}
+              >
+                <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted group-hover:text-ink transition-colors">
+                  {tagsOpen ? '▾' : '▸'} Tags
+                </span>
+                <span className="font-mono text-[9px] text-ink-faint">
+                  {allTags.length} tags
+                  {activeTags.length > 0 && ` · ${activeTags.length} actif${activeTags.length > 1 ? 's' : ''}`}
+                </span>
+              </button>
+
               <div role="group" aria-label="Filtrer par tags" className="flex flex-wrap items-center gap-1.5">
-                {allTags.map(([tag, n]) => {
+                {(tagsOpen ? allTags : allTags.slice(0, TAGS_PREVIEW)).map(([tag, n]) => {
                   const active = activeTags.includes(tag)
                   return (
                     <button key={tag} onClick={() => toggleTag(tag)} aria-pressed={active}
@@ -696,6 +710,18 @@ export default function ReferencesAdminPage() {
                     </button>
                   )
                 })}
+                {!tagsOpen && allTags.length > TAGS_PREVIEW && (
+                  <button type="button" onClick={() => setTagsOpen(true)}
+                    className="px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase border border-dashed border-surface-border text-ink-faint hover:text-ink hover:border-ink transition-colors">
+                    +{allTags.length - TAGS_PREVIEW} autres…
+                  </button>
+                )}
+                {tagsOpen && (
+                  <button type="button" onClick={() => setTagsOpen(false)}
+                    className="px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase text-ink-faint hover:text-ink transition-colors underline underline-offset-2">
+                    Réduire ↑
+                  </button>
+                )}
                 {activeTags.length > 0 && (
                   <button onClick={() => setActiveTags([])}
                     className="px-2 py-0.5 text-[9px] font-mono tracking-widest uppercase text-ink-faint hover:text-ink transition-colors underline underline-offset-2">
@@ -703,9 +729,9 @@ export default function ReferencesAdminPage() {
                   </button>
                 )}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )
+        })()}
 
         {/* ── États ── */}
         {loading && <p className="text-ink-muted text-sm font-mono" role="status">Chargement…</p>}
@@ -754,6 +780,29 @@ export default function ReferencesAdminPage() {
         )}
 
       </div>
+
+      {/* ── Pagination (180-46 M5) ── */}
+      {!loading && !error && total > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-surface-border px-8">
+          <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted">
+            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} / {total}
+          </span>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-3 py-1 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink disabled:opacity-30 transition-colors">
+              ← Préc.
+            </button>
+            <span className="px-3 py-1 font-mono text-[10px] text-ink-muted border border-surface-border">
+              {page} / {Math.ceil(total / PAGE_SIZE)}
+            </span>
+            <button type="button" onClick={() => setPage(p => Math.min(Math.ceil(total / PAGE_SIZE), p + 1))}
+              disabled={page >= Math.ceil(total / PAGE_SIZE)}
+              className="px-3 py-1 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink disabled:opacity-30 transition-colors">
+              Suiv. →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Batch bar ── */}
       {selected.size > 0 && (
