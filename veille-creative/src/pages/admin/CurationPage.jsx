@@ -1239,24 +1239,58 @@ function LinksTab({ onSessionStarted }) {
 const STATUS_LABEL = { TRIAGE: 'Triage', DRAFT: 'Brouillon', PUBLISHED: 'Publié', REJECTED: 'Rejeté' }
 const STATUS_COLOR = { TRIAGE: 'text-ink-muted', DRAFT: 'text-amber-400', PUBLISHED: 'text-emerald-400', REJECTED: 'text-red-400' }
 
-function ConflictsPanel({ sessionId, initialConflicts, onAllResolved }) {
-  const [conflicts, setConflicts] = useState(initialConflicts ?? [])
-  const [resolving, setResolving] = useState(null) // videoId en cours
+const ACTION_DEFS = [
+  {
+    action: 'overwrite',
+    label: 'Écraser',
+    sub: 'Remplace les tags et métadonnées enrichies. Le statut de curation actuel est conservé.',
+  },
+  {
+    action: 'attach',
+    label: 'Rattacher',
+    sub: 'Lie la référence existante à cette session sans modifier aucune donnée.',
+  },
+  {
+    action: 'skip',
+    label: 'Ignorer',
+    sub: 'Ne fait rien — la référence reste telle quelle, hors de cette session.',
+  },
+]
 
-  async function resolve(videoId, action) {
-    setResolving(videoId)
+function ConflictsPanel({ sessionId, initialConflicts, onAllResolved }) {
+  const [choices, setChoices]   = useState({}) // { [videoId]: 'overwrite'|'attach'|'skip' }
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState(null)
+
+  const conflicts = initialConflicts ?? []
+  const chosenCount = Object.keys(choices).length
+  const allChosen   = chosenCount === conflicts.length && conflicts.length > 0
+
+  function choose(videoId, action) {
+    setChoices(prev => ({ ...prev, [videoId]: action }))
+  }
+
+  function chooseAll(action) {
+    const all = {}
+    conflicts.forEach(c => { all[c.videoId] = action })
+    setChoices(all)
+  }
+
+  async function confirm() {
+    setLoading(true)
+    setError(null)
     try {
-      const data = await apiFetch(`${ING_API}/sessions/${sessionId}/conflicts/resolve`, {
+      const resolutions = Object.entries(choices).map(([videoId, action]) => ({ videoId, action }))
+      await apiFetch(`${ING_API}/sessions/${sessionId}/conflicts/resolve-batch`, {
         method: 'POST',
-        body: JSON.stringify({ videoId, action }),
+        body: JSON.stringify({ resolutions }),
       })
-      const remaining = conflicts.filter(c => c.videoId !== videoId)
-      setConflicts(remaining)
-      if (remaining.length === 0 || data.remaining === 0) onAllResolved()
+      onAllResolved()
     } catch (err) {
-      console.error('[ConflictsPanel] resolve error:', err)
+      console.error('[ConflictsPanel] batch resolve error:', err)
+      setError('Erreur lors de la résolution — réessaie.')
     } finally {
-      setResolving(null)
+      setLoading(false)
     }
   }
 
@@ -1264,65 +1298,110 @@ function ConflictsPanel({ sessionId, initialConflicts, onAllResolved }) {
 
   return (
     <div className="mb-10">
-      <div className="mb-4">
-        <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted mb-1">
+
+      {/* En-tête */}
+      <div className="mb-5">
+        <p className="font-mono text-[10px] tracking-widest uppercase text-amber-500 mb-1">
           {conflicts.length} doublon{conflicts.length > 1 ? 's' : ''} détecté{conflicts.length > 1 ? 's' : ''}
         </p>
-        <h2 className="font-editorial text-2xl text-ink">Références déjà en base</h2>
+        <h2 className="font-editorial text-2xl text-ink">Ces références existent déjà en base</h2>
         <p className="text-[11px] text-ink-muted mt-1">
-          Ces vidéos existent déjà. Choisissez comment les traiter avant d'accéder aux nouvelles références.
+          Choisissez une action pour chaque référence, puis confirmez d'un coup.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {conflicts.map(c => (
-          <div key={c.videoId} className="border border-surface-border p-4 flex gap-4 items-start">
-            {c.thumbnailUrl && (
-              <img src={c.thumbnailUrl} alt="" className="w-24 h-14 object-cover flex-shrink-0 bg-surface" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-ink truncate">{c.title}</p>
-              <p className="text-[10px] text-ink-muted font-mono">{c.channelName}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-[9px] font-mono tracking-widest uppercase text-ink-faint">En base :</span>
-                <span className={`text-[9px] font-mono tracking-widest uppercase font-medium ${STATUS_COLOR[c.existingStatus] ?? 'text-ink-muted'}`}>
-                  {STATUS_LABEL[c.existingStatus] ?? c.existingStatus}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5 flex-shrink-0">
-              {[
-                { action: 'overwrite', label: 'Écraser', title: 'Remplace les données enrichies, préserve le statut curation' },
-                { action: 'attach',   label: 'Rattacher', title: 'Rattache à cette session sans modifier la référence' },
-                { action: 'skip',     label: 'Ignorer', title: 'Laisse la référence existante intacte' },
-              ].map(({ action, label, title }) => (
-                <button
-                  key={action}
-                  type="button"
-                  title={title}
-                  disabled={resolving === c.videoId}
-                  onClick={() => resolve(c.videoId, action)}
-                  className={`px-3 py-1 font-mono text-[9px] tracking-widest uppercase border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                    action === 'overwrite'
-                      ? 'border-ink bg-ink text-canvas hover:opacity-80'
-                      : 'border-surface-border text-ink-muted hover:text-ink hover:border-ink'
-                  }`}
-                >
-                  {resolving === c.videoId ? '…' : label}
-                </button>
-              ))}
-            </div>
+      {/* Triptique global */}
+      <div className="flex gap-2 mb-6 p-3 border border-surface-border bg-surface">
+        <span className="font-mono text-[9px] tracking-widest uppercase text-ink-faint self-center mr-2">Tout :</span>
+        {ACTION_DEFS.map(({ action, label }) => (
+          <button
+            key={action}
+            type="button"
+            onClick={() => chooseAll(action)}
+            className="px-3 py-1.5 font-mono text-[9px] tracking-widest uppercase border border-surface-border text-ink-muted hover:border-ink hover:text-ink transition-colors"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Légende des actions */}
+      <div className="flex gap-6 mb-4">
+        {ACTION_DEFS.map(({ action, label, sub }) => (
+          <div key={action} className="flex-1">
+            <p className="font-mono text-[9px] tracking-widest uppercase text-ink mb-0.5">{label}</p>
+            <p className="text-[10px] text-ink-faint leading-relaxed">{sub}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 border-t border-surface-border pt-4">
+      {/* Cartes */}
+      <div className="flex flex-col gap-2 mb-6">
+        {conflicts.map(c => {
+          const chosen = choices[c.videoId]
+          return (
+            <div
+              key={c.videoId}
+              className={`border p-4 flex gap-4 items-center transition-colors ${
+                chosen ? 'border-ink' : 'border-surface-border'
+              }`}
+            >
+              {c.thumbnailUrl && (
+                <img src={c.thumbnailUrl} alt="" className="w-20 h-12 object-cover flex-shrink-0 bg-surface" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-medium text-ink truncate">{c.title}</p>
+                <p className="text-[10px] text-ink-muted font-mono">{c.channelName}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[9px] font-mono text-ink-faint">En base :</span>
+                  <span className={`text-[9px] font-mono tracking-widest uppercase font-medium ${STATUS_COLOR[c.existingStatus] ?? 'text-ink-muted'}`}>
+                    {STATUS_LABEL[c.existingStatus] ?? c.existingStatus}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-1.5 flex-shrink-0">
+                {ACTION_DEFS.map(({ action, label }) => (
+                  <button
+                    key={action}
+                    type="button"
+                    onClick={() => choose(c.videoId, action)}
+                    className={`px-3 py-1.5 font-mono text-[9px] tracking-widest uppercase border transition-colors ${
+                      chosen === action
+                        ? 'border-ink bg-ink text-canvas'
+                        : 'border-surface-border text-ink-muted hover:border-ink hover:text-ink'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Barre de confirmation */}
+      <div className="flex items-center gap-4 border-t border-surface-border pt-4">
+        <button
+          type="button"
+          disabled={!allChosen || loading}
+          onClick={confirm}
+          className="px-6 py-2.5 font-mono text-[10px] tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Application…' : `Confirmer ${chosenCount}/${conflicts.length} choix`}
+        </button>
+        {!allChosen && (
+          <p className="text-[10px] text-ink-faint font-mono">
+            {conflicts.length - chosenCount} référence{conflicts.length - chosenCount > 1 ? 's' : ''} sans choix
+          </p>
+        )}
+        {error && <p className="text-[10px] text-red-400 font-mono">{error}</p>}
         <button
           type="button"
           onClick={onAllResolved}
-          className="font-mono text-[9px] tracking-widest uppercase text-ink-faint hover:text-ink-muted transition-colors"
+          className="ml-auto font-mono text-[9px] tracking-widest uppercase text-ink-faint hover:text-ink-muted transition-colors"
         >
-          Passer les doublons restants →
+          Passer →
         </button>
       </div>
     </div>

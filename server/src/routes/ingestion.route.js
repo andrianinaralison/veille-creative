@@ -173,19 +173,20 @@ router.post('/links', async (req, res) => {
 });
 
 /**
- * POST /api/v1/ingestion/sessions/:id/conflicts/resolve
- * Résout un conflit de doublon pour une session.
- * Body : { videoId: string, action: 'overwrite' | 'skip' | 'attach' }
- *   overwrite → écrase les données enrichies de la référence existante (préserve status/curation)
- *   skip      → ignore, la référence existante reste intacte
- *   attach    → rattache la référence existante à cette session (mise à jour ingestionSessionId)
+ * POST /api/v1/ingestion/sessions/:id/conflicts/resolve-batch
+ * Résout tous les conflits d'un coup.
+ * Body : { resolutions: [{ videoId, action: 'overwrite'|'skip'|'attach' }] }
  */
-router.post('/sessions/:id/conflicts/resolve', async (req, res) => {
+router.post('/sessions/:id/conflicts/resolve-batch', async (req, res) => {
   const { id } = req.params;
-  const { videoId, action } = req.body ?? {};
+  const { resolutions } = req.body ?? {};
 
-  if (!videoId || !['overwrite', 'skip', 'attach'].includes(action)) {
-    return res.status(400).json({ error: 'videoId et action (overwrite|skip|attach) requis' });
+  if (!Array.isArray(resolutions) || resolutions.length === 0) {
+    return res.status(400).json({ error: 'resolutions requis (tableau non vide)' });
+  }
+  const VALID_ACTIONS = ['overwrite', 'skip', 'attach'];
+  if (resolutions.some(r => !r.videoId || !VALID_ACTIONS.includes(r.action))) {
+    return res.status(400).json({ error: 'Chaque résolution doit avoir videoId et action (overwrite|skip|attach)' });
   }
 
   try {
@@ -193,32 +194,32 @@ router.post('/sessions/:id/conflicts/resolve', async (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session introuvable' });
 
     const conflicts = Array.isArray(session.conflicts) ? session.conflicts : [];
-    const conflict = conflicts.find(c => c.videoId === videoId);
-    if (!conflict) return res.status(404).json({ error: 'Conflit introuvable pour ce videoId' });
+    const conflictMap = Object.fromEntries(conflicts.map(c => [c.videoId, c]));
 
-    if (action === 'overwrite') {
-      const { ingestionSessionId: _sid, ...enrichFields } = conflict.newData;
-      await prisma.reference.update({
-        where: { id: conflict.existingId },
-        data: { ...enrichFields, ingestionSessionId: id },
-      });
-    } else if (action === 'attach') {
-      await prisma.reference.update({
-        where: { id: conflict.existingId },
-        data: { ingestionSessionId: id },
-      });
+    const ops = [];
+    for (const { videoId, action } of resolutions) {
+      const conflict = conflictMap[videoId];
+      if (!conflict) continue;
+      if (action === 'overwrite') {
+        const { ingestionSessionId: _sid, ...enrichFields } = conflict.newData;
+        ops.push(prisma.reference.update({ where: { id: conflict.existingId }, data: { ...enrichFields, ingestionSessionId: id } }));
+      } else if (action === 'attach') {
+        ops.push(prisma.reference.update({ where: { id: conflict.existingId }, data: { ingestionSessionId: id } }));
+      }
+      // skip : rien à faire en base
     }
-    // skip : rien à faire en base
 
-    const remaining = conflicts.filter(c => c.videoId !== videoId);
-    await prisma.ingestionSession.update({
-      where: { id },
-      data: { conflicts: remaining, totalConflicts: remaining.length },
-    });
+    const resolvedIds = new Set(resolutions.map(r => r.videoId));
+    const remaining = conflicts.filter(c => !resolvedIds.has(c.videoId));
 
-    res.json({ ok: true, remaining: remaining.length });
+    await prisma.$transaction([
+      ...ops,
+      prisma.ingestionSession.update({ where: { id }, data: { conflicts: remaining, totalConflicts: remaining.length } }),
+    ]);
+
+    res.json({ ok: true, resolved: resolutions.length, remaining: remaining.length });
   } catch (err) {
-    console.error('[ingestion] POST /sessions/:id/conflicts/resolve', err);
+    console.error('[ingestion] POST /sessions/:id/conflicts/resolve-batch', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
