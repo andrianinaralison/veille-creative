@@ -76,6 +76,7 @@ export async function runIngestionAgent(sessionId, brief) {
     const avatarMap = await getChannelAvatars(scored.map(v => v.channelId));
 
     let saved = 0;
+    const conflicts = [];
     for (const video of scored) {
       try {
         let thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
@@ -94,20 +95,23 @@ export async function runIngestionAgent(sessionId, brief) {
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
         };
-        await prisma.reference.upsert({
-          where: { url: videoUrl },
-          create: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'TOPIC_DISCOVERY', status: 'TRIAGE',
+
+        const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });
+        if (existing) {
+          conflicts.push({ videoId: video.videoId, url: videoUrl, title: video.title, channelName: video.channelName ?? '', thumbnailUrl, existingId: existing.id, existingStatus: existing.status, existingTitle: existing.title, newData: { title: video.title, description: video.description ?? '', channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`, ...shared } });
+          console.log(`[ingestion:${sessionId}] Conflit détecté : ${video.videoId} (existant: ${existing.status})`);
+        } else {
+          await prisma.reference.create({ data: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'TOPIC_DISCOVERY', status: 'TRIAGE',
             title: video.title, description: video.description ?? '',
             channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`,
-            ...shared },
-          update: { title: video.title, description: video.description ?? '', channelName: video.channelName ?? '', ...shared },
-        });
-        saved++;
-        await updateSession({ totalSaved: saved });
+            ...shared } });
+          saved++;
+          await updateSession({ totalSaved: saved });
+        }
       } catch (err) { console.error(`[ingestion:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
-    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved });
+    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved, totalConflicts: conflicts.length, conflicts });
     console.log(`[ingestion:${sessionId}] Completed — ${saved} saved`);
   } catch (err) {
     console.error(`[ingestion:${sessionId}] Agent failed:`, err);
@@ -188,6 +192,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
     const avatarMap = await getChannelAvatars(enriched.map(v => v.channelId));
 
     let saved = 0;
+    const conflicts = [];
     for (const video of enriched) {
       try {
         let thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
@@ -206,21 +211,24 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
         };
-        await prisma.reference.upsert({
-          where: { url: videoUrl },
-          create: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'CREATOR_SCAN', status: 'TRIAGE',
+
+        const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });
+        if (existing) {
+          conflicts.push({ videoId: video.videoId, url: videoUrl, title: video.title, channelName: video.channelName ?? '', thumbnailUrl, existingId: existing.id, existingStatus: existing.status, existingTitle: existing.title, newData: { title: video.title, description: video.description ?? '', channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`, ...shared } });
+          console.log(`[creator-scan:${sessionId}] Conflit détecté : ${video.videoId} (existant: ${existing.status})`);
+        } else {
+          await prisma.reference.create({ data: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'CREATOR_SCAN', status: 'TRIAGE',
             title: video.title, description: video.description ?? '',
             channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`,
-            ...shared },
-          update: { title: video.title, description: video.description ?? '', channelAvatarUrl: avatarMap[video.channelId] ?? '', ...shared },
-        });
-        saved++;
-        await updateSession({ totalSaved: saved });
+            ...shared } });
+          saved++;
+          await updateSession({ totalSaved: saved });
+        }
       } catch (err) { console.error(`[creator-scan:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
     const totalAlreadyPublished = await prisma.reference.count({ where: { ingestionSessionId: sessionId, status: 'PUBLISHED' } });
-    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved, totalAlreadyPublished });
+    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved, totalAlreadyPublished, totalConflicts: conflicts.length, conflicts });
     console.log(`[creator-scan:${sessionId}] Completed — ${saved}/${enriched.length} saved`);
   } catch (err) {
     console.error(`[creator-scan:${sessionId}] Agent failed:`, err);
@@ -248,6 +256,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
     const avatarMap = await getChannelAvatars(details.map(v => v.channelId));
 
     let saved = 0;
+    const conflicts = [];
     for (const video of details) {
       try {
         let thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
@@ -255,7 +264,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
         try {
           const t = await downloadAndStore({ platform: 'youtube', videoId: video.videoId });
           thumbnailUrl = t.thumbnailUrl; thumbnailStorageKey = t.thumbnailStorageKey; thumbnailSourceUrl = t.thumbnailSourceUrl;
-        } catch (err) { console.warn(`[creator-scan:${sessionId}] Thumbnail failed for ${video.videoId}:`, err.message); }
+        } catch (err) { console.warn(`[links:${sessionId}] Thumbnail failed for ${video.videoId}:`, err.message); }
 
         const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
         const meta = enrichMap[video.videoId] ?? {};
@@ -266,20 +275,23 @@ export async function fetchAndSaveLinks(sessionId, urls) {
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
         };
-        await prisma.reference.upsert({
-          where: { url: videoUrl },
-          create: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'MANUAL', status: 'TRIAGE',
+
+        const existing = await prisma.reference.findUnique({ where: { url: videoUrl }, select: { id: true, status: true, title: true } });
+        if (existing) {
+          conflicts.push({ videoId: video.videoId, url: videoUrl, title: video.title, channelName: video.channelName ?? '', thumbnailUrl, existingId: existing.id, existingStatus: existing.status, existingTitle: existing.title, newData: { title: video.title, description: video.description ?? '', channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`, ...shared } });
+          console.log(`[links:${sessionId}] Conflit détecté : ${video.videoId} (existant: ${existing.status})`);
+        } else {
+          await prisma.reference.create({ data: { url: videoUrl, platform: 'YOUTUBE', sourceMode: 'MANUAL', status: 'TRIAGE',
             title: video.title, description: video.description ?? '',
             channelName: video.channelName ?? '', channelUrl: `https://www.youtube.com/channel/${video.channelId}`,
-            ...shared },
-          update: { title: video.title, description: video.description ?? '', channelAvatarUrl: avatarMap[video.channelId] ?? '', ...shared },
-        });
-        saved++;
-        await updateSession({ totalSaved: saved });
+            ...shared } });
+          saved++;
+          await updateSession({ totalSaved: saved });
+        }
       } catch (err) { console.error(`[links:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
-    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved });
+    await updateSession({ status: 'COMPLETED', completedAt: new Date(), totalSaved: saved, totalConflicts: conflicts.length, conflicts });
     console.log(`[links:${sessionId}] Completed — ${saved}/${details.length} saved`);
   } catch (err) {
     console.error(`[links:${sessionId}] Agent failed:`, err);

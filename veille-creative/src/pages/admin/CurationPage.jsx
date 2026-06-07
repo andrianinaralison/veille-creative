@@ -550,11 +550,12 @@ function MonitoringView({ sessionId, onCompleted }) {
     return () => clearInterval(intervalRef.current)
   }, [poll])
 
-  const isFailed  = session?.status === 'FAILED'
-  const isRunning = session?.status === 'RUNNING' || !session
-  const found     = session?.totalFound ?? 0
-  const saved     = session?.totalSaved ?? 0
-  const isStopped = errCountRef.current >= STOP_AT
+  const isFailed    = session?.status === 'FAILED'
+  const isRunning   = session?.status === 'RUNNING' || !session
+  const found       = session?.totalFound ?? 0
+  const saved       = session?.totalSaved ?? 0
+  const conflicts   = session?.totalConflicts ?? 0
+  const isStopped   = errCountRef.current >= STOP_AT
 
   function resumePolling() {
     errCountRef.current = 0
@@ -605,6 +606,12 @@ function MonitoringView({ sessionId, onCompleted }) {
           <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted mb-1">Sauvegardées</p>
           <p className="font-editorial text-3xl text-ink">{saved}</p>
         </div>
+        {conflicts > 0 && (
+          <div>
+            <p className="font-mono text-[9px] tracking-widest uppercase text-amber-500 mb-1">Doublons</p>
+            <p className="font-editorial text-3xl text-amber-400">{conflicts}</p>
+          </div>
+        )}
       </div>
       <p className="font-mono text-[9px] text-ink-faint mb-4">
         Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.
@@ -1227,6 +1234,101 @@ function LinksTab({ onSessionStarted }) {
   )
 }
 
+// ─── ConflictsPanel ───────────────────────────────────────────────────────────
+
+const STATUS_LABEL = { TRIAGE: 'Triage', DRAFT: 'Brouillon', PUBLISHED: 'Publié', REJECTED: 'Rejeté' }
+const STATUS_COLOR = { TRIAGE: 'text-ink-muted', DRAFT: 'text-amber-400', PUBLISHED: 'text-emerald-400', REJECTED: 'text-red-400' }
+
+function ConflictsPanel({ sessionId, initialConflicts, onAllResolved }) {
+  const [conflicts, setConflicts] = useState(initialConflicts ?? [])
+  const [resolving, setResolving] = useState(null) // videoId en cours
+
+  async function resolve(videoId, action) {
+    setResolving(videoId)
+    try {
+      const data = await apiFetch(`${ING_API}/sessions/${sessionId}/conflicts/resolve`, {
+        method: 'POST',
+        body: JSON.stringify({ videoId, action }),
+      })
+      const remaining = conflicts.filter(c => c.videoId !== videoId)
+      setConflicts(remaining)
+      if (remaining.length === 0 || data.remaining === 0) onAllResolved()
+    } catch (err) {
+      console.error('[ConflictsPanel] resolve error:', err)
+    } finally {
+      setResolving(null)
+    }
+  }
+
+  if (conflicts.length === 0) return null
+
+  return (
+    <div className="mb-10">
+      <div className="mb-4">
+        <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted mb-1">
+          {conflicts.length} doublon{conflicts.length > 1 ? 's' : ''} détecté{conflicts.length > 1 ? 's' : ''}
+        </p>
+        <h2 className="font-editorial text-2xl text-ink">Références déjà en base</h2>
+        <p className="text-[11px] text-ink-muted mt-1">
+          Ces vidéos existent déjà. Choisissez comment les traiter avant d'accéder aux nouvelles références.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {conflicts.map(c => (
+          <div key={c.videoId} className="border border-surface-border p-4 flex gap-4 items-start">
+            {c.thumbnailUrl && (
+              <img src={c.thumbnailUrl} alt="" className="w-24 h-14 object-cover flex-shrink-0 bg-surface" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium text-ink truncate">{c.title}</p>
+              <p className="text-[10px] text-ink-muted font-mono">{c.channelName}</p>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-[9px] font-mono tracking-widest uppercase text-ink-faint">En base :</span>
+                <span className={`text-[9px] font-mono tracking-widest uppercase font-medium ${STATUS_COLOR[c.existingStatus] ?? 'text-ink-muted'}`}>
+                  {STATUS_LABEL[c.existingStatus] ?? c.existingStatus}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 flex-shrink-0">
+              {[
+                { action: 'overwrite', label: 'Écraser', title: 'Remplace les données enrichies, préserve le statut curation' },
+                { action: 'attach',   label: 'Rattacher', title: 'Rattache à cette session sans modifier la référence' },
+                { action: 'skip',     label: 'Ignorer', title: 'Laisse la référence existante intacte' },
+              ].map(({ action, label, title }) => (
+                <button
+                  key={action}
+                  type="button"
+                  title={title}
+                  disabled={resolving === c.videoId}
+                  onClick={() => resolve(c.videoId, action)}
+                  className={`px-3 py-1 font-mono text-[9px] tracking-widest uppercase border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                    action === 'overwrite'
+                      ? 'border-ink bg-ink text-canvas hover:opacity-80'
+                      : 'border-surface-border text-ink-muted hover:text-ink hover:border-ink'
+                  }`}
+                >
+                  {resolving === c.videoId ? '…' : label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 border-t border-surface-border pt-4">
+        <button
+          type="button"
+          onClick={onAllResolved}
+          className="font-mono text-[9px] tracking-widest uppercase text-ink-faint hover:text-ink-muted transition-colors"
+        >
+          Passer les doublons restants →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page principale ───────────────────────────────────────────────────────────
 
 export default function CurationPage() {
@@ -1236,6 +1338,7 @@ export default function CurationPage() {
   const [scanLabel, setScanLabel]         = useState('')
   const [completedSession, setCompletedSession] = useState(null)
   const [sections, setSections]           = useState([])
+  const [conflictsResolved, setConflictsResolved] = useState(false)
 
   // 180-40: restaurer le polling si une session RUNNING existe au rechargement
   useEffect(() => {
@@ -1272,6 +1375,7 @@ export default function CurationPage() {
     setPhase('idle')
     setSessionId(null)
     setCompletedSession(null)
+    setConflictsResolved(false)
   }
 
   return (
@@ -1344,10 +1448,21 @@ export default function CurationPage() {
             <span className="text-ink-faint text-[10px]">/</span>
             <span className="font-mono text-[10px] tracking-widest uppercase text-ink">Tri</span>
           </div>
-          {(completedSession.references ?? []).some(r => r.status === 'TRIAGE')
-            ? <TriageView session={completedSession} onNewImport={handleNewImport} />
-            : <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
-          }
+
+          {/* Conflits à résoudre en premier */}
+          {!conflictsResolved && (completedSession.conflicts ?? []).length > 0 && (
+            <ConflictsPanel
+              sessionId={completedSession.id}
+              initialConflicts={completedSession.conflicts}
+              onAllResolved={() => setConflictsResolved(true)}
+            />
+          )}
+
+          {(conflictsResolved || !(completedSession.conflicts ?? []).length) && (
+            (completedSession.references ?? []).some(r => r.status === 'TRIAGE')
+              ? <TriageView session={completedSession} onNewImport={handleNewImport} />
+              : <ResultsTable session={completedSession} sections={sections} onNewImport={handleNewImport} />
+          )}
         </div>
       )}
 

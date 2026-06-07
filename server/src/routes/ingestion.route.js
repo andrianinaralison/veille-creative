@@ -172,4 +172,55 @@ router.post('/links', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/v1/ingestion/sessions/:id/conflicts/resolve
+ * Résout un conflit de doublon pour une session.
+ * Body : { videoId: string, action: 'overwrite' | 'skip' | 'attach' }
+ *   overwrite → écrase les données enrichies de la référence existante (préserve status/curation)
+ *   skip      → ignore, la référence existante reste intacte
+ *   attach    → rattache la référence existante à cette session (mise à jour ingestionSessionId)
+ */
+router.post('/sessions/:id/conflicts/resolve', async (req, res) => {
+  const { id } = req.params;
+  const { videoId, action } = req.body ?? {};
+
+  if (!videoId || !['overwrite', 'skip', 'attach'].includes(action)) {
+    return res.status(400).json({ error: 'videoId et action (overwrite|skip|attach) requis' });
+  }
+
+  try {
+    const session = await prisma.ingestionSession.findUnique({ where: { id }, select: { conflicts: true } });
+    if (!session) return res.status(404).json({ error: 'Session introuvable' });
+
+    const conflicts = Array.isArray(session.conflicts) ? session.conflicts : [];
+    const conflict = conflicts.find(c => c.videoId === videoId);
+    if (!conflict) return res.status(404).json({ error: 'Conflit introuvable pour ce videoId' });
+
+    if (action === 'overwrite') {
+      const { ingestionSessionId: _sid, ...enrichFields } = conflict.newData;
+      await prisma.reference.update({
+        where: { id: conflict.existingId },
+        data: { ...enrichFields, ingestionSessionId: id },
+      });
+    } else if (action === 'attach') {
+      await prisma.reference.update({
+        where: { id: conflict.existingId },
+        data: { ingestionSessionId: id },
+      });
+    }
+    // skip : rien à faire en base
+
+    const remaining = conflicts.filter(c => c.videoId !== videoId);
+    await prisma.ingestionSession.update({
+      where: { id },
+      data: { conflicts: remaining, totalConflicts: remaining.length },
+    });
+
+    res.json({ ok: true, remaining: remaining.length });
+  } catch (err) {
+    console.error('[ingestion] POST /sessions/:id/conflicts/resolve', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 export default router;
