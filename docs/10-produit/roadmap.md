@@ -1,7 +1,9 @@
 # Roadmap — 180 Degrés
 
-> **Source de vérité unique** pour le quoi/quand. Si `CLAUDE.md`, `PROJET.md` ou le backlog disent autre chose, c'est **ce fichier** qui fait foi.
-> Liés : [`WAY-OF-WORKING.md`](./WAY-OF-WORKING.md) · [`audit/AUDIT-2026-06-04.md`](./audit/AUDIT-2026-06-04.md) · [`audit/PLAN-RESTRUCTURATION.md`](./audit/PLAN-RESTRUCTURATION.md) · [`PRD_Ingestion_Espace.md`](./PRD_Ingestion_Espace.md)
+> **Statut** : ⭐ Référence vivante · **Domaine** : Produit · **MàJ** : 2026-06-12 · **Source de vérité** : oui
+
+> **Source de vérité unique** pour le quoi/quand. Si `CLAUDE.md`, `projet.md` ou le backlog disent autre chose, c'est **ce fichier** qui fait foi.
+> Liés : [`way-of-working.md`](./way-of-working.md) · [`audit code`](../30-tech/audit/audit-2026-06-04.md) · [`plan restructuration code`](../30-tech/audit/plan-restructuration-code.md) · [`prd/ingestion-espace.md`](./prd/ingestion-espace.md)
 > Révisée le : **7 juin 2026** — Phase C active, jalons restructurés avec tickets 180-40→180-49.
 
 ---
@@ -162,7 +164,7 @@ Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export 
 - **2026-06-07** — Audit UX live `@tobifilmsofficial` + thread équipe produit (9 agents) + v0.5C lancée : 10 tickets 180-40→180-49 créés dans Linear.
 - **2026-06-05** — v0.5B close : P1 lot+compteur (180-29), P2 règles (180-30), P3 smart search (180-31), dette totalFiltered (180-32), bugs polling 429 (180-33) + 0 refs (180-34), UX cas non nominaux (180-35→180-39 — tous Done).
 - **2026-06-05** — v0.5A close : T-05 taxonomie, T-06 découpe service, T-07 structured output, T-08 zod+logs.
-- **2026-06-05** — Disco parcours d'ingestion (entretien + benchmark) → reformulation v0.5 + [`PRD_Ingestion_Espace.md`](./PRD_Ingestion_Espace.md).
+- **2026-06-05** — Disco parcours d'ingestion (entretien + benchmark) → reformulation v0.5 + [`prd/ingestion-espace.md`](./prd/ingestion-espace.md).
 - **2026-06-05** — v0.4 close : T-04 (git), T-03 (docs), D13 (arbo), T-01 (sécu JWT), T-02 (CI Vitest).
 - **2026-06-04** — Audit transverse + Way of Working + plan de restructuration + recadrage 3 parcours.
 - **2026-06-02** — v0.3 : backoffice curation (ingestion tri-modale, qualif Claude, review DRAFT/PUBLISHED).

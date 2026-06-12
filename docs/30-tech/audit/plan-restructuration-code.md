@@ -1,6 +1,6 @@
 # Plan de restructuration — 180 Degrés
 
-> Le « quoi faire concrètement » qui découle de [`AUDIT-2026-06-04.md`](./AUDIT-2026-06-04.md) et [`WAY-OF-WORKING.md`](../WAY-OF-WORKING.md).
+> Le « quoi faire concrètement » qui découle de [`audit-2026-06-04.md`](./audit-2026-06-04.md) et [`way-of-working.md`](../../10-produit/way-of-working.md).
 > Pensé pour être exécuté ticket par ticket. Chaque bloc = un candidat PR.
 > Date : 4 juin 2026.
 

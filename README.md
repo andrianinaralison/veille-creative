@@ -41,6 +41,7 @@ cd server && npm test
 
 ## Process
 
-- Roadmap : [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- Way of Working : [`docs/WAY-OF-WORKING.md`](docs/WAY-OF-WORKING.md)
+- Documentation (index) : [`docs/README.md`](docs/README.md)
+- Roadmap : [`docs/10-produit/roadmap.md`](docs/10-produit/roadmap.md)
+- Way of Working : [`docs/10-produit/way-of-working.md`](docs/10-produit/way-of-working.md)
 - Contributions : [`CONTRIBUTING.md`](CONTRIBUTING.md)

@@ -1,7 +1,9 @@
 # Way of Working — 180 Degrés
 
+> **Statut** : ⭐ Référence vivante · **Domaine** : Produit · **MàJ** : 2026-06-12 · **Source de vérité** : oui
+
 > Comment on développe ce produit. **Ce fichier est la référence process.** Si une autre doc le contredit, c'est lui qui gagne.
-> Lié à : [`audit/AUDIT-2026-06-04.md`](./audit/AUDIT-2026-06-04.md) · [`audit/PLAN-RESTRUCTURATION.md`](./audit/PLAN-RESTRUCTURATION.md)
+> Lié à : [`audit code`](../30-tech/audit/audit-2026-06-04.md) · [`plan restructuration code`](../30-tech/audit/plan-restructuration-code.md)
 > Dernière révision : 4 juin 2026.
 
 ---
@@ -151,7 +153,7 @@ La PR force le moment où QA, review et DoD s'appliquent. Sans elle, tout se mé
 
 Dès qu'un utilisateur ou membre d'équipe détecte un bug :
 1. **Créer un ticket Linear** `type/bug` dans le cycle courant, assigner au dev responsable.
-2. **Ouvrir une fiche 5C** dans `docs/lean.md` (Constater → Contenir → Comprendre → Corriger → Consolider).
+2. **Ouvrir une fiche 5C** dans `docs/30-tech/journal-5c.md` (Constater → Contenir → Comprendre → Corriger → Consolider).
 3. **Mettre à jour le WAY-OF-WORKING** si la cause racine révèle une lacune de process.
 
 ---
@@ -176,13 +178,13 @@ Le problème actuel : tout se répète et diverge. **Chaque type d'info a UN seu
 
 | Question | Fichier propriétaire | Les autres font quoi |
 |---|---|---|
-| C'est quoi le projet ? (pitch, persona, scope) | `docs/PROJET.md` | — |
-| Quoi/quand ? (roadmap, priorités) | `docs/ROADMAP.md` *(ou Linear)* | CLAUDE.md & PROJET.md **pointent** vers lui |
-| Comment on bosse ? (process) | `docs/WAY-OF-WORKING.md` *(ce fichier)* | — |
+| C'est quoi le projet ? (pitch, persona, scope) | `docs/00-cadrage/projet.md` | — |
+| Quoi/quand ? (roadmap, priorités) | `docs/10-produit/roadmap.md` *(ou Linear)* | CLAUDE.md & projet.md **pointent** vers lui |
+| Comment on bosse ? (process) | `docs/10-produit/way-of-working.md` *(ce fichier)* | — |
 | Règles techniques pour Claude/IDE | `CLAUDE.md` (racine) | Ne **duplique pas** la roadmap, juste un lien |
-| Pourquoi ce choix d'archi ? | `docs/adr/NNNN-titre.md` (un par décision) | — |
-| Spec d'une feature | `docs/specs/feature-xxx.md` | — |
-| Mémoire de session / contexte courant | `docs/admin-curation-context.md` | OK, mais une seule par chantier actif |
+| Pourquoi ce choix d'archi ? | `docs/30-tech/adr/NNNN-titre.md` (un par décision) | — |
+| Spec d'une feature | `docs/30-tech/specs/feature-xxx.md` | — |
+| Mémoire de session / contexte courant | `docs/10-produit/contexte/admin-curation.md` | OK, mais une seule par chantier actif |
 
 **Tout le reste** (lean canvas ×3, PRD legacy, journey maps de mars, analyses datées) → `docs/archive/`. On ne supprime pas (valeur historique), on **sort du chemin** pour que le `docs/` actif soit lisible.
 

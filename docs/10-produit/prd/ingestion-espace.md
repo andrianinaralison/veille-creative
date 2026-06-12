@@ -1,8 +1,8 @@
 # PRD — L'espace Ingestion (global)
 
 > **Statut** : Draft pour revue Tech Lead · **Cible** : jalon v0.5 « Curation fiable & sereine »
-> **Sources** : disco entretien Andri + benchmark (2026-06-05), `docs/admin-curation-context.md`, `docs/PRD_Ingestion_Admin.md`, `docs/ROADMAP.md`
-> **Périmètre** : tout le parcours back-office de curation, de l'import à la restitution. Remplace, en le globalisant, le cadrage feature-par-feature de `PRD_Ingestion_Admin.md`.
+> **Sources** : disco entretien Andri + benchmark (2026-06-05), `docs/10-produit/contexte/admin-curation.md`, `docs/10-produit/prd/ingestion-admin.md`, `docs/10-produit/roadmap.md`
+> **Périmètre** : tout le parcours back-office de curation, de l'import à la restitution. Remplace, en le globalisant, le cadrage feature-par-feature de `ingestion-admin.md`.
 
 ---
 

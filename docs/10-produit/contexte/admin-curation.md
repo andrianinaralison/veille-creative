@@ -1,5 +1,7 @@
 # Contexte global — Backoffice Curation 180 Degrés
 
+> **Statut** : ⭐ Référence vivante · **Domaine** : Produit · **MàJ** : 2026-06-12 · **Source de vérité** : oui (contexte admin)
+
 > Document de référence à fournir en tête de chaque session de dev.
 > Dernière mise à jour : **2 juin 2026**
 

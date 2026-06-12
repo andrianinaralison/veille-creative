@@ -1,5 +1,7 @@
 # 180 Degrés — Présentation du projet
 
+> **Statut** : 🟢 Actif · **Domaine** : Cadrage · **MàJ** : 2026-06-12
+
 ## Contexte
 
 Les vidéastes indépendants français manquent d'un outil dédié pour faire leur veille créative. Ils passent des heures à fouiller YouTube, Vimeo, Instagram et des dizaines de blogs pour trouver des références visuelles pertinentes — du temps qu'ils pourraient consacrer à leurs projets.

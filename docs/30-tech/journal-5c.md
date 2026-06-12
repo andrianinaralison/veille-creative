@@ -1,4 +1,6 @@
-# Lean — Dysfonctionnements Way of Working
+# Journal 5C — Dysfonctionnements & analyses causales
+
+> **Statut** : ⭐ Référence vivante · **Domaine** : Tech/Qualité · **MàJ** : 2026-06-12 · **Source de vérité** : oui (incidents)
 
 > Ce fichier trace tous les problèmes détectés en environnement (front, back, process) avec leur analyse causale 5C.
 > **Règle** : dès qu'un utilisateur ou un membre de l'équipe détecte un dysfonctionnement, on convoque l'équipe produit et on ouvre une fiche 5C ici.

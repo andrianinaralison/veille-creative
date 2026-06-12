@@ -9,9 +9,10 @@ Prix : 39€/mois. Persona principale : Léa, 31 ans, Lyon, Sony A7SIII.
 ## ⚙️ Méthode de travail (à lire en premier)
 
 - **Le build se fait UNIQUEMENT dans Claude Code (VS Code).** Le code des features n'est jamais écrit ailleurs (ni en Cowork, qui sert au cadrage/docs/stratégie/git).
-- **Source de vérité du quoi/quand : [`docs/ROADMAP.md`](docs/ROADMAP.md).** Ce CLAUDE.md ne redéfinit pas la roadmap, il pointe dessus.
-- **Process de dev : [`docs/WAY-OF-WORKING.md`](docs/WAY-OF-WORKING.md)** (rôles, DoR/DoD, flux PR, rituels).
-- **État des lieux & dette : [`docs/audit/AUDIT-2026-06-04.md`](docs/audit/AUDIT-2026-06-04.md)** + plan [`docs/audit/PLAN-RESTRUCTURATION.md`](docs/audit/PLAN-RESTRUCTURATION.md).
+- **Index doc (point d'entrée) : [`docs/README.md`](docs/README.md).** Toute la doc est rangée par intention sous `docs/` (00-cadrage, 10-produit, 20-ux, 30-tech, 90-journal).
+- **Source de vérité du quoi/quand : [`docs/10-produit/roadmap.md`](docs/10-produit/roadmap.md).** Ce CLAUDE.md ne redéfinit pas la roadmap, il pointe dessus.
+- **Process de dev : [`docs/10-produit/way-of-working.md`](docs/10-produit/way-of-working.md)** (rôles, DoR/DoD, flux PR, rituels).
+- **État des lieux & dette : [`docs/30-tech/audit/audit-2026-06-04.md`](docs/30-tech/audit/audit-2026-06-04.md)** + plan [`docs/30-tech/audit/plan-restructuration-code.md`](docs/30-tech/audit/plan-restructuration-code.md).
 - **Flux Git** : une branche `feat|fix|chore/xxx` = un ticket = une PR vers `main` ; commits atomiques conventionnels ; checkpoints = tags (pas de branches `*_Save`).
 
 ## 📝 Documentation obligatoire à chaque ticket
@@ -81,11 +82,15 @@ Description PR avec :
 │       ├── routes/search.route.js
 │       ├── services/search.service.js   ← Claude API + prompt caching
 │       └── services/thumbnail.service.js ← DL thumbnail + upload Supabase CDN
-└── docs/
-    ├── admin-curation-context.md  ← ⭐ LIRE EN PREMIER pour toute session admin
-    ├── backlog-180degres.md       ← suivi des itérations
-    ├── iteration-1-prisma-schema.md
-    └── PRD_Ingestion_Admin.md     ← PRD complet feature ingestion
+└── docs/                ← toute la doc non-code (voir docs/README.md = index maître)
+    ├── README.md                       ← ⭐ point d'entrée / index de navigation
+    ├── 00-cadrage/                     ← pourquoi : projet, business, decks investisseur
+    ├── 10-produit/                     ← quoi : roadmap ⭐, way-of-working, prd/, discovery/, contexte/
+    │   └── contexte/admin-curation.md  ← ⭐ LIRE EN PREMIER pour toute session admin
+    ├── 20-ux/                          ← audits UX, userflow, inspirations, digest-reference
+    ├── 30-tech/                        ← specs/, adr/, architecture/, audit/, journal-5c.md (ex lean.md)
+    ├── 90-journal/                     ← instantanés datés : sessions/, threads
+    └── archive/                        ← legacy (ne pas consulter comme source courante)
 ```
 
 ## Conventions de code
@@ -116,17 +121,17 @@ Description PR avec :
 | `main` | Production — toujours déployable, jamais de push direct |
 | `feat\|fix\|chore/xxx` | Travail en cours — une branche = un ticket = une PR, courte durée |
 
-Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save`. Détail du flux dans `docs/WAY-OF-WORKING.md`.
+Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save`. Détail du flux dans `docs/10-produit/way-of-working.md`.
 
 ## Priorité courante — v0.4 « Structure propre »
 
-> ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/ROADMAP.md`** — source de vérité unique.
+> ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/10-produit/roadmap.md`** — source de vérité unique.
 
 ✅ v0.4 et v0.5 Done — auth `requireAdmin` (JWT jose) en place sur `/admin` + `/ingestion`, CI Vitest, taxonomie centralisée, structured output. Prochain jalon : **v0.6** (auth utilisateurs, feed veille, digest éditorial + email).
 
 Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
 
-## Backlog (résumé — détail dans `docs/ROADMAP.md`)
+## Backlog (résumé — détail dans `docs/10-produit/roadmap.md`)
 
 - 🔧 v0.5 — fiabiliser la boucle back (taxonomie unique, structured output, découpe `ingestion.service`, validation, tests)
 - 🎬 v0.6 — Auth utilisateurs, smart search réel, feed veille, **Digest** (modèle éditorial + email Resend) — *réintégré au scope*
