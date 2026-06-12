@@ -31,9 +31,9 @@
 | **v0.4 — Structure propre** | Git · docs · arbo · sécu JWT | ✅ Done (2026-06-05) | Routes admin fermées, `main` protégé, CI verte |
 | **v0.5A — Dette qui sécurise** | Taxonomie · structured output · découpe service · zod | ✅ Done (2026-06-05) | `ingestion.service` découpé, qualif Claude fiable |
 | **v0.5B — Tri amont (3 paris)** | Lot+compteur · règles · smart search · UX cas non-noms | ✅ Done (2026-06-05) | Compteur → 0 = lot propre, règles persistent, search admin opérationnel |
-| **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟠 **En cours** | Parcours admin sans friction confirmé en test utilisabilité |
-| **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | ⬜ Next | Léa s'inscrit, consulte sa veille, reçoit son digest |
-| **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | ⬜ Later | Léa crée et partage un treatment à un client |
+| **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟡 Code Done (2026-06-12) | Reste : test utilisabilité Camille (180-48) |
+| **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | 🟡 Code Done (2026-06-12) | Reste : clé Resend + recette device (180-25) |
+| **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | 🟡 Code Done (2026-06-12) | Reste : session JTBD (180-24) + recette (180-27) |
 
 ---
 
@@ -156,6 +156,29 @@ Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export 
 2. **180-40 + 180-47** en même PR — les deux touchent `CurationPage` / `ReferencesAdminPage`, XS+S, embarquables ensemble
 3. **180-42 + 180-43** — CSS sticky + intervalle polling, même PR ou deux commits atomiques
 4. Pendant ce temps : **Marie livre le wireframe TagEditor** → débloquer 180-44 → sprint S+1
+
+---
+
+## ▶️ État au 2026-06-12 — train de PRs MVP
+
+Le code des trois jalons restants est livré en **PRs stackées** (chacune basée sur la précédente, merge dans l'ordre) :
+
+| PR | Branche | Tickets |
+|---|---|---|
+| #2 | `feat/admin-curation` → main | v0.5B + v0.5C (180-29→47, 50→55) |
+| #3 | `feat/tags-taxonomy-split` | 180-49 (taxonomie ≠ tags YouTube) + ADR 0002 |
+| #4 | `feat/user-auth` | 180-16 (auth Léa + claims role stricts) |
+| #5 | `feat/feed-veille` | 180-18 (feed du jour + filtres) |
+| #6 | `feat/digest` | 180-19 (digest : compose admin + vue Léa) |
+| #7 | `feat/digest-email` | 180-20 (Resend + opt-in, ⚠️ clé à configurer) |
+| #8 | `feat/projects-crud` | 180-21 + 180-24 (spec treatment draft) |
+| #9 | `feat/treatment-builder` | 180-22 (builder intention + réfs annotées) |
+| #10 | `feat/treatment-share` | 180-23 (lien public /t/:token + PDF print) |
+| #11 | `chore/polish-mvp` | 180-25/27 partiels (42 tests, mockData supprimé) |
+
+Migrations BDD **déjà appliquées** sur Supabase (taxonomy, User, Digest, Project). Suite : 42/42 verts. Smoke E2E parcours Léa : 9/9.
+
+**Reste humain** : merger le train · clé `RESEND_API_KEY` · test utilisabilité (180-48) · session JTBD treatment (180-24) · recette device 375px (180-25/27) · checklist bêta (180-26).
 
 ---
 
