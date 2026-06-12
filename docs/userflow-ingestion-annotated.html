@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcours d'ingestion — User Flow Annoté · 180 Degrés</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f2;color:#1a1a18;font-size:14px;line-height:1.6}
+
+/* ── Doc header ── */
+.doc-header{background:#fff;border-bottom:1px solid #e4e4e0;padding:32px 48px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.doc-header-left h1{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+.doc-meta{font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.08em;display:flex;gap:20px;flex-wrap:wrap}
+.doc-meta span::before{content:'·';margin-right:20px}
+.doc-meta span:first-child::before{content:''}
+
+/* ── Legend ── */
+.legend{display:flex;gap:20px;padding:14px 48px;background:#fff;border-bottom:1px solid #e4e4e0;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:#444}
+.dot{width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:800;font-family:'SF Mono',monospace;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dot.B{background:#dc2626}
+.dot.M{background:#ea580c}
+.dot.C{background:#ca8a04}
+.dot.P{background:#16a34a}
+.dot.L{background:#7c3aed}
+
+/* ── Flow strip ── */
+.flow-strip{background:#fff;border-bottom:2px solid #e4e4e0;padding:20px 48px}
+.flow-strip h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#bbb;margin-bottom:14px}
+.flow-steps{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px}
+.flow-step{display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:#1a1a18;color:#fff;font-size:11px;font-weight:700;font-family:'SF Mono',monospace;display:flex;align-items:center;justify-content:center}
+.step-label{font-size:10px;font-family:'SF Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:#999;text-align:center;max-width:72px;line-height:1.3}
+.flow-arrow{width:40px;height:1px;background:#ddd;flex-shrink:0;position:relative;margin-top:-14px}
+.flow-arrow::after{content:'';position:absolute;right:-1px;top:-3px;border-left:5px solid #ddd;border-top:3px solid transparent;border-bottom:3px solid transparent}
+
+/* ── Layout ── */
+.page{max-width:1320px;margin:0 auto;padding:0 48px 80px}
+
+.screen-block{margin-top:48px}
+.screen-block+.screen-block{margin-top:8px}
+
+.screen-connector{display:flex;align-items:center;gap:12px;padding:16px 0 0;color:#ccc;font-size:11px;font-family:'SF Mono',monospace;text-transform:uppercase;letter-spacing:0.08em}
+.screen-connector::before,.screen-connector::after{content:'';flex:1;height:1px;background:#e4e4e0}
+
+.screen-header{margin-bottom:20px;padding-top:32px}
+.screen-num{font-family:'SF Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:#bbb;margin-bottom:4px}
+.screen-name{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin-bottom:4px}
+.screen-desc{font-size:13px;color:#888;line-height:1.4}
+
+.screen-layout{display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:start}
+
+/* ── Mockup shell ── */
+.mockup{background:#0a0a0a;border:1px solid #1e1e1c;border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+
+/* Topbar */
+.m-topbar{height:48px;background:#0a0a0a;border-bottom:1px solid #1e1e1c;display:flex;align-items:center;padding:0 28px;gap:20px}
+.m-logo{font-size:11px;font-weight:700;color:#e8e8e0;letter-spacing:-0.01em;margin-right:4px}
+.m-slash{font-size:12px;color:#2a2a28}
+.m-badge{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:#555550;border:1px solid #2a2a28;padding:2px 7px}
+.m-nav{display:flex;gap:2px;margin-left:12px}
+.m-nav-link{font-size:12px;color:#55554e;padding:4px 12px;position:relative;cursor:default}
+.m-nav-link.active{color:#e8e8e0;font-weight:500}
+.m-nav-link.active::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:1px;background:#e8e8e0}
+.m-topbar-right{margin-left:auto;display:flex;align-items:center;gap:18px}
+.m-btn-pub{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;padding:4px 14px;border:1px solid;cursor:default}
+.m-btn-pub.idle{border-color:#2a2a28;color:#333330}
+.m-btn-pub.active{border-color:#e8e8e0;background:#e8e8e0;color:#0a0a0a}
+.m-text-link{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#333330}
+
+/* Body */
+.m-body{padding:28px 32px}
+.m-breadcrumb{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#333330;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.m-breadcrumb .cur{color:#666660}
+.m-title{font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#e8e8e0;margin-bottom:20px;font-weight:normal;line-height:1.1}
+.m-section-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.m-section-name{font-family:Georgia,serif;font-size:16px;color:#e8e8e0;font-weight:normal}
+.m-section-sub{font-size:11px;color:#333330}
+.m-tabs{display:flex;border-bottom:1px solid #1e1e1c;margin-bottom:24px}
+.m-tab{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#333330;padding:8px 14px;position:relative;cursor:default}
+.m-tab.active{color:#e8e8e0}
+.m-tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:#e8e8e0}
+
+/* Form */
+.m-form{border:1px solid #1e1e1c;padding:18px;background:#0e0e0c}
+.m-form-title{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#555550;margin-bottom:14px}
+.m-field{margin-bottom:14px}
+.m-field-label{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:#444440;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.m-field-req{color:#555}
+.m-input{background:#0a0a0a;border:1px solid #1e1e1c;color:#e8e8e0;padding:7px 10px;font-size:12px;width:100%}
+.m-input.placeholder{color:#333330}
+.m-select{background:#0a0a0a;border:1px solid #1e1e1c;color:#e8e8e0;padding:7px 10px;font-size:12px;width:100%;display:flex;align-items:center;justify-content:space-between}
+.m-select-check{color:#e8e8e0;font-size:10px}
+.m-hint{font-size:10px;color:#2e2e2a;margin-top:4px;font-family:'SF Mono',monospace;letter-spacing:0.02em}
+.m-chip{display:inline-flex;align-items:center;gap:6px;font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:#666660;border:1px solid #2a2a28;padding:3px 8px;margin-bottom:12px}
+.m-chip-source{color:#8a8a82;font-weight:600}
+.m-chip-x{color:#333330}
+.m-btn-add{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #e8e8e0;background:#e8e8e0;color:#0a0a0a;padding:6px 14px;cursor:default}
+
+/* Creator row */
+.m-creator-row{display:flex;align-items:center;padding:9px 14px;border:1px solid #141412;background:#0d0d0b;gap:10px}
+.m-creator-dot{width:8px;height:8px;background:#1a1a18;flex-shrink:0}
+.m-creator-name{font-size:12px;color:#e8e8e0;font-weight:500;flex:1}
+.m-creator-handle{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.06em;text-transform:uppercase;color:#333330;background:#111110;padding:1px 6px;margin-right:4px}
+.m-creator-source{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:#2e2e2a}
+.m-creator-actions{display:flex;gap:6px;margin-left:auto}
+.m-btn-xs{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:#555550;border:1px solid #1e1e1c;padding:3px 8px;background:transparent;cursor:default}
+.m-creator-caret{color:#333330;font-size:10px}
+
+/* Filter rules */
+.m-rules-panel{margin-top:0;border:1px solid #1e1e1c;border-top:none;background:#0d0d0b;padding:12px 14px}
+.m-rules-title{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:#444440;margin-bottom:10px;display:flex;justify-content:space-between}
+.m-rules-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.m-rule-type{display:flex;gap:0}
+.m-rule-type-btn{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:#666660;border:1px solid #2a2a28;padding:4px 10px;cursor:default;background:transparent}
+.m-rule-type-btn+.m-rule-type-btn{border-left:none}
+.m-rule-input{flex:1;background:#0a0a0a;border:1px solid #1e1e1c;color:#333330;padding:4px 8px;font-family:'SF Mono',monospace;font-size:9px;letter-spacing:0.04em}
+.m-rules-add{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#555550;border:1px solid #1e1e1c;background:#1a1a18;color:#666660;padding:4px 10px;cursor:default}
+.m-rules-empty{font-size:10px;color:#2a2a28;font-style:italic;margin-top:4px}
+
+/* Monitoring */
+.m-session-id{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.06em;color:#2a2a28;margin-bottom:20px}
+.m-mon-card{border:1px solid #1e1e1c;background:#0d0d0b;padding:22px 26px}
+.m-mon-status{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.m-pulsing{width:10px;height:10px;background:#555550}
+.m-mon-label{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#666660}
+.m-counters{display:flex;gap:44px;margin-bottom:14px}
+.m-counter-val{font-family:Georgia,serif;font-size:52px;color:#e8e8e0;font-weight:normal;line-height:1}
+.m-counter-label{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:#333330;margin-top:4px}
+.m-mon-note{font-family:'SF Mono',monospace;font-size:8px;color:#2a2a28;letter-spacing:0.03em}
+
+/* Triage */
+.m-triage-hero{margin-bottom:18px}
+.m-triage-count{font-family:Georgia,serif;font-size:72px;color:#e8e8e0;font-weight:normal;line-height:1}
+.m-triage-label{font-family:'SF Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#666660;margin-top:4px}
+.m-session-sm{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.06em;color:#2a2a28;margin-top:8px}
+.m-nl-row{display:flex;margin-bottom:10px}
+.m-nl-input{flex:1;background:#0a0a0a;border:1px solid #1e1e1c;border-right:none;color:#2a2a28;padding:7px 10px;font-family:'SF Mono',monospace;font-size:9px;letter-spacing:0.04em}
+.m-nl-btn{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #1e1e1c;background:#141412;color:#555550;padding:7px 14px;cursor:default}
+.m-bulk-row{display:flex;gap:8px;margin-bottom:18px}
+.m-btn-bulk-p{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;border:1px solid #e8e8e0;background:transparent;color:#e8e8e0;padding:5px 12px;cursor:default}
+.m-btn-bulk-s{font-family:'SF Mono',monospace;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;border:1px solid #2a2a28;background:transparent;color:#333330;padding:5px 12px;cursor:default}
+
+/* Triage grid */
+.m-triage-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.m-triage-card{background:#0d0d0b}
+.m-thumb{aspect-ratio:16/9;background:linear-gradient(135deg,#1a1916 0%,#0e0e0c 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:4px 5px;position:relative}
+.m-thumb-ch{font-family:'SF Mono',monospace;font-size:6px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,232,224,0.4)}
+.m-card-info{padding:5px 6px 7px}
+.m-card-title{font-size:9px;color:#aaa8a0;line-height:1.3;margin-bottom:5px}
+.m-card-btns{display:flex;gap:3px}
+.m-btn-garder{font-family:'SF Mono',monospace;font-size:6px;letter-spacing:0.08em;text-transform:uppercase;border:1px solid #aaa8a0;background:transparent;color:#aaa8a0;padding:2px 6px;flex:1;cursor:default}
+.m-btn-rejeter{font-family:'SF Mono',monospace;font-size:6px;letter-spacing:0.08em;text-transform:uppercase;border:none;background:transparent;color:#333330;padding:2px 6px;cursor:default}
+
+/* RefRow */
+.m-refrow{display:grid;grid-template-columns:180px 1fr;border:1px solid #1e1e1c}
+.m-refrow-thumb-col{background:#0d0d0b;border-right:1px solid #1e1e1c;padding:14px}
+.m-refrow-thumb{aspect-ratio:16/9;background:linear-gradient(135deg,#1e1c18 0%,#0e0e0c 100%);width:100%;margin-bottom:8px;display:flex;align-items:center;justify-content:center}
+.m-play{width:24px;height:24px;border:1px solid rgba(232,232,224,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.m-play::after{content:'';width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid rgba(232,232,224,0.4);margin-left:2px}
+.m-yt-link{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.06em;color:#2a2a28}
+.m-refrow-meta{padding:14px 18px}
+.m-refrow-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.m-refrow-title{font-family:Georgia,serif;font-size:12px;color:#e8e8e0;font-weight:normal;line-height:1.3}
+.m-refrow-author{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:#333330;margin-top:2px}
+.m-status-btns{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:12px}
+.m-status-btn{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border:1px solid #2a2a28;background:transparent;color:#444440;cursor:default}
+.m-status-btn.pub{border-color:#e8e8e0;background:#e8e8e0;color:#0a0a0a}
+.m-status-x{color:#2a2a28;font-size:12px}
+.m-field-sec{margin-bottom:10px}
+.m-field-title{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:#333330;margin-bottom:5px}
+.m-tags{display:flex;flex-wrap:wrap;gap:3px}
+.m-tag{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:#666660;border:1px solid #1e1e1c;padding:2px 6px}
+.m-tag-add{font-family:'SF Mono',monospace;font-size:7px;color:#333330;border:1px dashed #2a2a28;padding:2px 6px;cursor:pointer}
+.m-editorial{background:#111110;border:1px solid #1a1a18;padding:8px 10px;font-size:10px;color:#555550;line-height:1.5;margin-bottom:10px}
+.m-refrow-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid #141412}
+.m-btn-del{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #2a2a28;background:transparent;color:#333330;padding:4px 10px;cursor:default}
+.m-btn-save{font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #e8e8e0;background:transparent;color:#e8e8e0;padding:4px 12px;cursor:default}
+
+/* ── Annotation markers (inline) ── */
+.ann{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:7px;font-weight:800;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;text-decoration:none;vertical-align:middle;margin-left:5px;transition:transform 0.15s;flex-shrink:0}
+.ann:hover{transform:scale(1.2)}
+.ann.B{background:#dc2626}
+.ann.M{background:#ea580c}
+.ann.C{background:#ca8a04}
+.ann.P{background:#16a34a}
+.ann.L{background:#7c3aed}
+/* Block-level annotation (used in layout corners) */
+.ann-block{position:absolute;top:6px;right:6px;z-index:5}
+
+/* ── Findings panel ── */
+.findings-panel{position:sticky;top:20px}
+.findings-panel h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#bbb;margin-bottom:12px}
+.fi{display:flex;gap:9px;padding:10px 0;border-bottom:1px solid #eee}
+.fi:last-child{border:none}
+.fi-code{flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;font-family:'SF Mono',monospace;color:#fff;margin-top:1px}
+.fi-code.B{background:#dc2626}
+.fi-code.M{background:#ea580c}
+.fi-code.C{background:#ca8a04}
+.fi-code.P{background:#16a34a}
+.fi-code.L{background:#7c3aed}
+.fi-body{}
+.fi-title{font-size:12px;font-weight:600;line-height:1.3;margin-bottom:2px}
+.fi-desc{font-size:11px;color:#666;line-height:1.4}
+.fi-fix{font-size:10px;color:#bbb;margin-top:2px;font-style:italic}
+
+/* ── Full findings table ── */
+.ref-section{padding:48px;max-width:1320px;margin:0 auto}
+.ref-section h2{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin-bottom:8px}
+.ref-section .ref-desc{font-size:13px;color:#888;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-family:'SF Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#bbb;text-align:left;padding:8px 12px;border-bottom:2px solid #e4e4e0}
+td{padding:10px 12px;border-bottom:1px solid #f0f0ec;vertical-align:top;line-height:1.4}
+tr:hover td{background:#fafaf8}
+.xs{color:#16a34a;font-weight:600}
+.s{color:#65a30d;font-weight:600}
+.m{color:#ca8a04;font-weight:600}
+.l{color:#dc2626;font-weight:600}
+.ticket{font-family:'SF Mono',monospace;font-size:10px;color:#7c3aed}
+</style>
+</head>
+<body>
+
+<!-- ════════════ HEADER ════════════ -->
+<div class="doc-header">
+  <div class="doc-header-left">
+    <h1>Parcours d'ingestion de références — User Flow Annoté</h1>
+    <div class="doc-meta">
+      <span>180 Degrés</span>
+      <span>Marie · Product Designer</span>
+      <span>7 juin 2026</span>
+      <span>Session test : @tobifilmsofficial</span>
+    </div>
+  </div>
+  <div style="font-size:12px;color:#888;max-width:300px;line-height:1.5">
+    Support visuel pour le HOP — tous les écrans du parcours admin, annotés avec les findings de l'audit UX live.
+  </div>
+</div>
+
+<!-- ════════════ LEGEND ════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="dot B">B</div> Bloquant — corr. avant merge</div>
+  <div class="legend-item"><div class="dot M">M</div> Majeur — corr. avant v0.5</div>
+  <div class="legend-item"><div class="dot C">C</div> Cosmétique — backloggable</div>
+  <div class="legend-item"><div class="dot P">P</div> Point fort — à conserver</div>
+  <div class="legend-item"><div class="dot L">L</div> Constat live — détecté au test</div>
+</div>
+
+<!-- ════════════ FLOW STRIP ════════════ -->
+<div class="flow-strip">
+  <h3>Parcours complet</h3>
+  <div class="flow-steps">
+    <div class="flow-step"><div class="step-num">1</div><div class="step-label">Import<br>idle</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-label">Ajout<br>créateur</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-label">Monitoring<br>scan</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">4</div><div class="step-label">Triage<br>hero</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">5</div><div class="step-label">Triage<br>grid</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">6</div><div class="step-label">Qualifi-<br>cation</div></div>
+    <div class="flow-arrow"></div>
+    <div class="flow-step"><div class="step-num">7</div><div class="step-label">Règles<br>anti-poll.</div></div>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ══════════════════════════════════
+     SCREEN 1 — Import idle
+════════════════════════════════════ -->
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 01</div>
+    <div class="screen-name">Import de références — état initial</div>
+    <div class="screen-desc">L'admin arrive sur /admin/curation. La liste des créateurs enregistrés est visible, avec le panel de règles et les actions bulk.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <!-- Topbar -->
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span>
+        <span class="m-slash">/</span>
+        <span class="m-badge">Admin</span>
+        <div class="m-nav">
+          <span class="m-nav-link active">Curation</span>
+          <span class="m-nav-link">Références</span>
+          <span class="m-nav-link">Sections</span>
+        </div>
+        <div class="m-topbar-right">
+          <span class="m-btn-pub idle">Make a change<a href="#C1" class="ann C" style="margin-left:4px">C1</a></span>
+          <span class="m-text-link">← Plateforme</span>
+          <span class="m-text-link">Logout</span>
+        </div>
+      </div>
+      <!-- Body -->
+      <div class="m-body">
+        <div class="m-breadcrumb"><span>Admin</span><span class="cur">·</span><span class="cur">Curation</span></div>
+        <div class="m-title">Import de références <a href="#P1" class="ann P">P1</a></div>
+
+        <div class="m-tabs">
+          <span class="m-tab active">Créateurs</span>
+          <span class="m-tab">Liens manuels</span>
+        </div>
+
+        <div class="m-section-label">
+          <div>
+            <div class="m-section-name">Créateurs <a href="#P2" class="ann P">P2</a></div>
+            <div style="font-size:10px;color:#333330;margin-top:2px">1 enregistré · 1 actif</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <span class="m-btn-xs">Tout scrapper (1)</span>
+            <span class="m-btn-xs">+ Ajouter</span>
+          </div>
+        </div>
+
+        <!-- Creator row -->
+        <div class="m-creator-row">
+          <div class="m-creator-dot"></div>
+          <div>
+            <div class="m-creator-name">Tobi Films</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span class="m-creator-source">YT</span>
+              <span class="m-creator-handle">@tobifilmsofficial</span>
+            </div>
+          </div>
+          <div class="m-creator-actions">
+            <span class="m-btn-xs">Scrapper</span>
+            <span class="m-btn-xs">Règles <a href="#M6" class="ann M">M6</a></span>
+            <span class="m-btn-xs">Actif</span>
+            <span class="m-creator-caret">↓</span>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;font-size:10px;color:#2a2a28;font-style:italic">
+          ↑ Cliquer "Règles" déroule le FilterRulesPanel (voir écran 7)
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code C">C1</div>
+        <div class="fi-body">
+          <div class="fi-title">Labels anglais dans la topbar</div>
+          <div class="fi-desc">"Make a change" et "Set Live" — seuls mots anglais d'une interface intégralement française.</div>
+          <div class="fi-fix">Fix : "Mettre en ligne" / "Aucun changement". Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P1</div>
+        <div class="fi-body">
+          <div class="fi-title">Titre éditorial clair</div>
+          <div class="fi-desc">"Import de références" en serif — ancre le contexte dès l'entrée. Densité admin sans être austère.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P2</div>
+        <div class="fi-body">
+          <div class="fi-title">Compteur "1 enregistré · 1 actif"</div>
+          <div class="fi-desc">Signal d'état rapide — l'admin sait immédiatement combien de créateurs sont dans le pipeline.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M6</div>
+        <div class="fi-body">
+          <div class="fi-title">2 types de règles seulement</div>
+          <div class="fi-desc">FilterRulesPanel : "Titre contient" + "Chaîne contient" uniquement. Manquent duration_max et tag_contains.</div>
+          <div class="fi-fix">Voir écran 7 pour le détail. Ticket #180-30.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2 — Ajout créateur
+════════════════════════════════════ -->
+<div class="screen-connector">ajout créateur</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 02</div>
+    <div class="screen-name">Formulaire — ajout créateur</div>
+    <div class="screen-desc">L'admin clique "+ Ajouter" → form inline. En choisissant YouTube, le champ handle apparaît contextuellement. Un chip confirme la saisie avant soumission.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link active">Curation</span><span class="m-nav-link">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub idle">Make a change</span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-breadcrumb"><span>Admin</span><span class="cur">·</span><span class="cur">Curation</span></div>
+        <div class="m-title">Import de références</div>
+        <div class="m-tabs"><span class="m-tab active">Créateurs</span><span class="m-tab">Liens manuels <a href="#C7" class="ann C">C7</a></span></div>
+
+        <div class="m-form">
+          <div class="m-form-title">Nouveau créateur</div>
+          <div class="m-field">
+            <div class="m-field-label">Nom <span class="m-field-req">*</span></div>
+            <div class="m-input">Tobi Films</div>
+          </div>
+          <div class="m-field">
+            <div class="m-field-label">Profil source <a href="#P3" class="ann P" style="margin-left:4px">P3</a></div>
+            <div class="m-select"><span>YouTube ✓</span></div>
+          </div>
+          <div class="m-field">
+            <div class="m-field-label" style="display:flex;align-items:center;gap:6px">YouTube <a href="#P4" class="ann P">P4</a></div>
+            <div class="m-input">@tobifilmsofficial</div>
+            <div class="m-hint">Handle (@) ou URL complète — requis pour le scan chaîne</div>
+          </div>
+          <div class="m-chip">
+            <span class="m-chip-source">YouTube</span>
+            @tobifilmsofficial
+            <span class="m-chip-x">×</span>
+          </div>
+          <div><span class="m-btn-add">Ajouter</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code P">P3</div>
+        <div class="fi-body">
+          <div class="fi-title">Champ contextuel — apparition au bon moment</div>
+          <div class="fi-desc">Le champ YouTube handle n'apparaît que lorsque "YouTube" est sélectionné. Zéro friction, UX progressive.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P4</div>
+        <div class="fi-body">
+          <div class="fi-title">Chip de confirmation immédiate</div>
+          <div class="fi-desc">Le chip "YouTube @tobifilmsofficial" confirme la saisie avant de soumettre — feedback positif ancré dans la même zone.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C7</div>
+        <div class="fi-body">
+          <div class="fi-title">Tabs : form réinitialisé au switch</div>
+          <div class="fi-desc">Si l'admin passe à l'onglet "Liens manuels" alors qu'un formulaire est en cours de saisie, les données sont perdues au retour.</div>
+          <div class="fi-fix">Fix : remonter l'état form dans CurationPage. Effort S.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M3</div>
+        <div class="fi-body">
+          <div class="fi-title">Pas de feedback si AJOUTER échoue</div>
+          <div class="fi-desc">Si le serveur renvoie 500, le bouton "Ajouter" reprend son état normal sans message d'erreur visible.</div>
+          <div class="fi-fix">Fix : afficher l'erreur sous le bouton (pattern LinksTab). Effort S.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 3 — MonitoringView
+════════════════════════════════════ -->
+<div class="screen-connector">scan automatique déclenché au submit</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 03</div>
+    <div class="screen-name">MonitoringView — scan en cours</div>
+    <div class="screen-desc">Dès qu'un créateur est ajouté, la session de scan démarre. Le polling ramène les compteurs en temps réel. Les vidéos &lt; 3 min (Shorts) sont filtrées automatiquement.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link active">Curation ■</span><span class="m-nav-link">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub idle">Make a change</span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-breadcrumb"><span style="cursor:pointer">← Retour</span><span class="cur">/</span><span class="cur">Agent en cours</span></div>
+        <div class="m-title">Scan — Tobi Films <a href="#P5" class="ann P">P5</a></div>
+        <div class="m-session-id">Session · 578be935-8a45-4d7a-9cde-4441d33ea998</div>
+
+        <div class="m-mon-card">
+          <div class="m-mon-status">
+            <div class="m-pulsing"></div>
+            <span class="m-mon-label">En cours… <a href="#M2" class="ann M">M2</a></span>
+          </div>
+          <div class="m-counters">
+            <div>
+              <div class="m-counter-val">18</div>
+              <div class="m-counter-label">Trouvées <a href="#P6" class="ann P">P6</a></div>
+            </div>
+            <div>
+              <div class="m-counter-val">8</div>
+              <div class="m-counter-label">Sauvegardées <a href="#M2" class="ann M" style="margin-left:3px">M2</a></div>
+            </div>
+          </div>
+          <div class="m-mon-note">Les vidéos &lt; 3 min (Shorts) sont automatiquement écartées.</div>
+        </div>
+
+        <div style="margin-top:16px;font-size:10px;color:#2a2a28;font-style:italic">
+          ↑ Polling toutes les 1s. <a href="#M2" style="color:#ea580c;font-family:monospace;font-size:9px">M2</a> — devrait être 2s.<br>
+          Si startScan() échoue → aucun feedback visible. <a href="#M3" style="color:#ea580c;font-family:monospace;font-size:9px">M3</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code P">P5</div>
+        <div class="fi-body">
+          <div class="fi-title">Titre contextuel "Scan — Nom créateur"</div>
+          <div class="fi-desc">Le titre change dynamiquement selon la session en cours. L'admin sait immédiatement quel créateur est en train d'être scanné.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P6</div>
+        <div class="fi-body">
+          <div class="fi-title">Compteurs éditoriaux — chiffre géant + label mono</div>
+          <div class="fi-desc">TROUVÉES / SAUVEGARDÉES en 52px serif. Très lisible, donne le sentiment d'un outil professionnel et contrôlé.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M2</div>
+        <div class="fi-body">
+          <div class="fi-title">Polling à 1s (devrait être 2s)</div>
+          <div class="fi-desc">setInterval(poll, 1000) génère ~60 requêtes pour un scan de 60 refs. Charge réseau inutile, doc dit 2s.</div>
+          <div class="fi-fix">Fix : passer à 2000ms. Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M3</div>
+        <div class="fi-body">
+          <div class="fi-title">Aucun feedback si startScan() échoue</div>
+          <div class="fi-desc">catch(err) { console.error; setScanning(null) } — l'admin voit le bouton "Scrapper" se dégriser sans explication.</div>
+          <div class="fi-fix">Fix : stocker l'erreur dans state et l'afficher. Effort XS.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 4 — TriageView hero
+════════════════════════════════════ -->
+<div class="screen-connector">scan terminé → transition automatique</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 04</div>
+    <div class="screen-name">TriageView — compteur + bulk actions</div>
+    <div class="screen-desc">La MonitoringView se transforme automatiquement en TriageView quand le scan est terminé. Le compteur "À TRIER" est l'élément central de l'interface.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link active">Curation ■</span><span class="m-nav-link">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub active">Set Live <a href="#C1" class="ann C">C1</a></span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-breadcrumb">
+          <span style="cursor:pointer">← Retour <a href="#B2" class="ann B">B2</a></span>
+          <span class="cur">/</span>
+          <span class="cur">Tri</span>
+        </div>
+
+        <div class="m-triage-hero">
+          <div class="m-triage-count">8 <a href="#P7" class="ann P">P7</a><a href="#L1" class="ann L" style="margin-left:4px">L1</a></div>
+          <div class="m-triage-label">À trier</div>
+          <div class="m-session-sm">Session · 578be935…</div>
+        </div>
+
+        <div style="height:1px;background:#1e1e1c;margin-bottom:16px"></div>
+
+        <div class="m-nl-row">
+          <div class="m-nl-input">Recherche NL — ex: « vlogs perso de cette chaine » <a href="#B3" class="ann B">B3</a><a href="#C6" class="ann C" style="margin-left:4px">C6</a></div>
+          <div class="m-nl-btn">Filtrer <a href="#L2" class="ann L">L2</a></div>
+        </div>
+
+        <div class="m-bulk-row">
+          <span class="m-btn-bulk-p">Tout garder (8) <a href="#P8" class="ann P">P8</a></span>
+          <span class="m-btn-bulk-s">Tout rejeter (8) <a href="#C2" class="ann C">C2</a></span>
+        </div>
+
+        <div style="font-size:10px;color:#2a2a28;font-style:italic">
+          ↓ Grille de cards (voir écran 05)
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code P">P7</div>
+        <div class="fi-body">
+          <div class="fi-title">"8 À TRIER" — signal de complétude fort</div>
+          <div class="fi-desc">Le chiffre en serif 72px est l'élément dominant de l'écran. L'admin comprend instantanément l'ampleur du lot.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code B">B2</div>
+        <div class="fi-body">
+          <div class="fi-title">Navigation = perte de session (CONFIRMÉ LIVE)</div>
+          <div class="fi-desc">Cliquer "← Retour" ou aller sur /références remet phase=idle. Les refs restantes en TRIAGE sont invisibles — impossibles à retrouver sans rechargement manuel.</div>
+          <div class="fi-fix">Fix : restaurer la session au chargement (GET sessions?status=RUNNING). Ticket #180-29.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code L">L1</div>
+        <div class="fi-body">
+          <div class="fi-title">Compteur scrolle hors viewport pendant le tri (LIVE)</div>
+          <div class="fi-desc">Dès le 1er scroll vers les cards, le "8 À TRIER" disparaît. Pendant le tri, l'admin ne sait plus combien il en reste sans remonter.</div>
+          <div class="fi-fix">Fix : rendre le compteur sticky. Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code B">B3</div>
+        <div class="fi-body">
+          <div class="fi-title">NL search échoue silencieusement (CONFIRMÉ LIVE)</div>
+          <div class="fi-desc">console: {"error":"Erreur serveur"} — le grid reste inchangé, 0 message visible. L'admin croit que la recherche est vide.</div>
+          <div class="fi-fix">Fix : (1) implémenter l'endpoint. (2) afficher l'erreur. Ticket #180-31.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code L">L2</div>
+        <div class="fi-body">
+          <div class="fi-title">FILTRER sans état de chargement (LIVE)</div>
+          <div class="fi-desc">Le bouton ne montre pas "..." pendant l'appel. L'admin peut croire que son clic n'a pas été pris en compte.</div>
+          <div class="fi-fix">Fix : setFiltering(true) → "…" pendant l'appel async. Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C2</div>
+        <div class="fi-body">
+          <div class="fi-title">Bulk buttons — différentiel visuel</div>
+          <div class="fi-desc">"Tout garder" et "Tout rejeter" ont des traitements différents, mais vérifier que le différentiel est suffisamment lisible sur écran sombre.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C6</div>
+        <div class="fi-body">
+          <div class="fi-title">Placeholder NL search ambigu</div>
+          <div class="fi-desc">Ne précise pas que la recherche est limitée au lot en cours, pas à toute la bibliothèque.</div>
+          <div class="fi-fix">Fix : "Filtrer ce lot — ex: …". Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P8</div>
+        <div class="fi-body">
+          <div class="fi-title">Bulk actions — "Tout garder (N)"</div>
+          <div class="fi-desc">Le compteur dans le label du bouton est en temps réel — il reflète exactement les refs restantes. Pattern intuitif pour un lot homogène.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 5 — TriageView grid
+════════════════════════════════════ -->
+<div class="screen-connector">scroll vers la grille de cards</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 05</div>
+    <div class="screen-name">TriageView — grille de cards</div>
+    <div class="screen-desc">Chaque card affiche thumbnail + titre + créateur + GARDER / REJETER. Cliquer GARDER retire la card du grid, décrémente le compteur, allume "Set Live" dans la topbar.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link active">Curation</span><span class="m-nav-link">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub active">Set Live</span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-triage-grid">
+          <!-- Card 1 -->
+          <div class="m-triage-card">
+            <div class="m-thumb" style="background:linear-gradient(135deg,#2a2218 0%,#181410 100%)">
+              <div class="m-thumb-ch">Tobifilms</div>
+            </div>
+            <div class="m-card-info">
+              <div class="m-card-title">This South France wedding took all our breathes</div>
+              <div class="m-card-btns">
+                <div class="m-btn-garder">Garder <a href="#C4" class="ann C" style="width:14px;height:14px;font-size:6px">C4</a></div>
+                <div class="m-btn-rejeter">Rejeter</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="m-triage-card">
+            <div class="m-thumb" style="background:linear-gradient(135deg,#181c18 0%,#0e1010 100%)">
+              <div class="m-thumb-ch">Tobifilms</div>
+            </div>
+            <div class="m-card-info">
+              <div class="m-card-title">The wildest wedding party in Cancun | featured wedding</div>
+              <div class="m-card-btns">
+                <div class="m-btn-garder">Garder</div>
+                <div class="m-btn-rejeter">Rejeter</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card 3 -->
+          <div class="m-triage-card">
+            <div class="m-thumb" style="background:linear-gradient(135deg,#1a1820 0%,#0e0c14 100%)">
+              <div class="m-thumb-ch">Tobifilms</div>
+            </div>
+            <div class="m-card-info">
+              <div class="m-card-title">The most emotional wedding film at rainy lake como</div>
+              <div class="m-card-btns">
+                <div class="m-btn-garder">Garder</div>
+                <div class="m-btn-rejeter">Rejeter</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card 4 -->
+          <div class="m-triage-card">
+            <div class="m-thumb" style="background:linear-gradient(135deg,#201a14 0%,#14100a 100%)">
+              <div class="m-thumb-ch">Tobifilms</div>
+            </div>
+            <div class="m-card-info">
+              <div class="m-card-title">The Ultimate Tuscan Wedding | Beauty, Vows &amp; Wine</div>
+              <div class="m-card-btns">
+                <div class="m-btn-garder">Garder</div>
+                <div class="m-btn-rejeter">Rejeter</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card 5 -->
+          <div class="m-triage-card">
+            <div class="m-thumb" style="background:linear-gradient(135deg,#201418 0%,#140c10 100%)">
+              <div class="m-thumb-ch">Tobifilms</div>
+            </div>
+            <div class="m-card-info">
+              <div class="m-card-title">This Málaga Wedding Went VIRAL – Indian Style Meets Spanish Sun</div>
+              <div class="m-card-btns">
+                <div class="m-btn-garder">Garder</div>
+                <div class="m-btn-rejeter">Rejeter</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;font-size:10px;color:#2a2a28;font-style:italic">
+          ↑ GARDER → card retirée, compteur décrémente, "Set Live" s'allume · REJETER → idem, silencieux&nbsp;<a href="#C4" style="color:#ca8a04;font-family:monospace;font-size:9px">C4</a> aria-label manquant sur ces boutons
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code P">P9</div>
+        <div class="fi-body">
+          <div class="fi-title">Transition instantanée au clic</div>
+          <div class="fi-desc">GARDER retire la card immédiatement sans rechargement. La grille se repaquète seule. Le compteur décrémente en temps réel. Flow opérationnel.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P10</div>
+        <div class="fi-body">
+          <div class="fi-title">"Set Live" s'allume dès la 1re décision</div>
+          <div class="fi-desc">L'admin sait qu'il a des modifications à publier — le bouton topbar devient actif (inverted) après le 1er GARDER.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C4</div>
+        <div class="fi-body">
+          <div class="fi-title">Boutons sans aria-label contextualisé</div>
+          <div class="fi-desc">Lecteur d'écran : "Garder, bouton" — sans savoir de quelle vidéo. WCAG SC 2.4.6.</div>
+          <div class="fi-fix">Fix : aria-label="Garder — {titre}". Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C3</div>
+        <div class="fi-body">
+          <div class="fi-title">TagEditor — pas de fermeture sur Escape</div>
+          <div class="fi-desc">Si le dropdown de tags est ouvert, Escape ne le ferme pas. Utilisateurs clavier bloqués.</div>
+          <div class="fi-fix">Fix : addEventListener('keydown', e => e.key==='Escape' && setOpen(false)). Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code C">C5</div>
+        <div class="fi-body">
+          <div class="fi-title">MonitoringView — pas de région ARIA live</div>
+          <div class="fi-desc">Les compteurs TROUVÉES/SAUVEGARDÉES changent chaque seconde mais ne sont pas aria-live="polite".</div>
+          <div class="fi-fix">Fix : wrapper les compteurs dans aria-live="polite" aria-atomic="true". Effort XS.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 6 — RefRow / Qualification
+════════════════════════════════════ -->
+<div class="screen-connector">GARDER → ref passe en DRAFT → disponible dans Médiathèque admin</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 06</div>
+    <div class="screen-name">RefRow — qualification et tags</div>
+    <div class="screen-desc">Dans /admin/références, l'admin clique sur une ref pour ouvrir le panneau de qualification : tags, mood, contexte éditorial Claude, statut DRAFT/PUBLIÉ/REJETÉ.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link">Curation</span><span class="m-nav-link active">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub idle">Make a change</span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-refrow">
+          <!-- Thumbnail col -->
+          <div class="m-refrow-thumb-col">
+            <div class="m-refrow-thumb">
+              <div class="m-play"></div>
+            </div>
+            <div class="m-yt-link">→ Voir sur YouTube</div>
+          </div>
+          <!-- Meta col -->
+          <div class="m-refrow-meta">
+            <div class="m-refrow-hdr">
+              <div>
+                <div style="font-family:'SF Mono',monospace;font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:#333330;margin-bottom:3px">Tobifilms</div>
+                <div class="m-refrow-title">This South France wedding took all our breathes</div>
+              </div>
+              <div class="m-status-btns">
+                <span class="m-status-btn">Draft</span>
+                <span class="m-status-btn pub">Publier</span>
+                <span class="m-status-btn">Rejeter</span>
+                <span class="m-status-x">×</span>
+              </div>
+            </div>
+
+            <div class="m-field-sec">
+              <div class="m-field-title">Tags <a href="#B1" class="ann B">B1</a></div>
+              <div class="m-tags">
+                <span class="m-tag">Mariage</span>
+                <span class="m-tag">Cinématique</span>
+                <span class="m-tag">Authentique</span>
+                <span class="m-tag">Émotionnel</span>
+                <span class="m-tag">Destination-intl</span>
+                <span class="m-tag">Romantique</span>
+                <span class="m-tag">Brut</span>
+                <span class="m-tag">Contemplatif</span>
+                <span class="m-tag-add">+ Tag</span>
+              </div>
+            </div>
+
+            <div class="m-field-sec">
+              <div class="m-field-title">Mood</div>
+              <div class="m-tags">
+                <span class="m-tag">Romantique</span>
+                <span class="m-tag">Épique</span>
+                <span class="m-tag">Intime</span>
+                <span class="m-tag">Dynamique</span>
+                <span class="m-tag">Élegant</span>
+                <span class="m-tag">Professionnel</span>
+                <span class="m-tag">Vivant</span>
+                <span class="m-tag">Sérieux</span>
+              </div>
+            </div>
+
+            <div class="m-field-sec">
+              <div class="m-field-title">Contexte éditorial <a href="#P11" class="ann P">P11</a></div>
+              <div class="m-editorial">
+                Film de mariage sur 3 jours dans le Sud de la France, adoptant un style non conventionnel mêlant émotion brute, style naturel et ambiance authentique loin des codes classiques du wedding film.
+              </div>
+            </div>
+
+            <div class="m-refrow-footer">
+              <span class="m-btn-del">Supprimer <a href="#M1" class="ann M">M1</a></span>
+              <span class="m-btn-save" style="display:flex;align-items:center;gap:4px">Enregistrer <a href="#M4" class="ann M">M4</a></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;font-size:10px;color:#2a2a28;font-style:italic">
+          B1 — "+" Tag : le TagEditor propose 32 tags hardcodés (Sony-FX3, mariage…) ≠ 18 axes / ~130 slugs de la taxonomie Claude. <br>
+          L'admin ne peut pas corriger "mariage" → il ne le trouve pas dans le picker.
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code B">B1</div>
+        <div class="fi-body">
+          <div class="fi-title">TagEditor ALLOWED_TAGS ≠ taxonomie Claude</div>
+          <div class="fi-desc">32 tags codés en dur (Sony-FX3, slow-motion, mariage…) vs. 18 axes / ~130 slugs utilisés par Claude à l'enrichissement. L'admin ne peut pas corriger les tags Claude via l'éditeur.</div>
+          <div class="fi-fix">Fix : importer config/taxonomy.js dans TagEditor (ticket T-05). Effort M.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P11</div>
+        <div class="fi-body">
+          <div class="fi-title">Contexte éditorial Claude — qualité remarquable</div>
+          <div class="fi-desc">L'enrichissement Claude produit un contexte éditorial précis, en français, stylé. C'est la valeur différenciante du produit — visible et lisible dans cette interface.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M1</div>
+        <div class="fi-body">
+          <div class="fi-title">window.confirm() pour la suppression</div>
+          <div class="fi-desc">Dialog natif gris système sur fond dark cinema. Casse la charte et bloque le thread UI.</div>
+          <div class="fi-fix">Fix : confirmer inline sur la ligne ("Confirmer ?" + 2 boutons). Effort S.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M4</div>
+        <div class="fi-body">
+          <div class="fi-title">Ligne dirty non visuellement proéminente</div>
+          <div class="fi-desc">Modifier tags + section + statut et naviguer ailleurs = perte silencieuse. Le bouton "Enregistrer" change d'état mais est invisible dans une table dense.</div>
+          <div class="fi-fix">Fix : teinte de fond sur la tr quand isDirtyLocal=true. Effort XS.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M5</div>
+        <div class="fi-body">
+          <div class="fi-title">ResultsTable sans pagination</div>
+          <div class="fi-desc">La session entière est chargée en mémoire. 200+ refs → ~600 composants React, scroll laggy, FID élevé.</div>
+          <div class="fi-fix">Fix : pagination 50/page côté serveur. Effort M.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 7 — FilterRulesPanel
+════════════════════════════════════ -->
+<div class="screen-connector">cliquer "Règles" sur une ligne créateur</div>
+
+<div class="screen-block">
+  <div class="screen-header">
+    <div class="screen-num">Écran 07</div>
+    <div class="screen-name">FilterRulesPanel — règles anti-pollution</div>
+    <div class="screen-desc">Le panel se déroule inline sous la ligne du créateur. L'admin peut définir des règles d'exclusion qui s'appliquent automatiquement aux prochains scans de ce créateur.</div>
+  </div>
+
+  <div class="screen-layout">
+    <div class="mockup">
+      <div class="m-topbar">
+        <span class="m-logo">180Degré</span><span class="m-slash">/</span><span class="m-badge">Admin</span>
+        <div class="m-nav"><span class="m-nav-link active">Curation</span><span class="m-nav-link">Références</span><span class="m-nav-link">Sections</span></div>
+        <div class="m-topbar-right"><span class="m-btn-pub idle">Make a change</span><span class="m-text-link">← Plateforme</span><span class="m-text-link">Logout</span></div>
+      </div>
+      <div class="m-body">
+        <div class="m-title">Import de références</div>
+        <div class="m-tabs"><span class="m-tab active">Créateurs</span><span class="m-tab">Liens manuels</span></div>
+
+        <div class="m-creator-row">
+          <div class="m-creator-dot"></div>
+          <div>
+            <div class="m-creator-name">Tobi Films</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span class="m-creator-source">YT</span>
+              <span class="m-creator-handle">@tobifilmsofficial</span>
+            </div>
+          </div>
+          <div class="m-creator-actions">
+            <span class="m-btn-xs">Scrapper</span>
+            <span class="m-btn-xs" style="border-color:#e8e8e0;color:#e8e8e0">Règles</span>
+            <span class="m-btn-xs">Actif</span>
+            <span class="m-creator-caret">↑</span>
+          </div>
+        </div>
+
+        <!-- Rules panel inline -->
+        <div class="m-rules-panel">
+          <div class="m-rules-title">
+            <span>Règles anti-pollution — Tobi Films <a href="#P12" class="ann P">P12</a></span>
+            <span style="color:#2a2a28;cursor:pointer">×</span>
+          </div>
+          <div class="m-rules-row">
+            <div class="m-rule-type">
+              <span class="m-rule-type-btn" style="background:#1a1a18;border-color:#e8e8e0;color:#e8e8e0">Titre contient <a href="#M6" class="ann M">M6</a></span>
+              <span class="m-rule-type-btn">Chaîne contient</span>
+            </div>
+            <div class="m-rule-input">ex : vlog, behind the scenes…</div>
+            <div class="m-rules-add">+ Règle</div>
+          </div>
+          <div class="m-rules-empty">Aucune règle active.</div>
+
+          <div style="margin-top:14px;padding-top:10px;border-top:1px solid #1a1a18;font-family:'SF Mono',monospace;font-size:9px;color:#2a2a28">
+            <span style="color:#ea580c">M6</span> — Manquent : <span style="color:#555550">duration_max</span> (ex: "vidéos &gt; 3min uniquement") · <span style="color:#555550">tag_contains</span> (ex: "exclure BTS"). Ticket #180-30.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-panel">
+      <h3>Findings</h3>
+      <div class="fi">
+        <div class="fi-code P">P12</div>
+        <div class="fi-body">
+          <div class="fi-title">Pattern inline — pas de modal</div>
+          <div class="fi-desc">Le panel se déroule sous la ligne sans couvrir le reste de l'interface. Parfait pour la densité admin, aucune perte de contexte.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code P">P13</div>
+        <div class="fi-body">
+          <div class="fi-title">Label contextuel "— Tobi Films"</div>
+          <div class="fi-desc">Le nom du créateur est inclus dans le titre du panel. Évite toute ambiguïté sur les règles actives.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fi-code M">M6</div>
+        <div class="fi-body">
+          <div class="fi-title">2 types de règles seulement</div>
+          <div class="fi-desc">Confirmé live. "Titre contient" et "Chaîne contient" — les cas les plus courants sont absents : durée (< 3 min n'est pas configurable), tags.</div>
+          <div class="fi-fix">Ajouter duration_max (champ numérique) et tag_contains. Ticket #180-30. Effort M.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ FINDINGS TABLE ════════════ -->
+<div class="ref-section" style="margin-top:64px">
+  <h2>Référentiel complet des findings</h2>
+  <p class="ref-desc">Tous les findings de l'audit UX code + test live @tobifilmsofficial · 7 juin 2026</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Sévérité</th>
+        <th>Écran</th>
+        <th>Description</th>
+        <th>Correction</th>
+        <th>Effort</th>
+        <th>Ticket</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="B1">
+        <td><span class="dot B" style="margin:0">B1</span></td>
+        <td style="color:#dc2626;font-weight:600">Bloquant</td>
+        <td>06 — RefRow</td>
+        <td>ALLOWED_TAGS (32 tags hardcodés) ≠ taxonomie Claude 18 axes / ~130 slugs. L'admin ne peut pas corriger les tags enrichis par Claude via le TagEditor.</td>
+        <td>Importer config/taxonomy.js dans TagEditor, remplacer la liste plate</td>
+        <td class="m">M</td>
+        <td class="ticket">T-05</td>
+      </tr>
+      <tr id="B2">
+        <td><span class="dot B" style="margin:0">B2</span></td>
+        <td style="color:#dc2626;font-weight:600">Bloquant</td>
+        <td>04 — Triage</td>
+        <td>phase est un état local de CurationPage. Navigation = reset à idle. Impossible de retrouver le lot en cours après avoir quitté la page. CONFIRMÉ LIVE.</td>
+        <td>Restaurer la session au chargement via GET sessions?status=RUNNING</td>
+        <td class="m">M</td>
+        <td class="ticket">#180-29</td>
+      </tr>
+      <tr id="B3">
+        <td><span class="dot B" style="margin:0">B3</span></td>
+        <td style="color:#dc2626;font-weight:600">Bloquant</td>
+        <td>04 — Triage</td>
+        <td>POST /api/v1/admin/search retourne {"error":"Erreur serveur"}. Échec silencieux — le grid reste inchangé, aucun message visible. CONFIRMÉ LIVE.</td>
+        <td>(1) Implémenter/corriger l'endpoint. (2) Afficher l'erreur visible</td>
+        <td class="m">M</td>
+        <td class="ticket">#180-31</td>
+      </tr>
+      <tr id="M1">
+        <td><span class="dot M" style="margin:0">M1</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>06 — RefRow</td>
+        <td>window.confirm() natif pour suppression d'un créateur. Dialog gris système, bloquant, hors charte dark cinema.</td>
+        <td>Confirmer inline sur la ligne — pattern identique au "Rejeter" dans TriageCard</td>
+        <td class="s">S</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="M2">
+        <td><span class="dot M" style="margin:0">M2</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>03 — Monitoring</td>
+        <td>setInterval(poll, 1000) — polling à 1s. Pour un scan de 60 refs, ~60 requêtes GET inutiles. Doc indique 2s.</td>
+        <td>Passer à 2000ms. Ajouter backoff exponentiel optionnel</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="M3">
+        <td><span class="dot M" style="margin:0">M3</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>02 — Form</td>
+        <td>Si startScan() échoue (500/réseau), setScanning(null) silencieusement. L'admin voit le bouton se dégriser sans explication.</td>
+        <td>Stocker l'erreur dans un state local, afficher sous le bouton</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="M4">
+        <td><span class="dot M" style="margin:0">M4</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>06 — RefRow</td>
+        <td>Modifications non sauvées (tags + section + statut) pas suffisamment visibles dans une table dense. Perte silencieuse possible.</td>
+        <td>Teinte de fond sur la tr quand isDirtyLocal=true (border-l-2 border-ink-muted)</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="M5">
+        <td><span class="dot M" style="margin:0">M5</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>06 — RefRow</td>
+        <td>ResultsTable charge toute la session. 200 refs = ~600 composants React contrôlés. Scroll laggy, FID élevé.</td>
+        <td>Pagination côté serveur (50/page) via GET sessions/:id?page=X</td>
+        <td class="m">M</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="M6">
+        <td><span class="dot M" style="margin:0">M6</span></td>
+        <td style="color:#ea580c;font-weight:600">Majeur</td>
+        <td>07 — Règles</td>
+        <td>FilterRulesPanel : 2 types seulement (keyword_title, channel_name). Manquent duration_max et tag_contains. CONFIRMÉ LIVE.</td>
+        <td>Ajouter duration_max (champ numérique en secondes) et tag_contains</td>
+        <td class="m">M</td>
+        <td class="ticket">#180-30</td>
+      </tr>
+      <tr id="C1">
+        <td><span class="dot C" style="margin:0">C1</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>01, 04 — Topbar</td>
+        <td>"Set Live" / "Make a change" — seuls labels anglais dans une interface intégralement française.</td>
+        <td>"Mettre en ligne" / "Aucun changement"</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C2">
+        <td><span class="dot C" style="margin:0">C2</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>04 — Triage</td>
+        <td>"Tout garder" et "Tout rejeter" — vérifier que le différentiel visuel est suffisamment lisible sur fond sombre.</td>
+        <td>Garder = primaire, Rejeter = secondaire. Contraste à valider</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C3">
+        <td><span class="dot C" style="margin:0">C3</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>05 — Cards</td>
+        <td>TagEditor : le dropdown de tags ne se ferme pas sur Escape. Utilisateurs clavier bloqués.</td>
+        <td>addEventListener('keydown', e => Escape → setOpen(false))</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C4">
+        <td><span class="dot C" style="margin:0">C4</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>05 — Cards</td>
+        <td>Boutons GARDER/REJETER sans aria-label contextualisé. Lecteur d'écran : "Garder, bouton" sans savoir de quelle vidéo.</td>
+        <td>aria-label="Garder — {r.title}" sur chaque bouton</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C5">
+        <td><span class="dot C" style="margin:0">C5</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>03 — Monitoring</td>
+        <td>MonitoringView : compteurs TROUVÉES/SAUVEGARDÉES mis à jour chaque seconde sans aria-live="polite".</td>
+        <td>Wrapper les compteurs dans &lt;div aria-live="polite" aria-atomic="true"&gt;</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C6">
+        <td><span class="dot C" style="margin:0">C6</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>04 — Triage</td>
+        <td>Placeholder NL search : "Recherche NL — ex: …" ne précise pas que la recherche est limitée au lot en cours.</td>
+        <td>"Filtrer ce lot — ex: …"</td>
+        <td class="xs">XS</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="C7">
+        <td><span class="dot C" style="margin:0">C7</span></td>
+        <td style="color:#ca8a04;font-weight:600">Cosmétique</td>
+        <td>02 — Form</td>
+        <td>Switch d'onglet Créateurs / Liens manuels : le form d'ajout en cours est réinitialisé.</td>
+        <td>Remonter l'état showForm + form dans CurationPage</td>
+        <td class="s">S</td>
+        <td class="ticket">—</td>
+      </tr>
+      <tr id="L1">
+        <td><span class="dot L" style="margin:0">L1</span></td>
+        <td style="color:#7c3aed;font-weight:600">Live</td>
+        <td>04 — Triage</td>
+        <td>Le compteur "8 À TRIER" scrolle hors viewport dès le 1er scroll vers les cards. L'admin perd le signal de complétude pendant le tri.</td>
+        <td>Rendre le compteur sticky (au-dessus de la NL search bar)</td>
+        <td class="xs">XS</td>
+        <td class="ticket">#180-29</td>
+      </tr>
+      <tr id="L2">
+        <td><span class="dot L" style="margin:0">L2</span></td>
+        <td style="color:#7c3aed;font-weight:600">Live</td>
+        <td>04 — Triage</td>
+        <td>Bouton FILTRER sans état de chargement. L'admin peut croire que son clic n'a pas été enregistré et recliquer.</td>
+        <td>setFiltering(true) → label "…" pendant l'appel async (pattern déjà en place sur SCRAPPER)</td>
+        <td class="xs">XS</td>
+        <td class="ticket">#180-31</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:32px;padding:20px 24px;background:#fff;border:1px solid #e4e4e0;border-radius:8px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">Récapitulatif</div>
+    <div style="display:flex;gap:32px;font-size:13px">
+      <div><span style="color:#dc2626;font-weight:700">3</span> Bloquants (B1·B2·B3)</div>
+      <div><span style="color:#ea580c;font-weight:700">6</span> Majeurs (M1–M6)</div>
+      <div><span style="color:#ca8a04;font-weight:700">7</span> Cosmétiques (C1–C7)</div>
+      <div><span style="color:#7c3aed;font-weight:700">2</span> Live (L1·L2)</div>
+      <div><span style="color:#16a34a;font-weight:700">13</span> Points forts (P1–P13)</div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:#888;line-height:1.5">
+      Happy path validé live sur @tobifilmsofficial · Session 578be935 · 8 refs scannées / 8 enrichies Claude / 1 GARDER / 1 REJETER / 6 restantes en TRIAGE
+    </div>
+  </div>
+</div>
+
+</div><!-- end .page -->
+</body>
+</html>

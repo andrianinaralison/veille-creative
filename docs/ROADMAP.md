@@ -1,8 +1,8 @@
 # Roadmap — 180 Degrés
 
 > **Source de vérité unique** pour le quoi/quand. Si `CLAUDE.md`, `PROJET.md` ou le backlog disent autre chose, c'est **ce fichier** qui fait foi.
-> Liés : [`WAY-OF-WORKING.md`](./WAY-OF-WORKING.md) · [`audit/AUDIT-2026-06-04.md`](./audit/AUDIT-2026-06-04.md) · [`audit/PLAN-RESTRUCTURATION.md`](./audit/PLAN-RESTRUCTURATION.md)
-> Révisée le : **4 juin 2026** (recadrage autour des 3 parcours).
+> Liés : [`WAY-OF-WORKING.md`](./WAY-OF-WORKING.md) · [`audit/AUDIT-2026-06-04.md`](./audit/AUDIT-2026-06-04.md) · [`audit/PLAN-RESTRUCTURATION.md`](./audit/PLAN-RESTRUCTURATION.md) · [`PRD_Ingestion_Espace.md`](./PRD_Ingestion_Espace.md)
+> Révisée le : **7 juin 2026** — Phase C active, jalons restructurés avec tickets 180-40→180-49.
 
 ---
 
@@ -14,117 +14,156 @@
 
 | | Parcours | Pour qui | En une phrase |
 |---|---|---|---|
-| 🔧 **Back** | Boucle de curation | Toi (admin) | Ajouter des `@youtube` → le moteur va chercher les vidéos → les qualifie → te les restitue pour check + enrichissement métadata manuel. |
+| 🔧 **Back** | Boucle de curation | Toi (admin) | Ajouter des `@youtube` (choix humain) → le moteur scanne → tu **tries** vite (garder/rejeter, règles persistantes, smart search) jusqu'à un **lot propre** → tu **qualifies** (tags/sections) sereinement. |
 | 🎬 **Front 1** | Veille quotidienne + Digest | Léa | Consulter sa veille créative au quotidien et recevoir un digest éditorial. |
 | 🎨 **Front 2** | Création d'un *treatment* client | Léa | Construire le doc créatif (références + intention) d'un projet pour le présenter à son client. |
 
 > Le parcours **back alimente** les deux parcours front : sans contenu qualifié, la veille et les treatments sont vides. D'où l'ordre ci-dessous.
-> 🔬 *À cadrer en session JTBD dédiée (plus tard)* : la cadence exacte du digest, et la définition précise du « treatment » (vs simple moodboard).
 
 ---
 
-## 🗺️ Les jalons, dans l'ordre
+## 🗺️ Vue d'ensemble des jalons
 
-| Jalon | Contenu | Cible | Critère de sortie |
+| Jalon | Contenu | Statut | Critère de sortie |
 |---|---|---|---|
-| **v0.4 — Structure propre** | Axe 1 + sécuriser la boucle back | Sem. 1-2 | Git/docs/arbo rangés, plus aucune route admin publique |
-| **v0.5 — Boucle back fiable** | 🔧 Parcours back production-grade | Sem. 3-5 | Ajout `@handle` → scan → qualif → review → métadata : robuste et testé |
-| **v0.6 — Veille + Digest** | 🎬 Parcours front 1 | Sem. 6-9 | Léa s'inscrit, consulte sa veille, reçoit un digest |
-| **v0.7 — Treatment client** | 🎨 Parcours front 2 | Sem. 10-14 | Léa crée et partage un treatment à partir des références |
+| **v0.4 — Structure propre** | Git · docs · arbo · sécu JWT | ✅ Done (2026-06-05) | Routes admin fermées, `main` protégé, CI verte |
+| **v0.5A — Dette qui sécurise** | Taxonomie · structured output · découpe service · zod | ✅ Done (2026-06-05) | `ingestion.service` découpé, qualif Claude fiable |
+| **v0.5B — Tri amont (3 paris)** | Lot+compteur · règles · smart search · UX cas non-noms | ✅ Done (2026-06-05) | Compteur → 0 = lot propre, règles persistent, search admin opérationnel |
+| **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟠 **En cours** | Parcours admin sans friction confirmé en test utilisabilité |
+| **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | ⬜ Next | Léa s'inscrit, consulte sa veille, reçoit son digest |
+| **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | ⬜ Later | Léa crée et partage un treatment à un client |
 
 ---
 
-## 🟢 NOW — v0.4 « Structure propre » (cette semaine + la suivante)
+## 🟠 NOW — v0.5C « UX audit ingestion admin » (sem. 7)
 
-> ⚠️ Aucune feature des parcours ne démarre tant que ce bloc n'est pas vert. On range le plancher avant de poser les meubles.
+> Issu de l'audit live `@tobifilmsofficial` (2026-06-07) + thread équipe produit (9 agents). 3 findings bloquants, 6 majeurs, 2 live. Deux sprints.
+> Prérequis pour entrer en v0.6 : parcours admin validé par un test utilisabilité (180-48).
 
-| # | Ticket | Pourquoi maintenant | Effort |
+### Sprint S — Indépendants, en cours (~14h)
+
+> Tous exécutables en parallèle. Démarrer par **180-41** (bloquant, le plus rapide à diagnostiquer).
+
+| Ticket | Finding | Quoi | Effort | Priorité |
+|---|---|---|---|---|
+| [**180-41**](https://linear.app/180degre/issue/180-41) | B3 🔴 | NL search admin : corriger `POST /admin/search` 500 | M | Urgent — bloquer le smart search admin rend P3 inopérant |
+| [**180-40**](https://linear.app/180degre/issue/180-40) | B2 🔴 | Session RUNNING perdue au refresh — restaurer le polling au montage | S | High |
+| [**180-42**](https://linear.app/180degre/issue/180-42) | L1/L2 🟣 | Sticky header `MonitoringView` + état chargement bouton FILTRER | S | Medium |
+| [**180-43**](https://linear.app/180degre/issue/180-43) | M2/M3 🟡 | Polling 5 s (au lieu de 2 s) + error handling réseau (3→10 erreurs consécutives) | S | Medium |
+| [**180-47**](https://linear.app/180degre/issue/180-47) | — | Médiathèque admin : accordéon tags YouTube fermé par défaut | XS | Medium — 20 min, embarquer avec 180-40 (même fichier) |
+
+**Sortie sprint S :** MonitoringView stable, smart search opérationnel, Médiathèque utilisable dès l'ouverture.
+
+### Sprint S+1 — Après wireframe Marie
+
+> 180-44 **bloque** les deux autres (TagEditor groupé est prérequis à la qualif sereine). Démarrer 180-45 et 180-46 en parallèle de Marie dès qu'elle livre le wireframe.
+
+| Ticket | Finding | Quoi | Effort | Dépend de |
+|---|---|---|---|---|
+| [**180-44**](https://linear.app/180degre/issue/180-44) | B1 🔴 | TagEditor : regrouper les tags par axe taxonomique 180° (18 axes) | M | Wireframe Marie (`@marie`) |
+| [**180-45**](https://linear.app/180degre/issue/180-45) | M1/M4 🟡 | Confirmation inline avant publication + dirty indicator `RefRow` | S | — |
+| [**180-46**](https://linear.app/180degre/issue/180-46) | M5/M6 🟡 | Pagination refs (50/page côté serveur) + `duration_max` dans FilterRules | M | — |
+
+**Sortie sprint S+1 :** qualif sans ambiguïté taxonomique, publication protégée, table refs performante.
+
+### Research & cosmétiques (en parallèle des deux sprints)
+
+| Ticket | Quoi | Assigné | Quand |
 |---|---|---|---|
-| 1 | **Nettoyer Git** (T-04) | Sans risque, remet de l'ordre tout de suite | S |
-| 2 | **Source de vérité unique** (T-03) | Stoppe la dérive des docs (resync digest, etc.) | S |
-| 3 | **Ranger l'arborescence** (D13) | Sortir HTML/CSV/legacy du chemin, `assets/` + `archive/` | S |
-| 4 | **Sécuriser admin + ingestion** (T-01) | La boucle back est ta surface critique : protéger quota YouTube + budget Claude | M |
+| [**180-48**](https://linear.app/180degre/issue/180-48) | Guide + session test utilisabilité (45 min) — valide la sortie de v0.5C | Camille | Avant beta v0.6 |
+| C1→C7 (pas de ticket dédié) | Labels FR, Escape TagEditor, aria-labels, placeholder search, tab form | Andri | Opportuniste — embarquer dans les PR adjacentes |
 
-- **Git** : `*_Save`/`ToImprove` → tags, supprimer branches mortes, protéger `main`, `CONTRIBUTING.md`.
-- **Docs** : cette roadmap fait foi ; `CLAUDE.md`/`PROJET.md` pointent vers elle ; **resynchroniser le statut Digest** (n'est plus « abandonné ») ; archiver les redondances.
-- **Arbo** : `assets/` (deck, architecture, CSV, thumbnails), `docs/archive/` (legacy, lean canvas ×3, sessions).
-- **Sécu** : middleware `requireAdmin` (JWT) + login admin + `.env.example` racine + fail-fast + rate-limit `/ingestion`.
-
-**✅ Sortie** : base de travail propre et fermée au public. Reprise en main effective.
+**✅ Sortie v0.5C** : test utilisabilité valide que l'admin peut importer → monitorer → trier → qualifier en < 15 min sans confusion ni perte de contexte.
 
 ---
 
-## 🟡 NEXT — v0.5 « Boucle back fiable » (sem. 3-5) · 🔧 Parcours back
+## 🔵 NEXT — v0.6 « Veille quotidienne + Digest » (sem. 8-11) · 🎬 Parcours front 1
 
-La boucle existe déjà fonctionnellement (Creator Scan + scoring + enrichissement + review). Objectif ici : la rendre **fiable, testée et agréable à opérer** — c'est ton outil de travail quotidien.
+> **Prérequis d'entrée :** v0.5C Done (test utilisabilité passé) **+ 180-49** livré (sinon la data pipeline alimente le feed avec des tags YouTube bruts mélangés à la taxonomie).
+
+### Prérequis technique (faire en premier, avant le reste de v0.6)
+
+| Ticket | Quoi | Effort | Pourquoi maintenant |
+|---|---|---|---|
+| [**180-49**](https://linear.app/180degre/issue/180-49) | Séparer `tags[]` YouTube et `taxonomy` Claude dans schéma Prisma + UI | M | Sans ça, le feed Léa et le smart search public héritent du mélange YouTube/éditorial — même bug que B1, côté utilisateur |
+
+> 180-49 dépend de 180-44 (B1 TagEditor) — les deux forment le fix complet de la cause racine.
+
+### Features v0.6
 
 | # | Ticket | Quoi | Effort |
 |---|---|---|---|
-| 5 | **Taxonomie source unique** (T-05) | `config/taxonomy.js` importé partout (fin du copier-collé) | S |
-| 6 | **Fiabiliser la qualif Claude** (T-07) | Structured output au lieu du parsing JSON regex | S |
-| 7 | **Découper `ingestion.service.js`** (T-06) | `youtube.client` / `enrichment.service` / `orchestrator` (+ ADR) | L |
-| 8 | **Validation + erreurs + logs** (T-08) | zod, middleware d'erreur, logger structuré | M |
-| 9 | **Polir la restitution / check** | UX du tableau de review + enrichissement métadata manuel (le moment où *tu* valides) | M |
-| 10 | **Tests du chemin critique back** | Résolution `@handle`, filtre > 3 min, qualif, 401 sur routes protégées + CI | M |
+| 11 | **Auth utilisateurs** (180-11) | signup / login / me — réutilise le socle JWT T-01 | M |
+| 12 | **Smart search réel** (180-12) | Brancher `/search` sur vraies données (`results: []` aujourd'hui) | M |
+| 13 | **Feed de veille quotidienne** (180-13) | Page d'accueil Léa sur API, fin des mocks Dashboard | M |
+| 14 | **Digest — modèle éditorial** (180-19) | Sélection hebdo in-app (s'appuie sur le backoffice qualifié) | M |
+| 15 | **Digest — envoi email** (180-20, Resend) | Livraison + préférences d'abonnement | M |
+| 16 | **Couper le code zombie** (T-10) | Retirer Surprises (abandonné), aligner Digest sur le vrai modèle | S |
 
-**✅ Sortie** : tu ajoutes un `@handle`, le moteur te ramène des vidéos qualifiées que tu checks et enrichis sans friction. Le réservoir de contenu est fiable.
+**✅ Sortie v0.6** : Léa s'inscrit, ouvre l'app pour sa veille du jour, reçoit son digest. Premier parcours front vivant.
 
 ---
 
-## 🔵 NEXT+ — v0.6 « Veille quotidienne + Digest » (sem. 6-9) · 🎬 Parcours front 1
+## 🟣 LATER — v0.7 « Treatment client » (sem. 12-16) · 🎨 Parcours front 2
+
+> Précédé d'une **spec + session JTBD** (180-24) : qu'est-ce qu'un bon treatment pour Léa ? que met-elle dedans ? comment le client le reçoit ?
 
 | # | Ticket | Quoi | Effort |
 |---|---|---|---|
-| 11 | **Auth utilisateurs** | signup / login / me (réutilise le socle JWT de T-01) | M |
-| 12 | **Smart search réel** (T-09) | Brancher `/search` sur les vraies données (`results: []` aujourd'hui) | M |
-| 13 | **Feed de veille quotidienne** | Page d'accueil Léa = sa veille du jour, sur API (fin des mocks Dashboard) | M |
-| 14 | **Digest — modèle éditorial** | Sélection hebdo (s'appuie sur le backoffice), vue in-app | M |
-| 15 | **Digest — envoi email** (Resend) | Livraison + préférences d'abonnement | M |
-| 16 | **Couper le code zombie** (T-10) | Retirer Surprises (abandonné) ; aligner Digest sur le vrai modèle | S |
+| — | **Spec + JTBD treatment** (180-24) | Définir précisément le treatment avant d'écrire une ligne de code | S |
+| 17 | **Projets / treatments — CRUD** (180-21) | Créer un projet client, y rattacher des références | M |
+| 18 | **Builder de treatment** (180-22) | Éditeur moodboard enrichi (références + intention créative) | L |
+| 19 | **Export & partage** (180-23) | PDF + lien public → débloque la north star « partagés ≥ 60 % dans les 48h » | M |
+| — | **Tests + polish v0.7** (180-27) | Parcours treatment end-to-end, fix mineurs | S |
 
-**✅ Sortie** : Léa s'inscrit, ouvre l'app pour sa veille du jour, et reçoit son digest. Premier parcours front vivant.
-
----
-
-## 🟣 LATER — v0.7 « Treatment client » (sem. 10-14) · 🎨 Parcours front 2
-
-> Précédé d'une **spec + session JTBD** (qu'est-ce qu'un bon treatment pour Léa ? que met-elle dedans ? comment le client le reçoit ?).
-
-| # | Ticket | Quoi | Effort |
-|---|---|---|---|
-| 17 | **Projets / treatments — CRUD** | Créer un projet client, y rattacher des références | M |
-| 18 | **Builder de treatment** | L'éditeur (moodboard enrichi : références + intention créative) | L |
-| 19 | **Export & partage** | PDF + lien de partage client → débloque la north star « partagés ≥ 60 % » | M |
+**✅ Sortie v0.7** : Léa crée un treatment complet et le partage à son client via lien.
 
 ---
 
-## 🔭 Backlog post-MVP (pas avant validation des parcours)
+## 🔭 Backlog post-MVP
+
 - Scan multi-sources : **Vimeo** (API ouverte) → **site web** (scraping embeds) → **Instagram** (décision API).
-- Agents de dev custom (review PR vs DoD, curation semi-autonome) — *réévaluer une fois v0.5 verte*.
+- Agents de dev custom (review PR vs DoD, curation semi-autonome).
 - Instrumentation métriques curation (ratio publié/rejeté, coût Claude/session).
 - Trancher BullMQ/Redis : implémenter ou retirer du stack documenté.
+- **180-26** — Checklist bêta privée Léa (compte prod, 20 refs qualifiées, monitoring Railway).
+- **180-25** — Tests + polish v0.6 (parcours Léa end-to-end, mobile 375px).
 
 ---
 
-## 📅 Vue calendrier (cible solo, à ajuster à ton temps réel — l'ordre ne bouge pas)
+## 📅 Vue calendrier
 
 ```
-Sem. 1-2   ████ v0.4  Structure propre + sécu back
-Sem. 3-5   ████ v0.5  Boucle back fiable           🔧 → réservoir de contenu
-Sem. 6-9   ████ v0.6  Veille + Digest              🎬 → parcours front 1
-Sem.10-14  ████ v0.7  Treatment client             🎨 → parcours front 2
+Sem. 1-2   ████ v0.4   ✅ Structure propre + sécu JWT
+Sem. 3-4   ████ v0.5A  ✅ Dette · taxonomie · structured output · découpe service
+Sem. 5-6   ████ v0.5B  ✅ Tri amont · lot+compteur · règles · smart search back-office
+Sem. 7     ██   v0.5C  🟠 UX audit · Sprint S (180-40/41/42/43/47) + wireframe Marie
+Sem. 8     ██   v0.5C  ⬜  Sprint S+1 (180-44/45/46) + test utilisabilité Camille (180-48)
+Sem. 8     ─    v0.6↗  ⬜  180-49 prérequis taxonomie (peut démarrer en parallèle de S+1)
+Sem. 9-12  ████ v0.6   ⬜  Auth Léa · feed · digest · email Resend
+Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export PDF · partage
 ```
 
 ---
 
 ## ▶️ Par où commencer maintenant
-**v0.4, ticket 1 : nettoyer Git.** Rapide, sans risque, range tout de suite. Puis sécuriser la boucle back (ticket 4).
 
-> Dis « go » et j'enchaîne le ticket 1 : branches `*_Save` → tags, suppression des mortes, `CONTRIBUTING.md`, protection `main`.
+**On est en v0.5C, sprint S.** Ordre recommandé :
+
+1. **180-41** (B3 — NL search 500) — ouvrir `search.route.js` + logs Railway → diagnostic < 30 min
+2. **180-40 + 180-47** en même PR — les deux touchent `CurationPage` / `ReferencesAdminPage`, XS+S, embarquables ensemble
+3. **180-42 + 180-43** — CSS sticky + intervalle polling, même PR ou deux commits atomiques
+4. Pendant ce temps : **Marie livre le wireframe TagEditor** → débloquer 180-44 → sprint S+1
 
 ---
 
 ## ✅ DONE (archive datée)
+
+- **2026-06-07** — Audit UX live `@tobifilmsofficial` + thread équipe produit (9 agents) + v0.5C lancée : 10 tickets 180-40→180-49 créés dans Linear.
+- **2026-06-05** — v0.5B close : P1 lot+compteur (180-29), P2 règles (180-30), P3 smart search (180-31), dette totalFiltered (180-32), bugs polling 429 (180-33) + 0 refs (180-34), UX cas non nominaux (180-35→180-39 — tous Done).
+- **2026-06-05** — v0.5A close : T-05 taxonomie, T-06 découpe service, T-07 structured output, T-08 zod+logs.
+- **2026-06-05** — Disco parcours d'ingestion (entretien + benchmark) → reformulation v0.5 + [`PRD_Ingestion_Espace.md`](./PRD_Ingestion_Espace.md).
+- **2026-06-05** — v0.4 close : T-04 (git), T-03 (docs), D13 (arbo), T-01 (sécu JWT), T-02 (CI Vitest).
 - **2026-06-04** — Audit transverse + Way of Working + plan de restructuration + recadrage 3 parcours.
 - **2026-06-02** — v0.3 : backoffice curation (ingestion tri-modale, qualif Claude, review DRAFT/PUBLISHED).
 - **2026-06-04** — Migrations RLS + partial indexes, docs architecture.

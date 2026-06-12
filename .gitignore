@@ -36,3 +36,4 @@ assets/*.pptx
 assets/*.docx
 assets/*.pdf
 assets/*.csv
+*.pptx

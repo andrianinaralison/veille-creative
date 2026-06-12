@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thread équipe — Audit ingestion admin · 180 Degrés</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f6f6f3;--surface:#fff;--border:#e8e8e3;--ink:#1a1a18;--muted:#888880;--faint:#c8c8c0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* header */
+.page-header{background:#fff;border-bottom:1px solid var(--border);padding:24px 40px;display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.thread-title{font-size:20px;font-weight:600;letter-spacing:-0.01em}
+.thread-meta{font-family:'SF Mono',Menlo,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;display:flex;gap:16px;flex-wrap:wrap}
+.participants{margin-left:auto;display:flex;gap:-6px;align-items:center}
+
+/* avatars */
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid #fff}
+.av-sm{width:26px;height:26px;font-size:9px}
+.av-sophie{background:#7c3aed}
+.av-camille{background:#0891b2}
+.av-marie{background:#db2777}
+.av-alex{background:#d97706}
+.av-thomas{background:#16a34a}
+.av-leo{background:#dc2626}
+.av-sam{background:#4f46e5}
+.av-jordan{background:#0d9488}
+.av-antoine{background:#374151}
+
+/* layout */
+.container{max-width:860px;margin:0 auto;padding:0 40px 80px}
+
+/* sections */
+.section-divider{display:flex;align-items:center;gap:14px;margin:36px 0 20px;font-family:'SF Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--faint)}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* message */
+.msg{display:flex;gap:12px;margin-bottom:4px;padding:10px 0}
+.msg-body{flex:1;min-width:0}
+.msg-header{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.msg-name{font-weight:600;font-size:13px}
+.msg-role{font-size:10px;font-family:'SF Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;padding:1px 6px;border-radius:3px;font-weight:500}
+.role-pm{background:#ede9fe;color:#7c3aed}
+.role-research{background:#e0f2fe;color:#0369a1}
+.role-design{background:#fce7f3;color:#be185d}
+.role-tech{background:#fef3c7;color:#b45309}
+.role-dev{background:#dcfce7;color:#15803d}
+.role-ops{background:#ccfbf1;color:#0f766e}
+.role-hoe{background:#f1f5f9;color:#334155}
+.msg-time{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.msg-content{font-size:13.5px;line-height:1.65;color:#222}
+.msg-content p{margin-bottom:8px}
+.msg-content p:last-child{margin-bottom:0}
+.msg-content ul{padding-left:18px;margin:6px 0}
+.msg-content li{margin-bottom:3px}
+.msg-content code{font-family:'SF Mono',Menlo,monospace;font-size:11px;background:#f0f0ec;padding:1px 5px;border-radius:3px;color:#555}
+.msg-content blockquote{border-left:3px solid var(--border);padding-left:12px;color:var(--muted);font-style:italic;margin:6px 0}
+
+/* findings badges */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:12px;font-size:11px;font-weight:600;font-family:'SF Mono',monospace;vertical-align:middle;margin:0 1px}
+.tag-b{background:#fee2e2;color:#dc2626}
+.tag-m{background:#ffedd5;color:#ea580c}
+.tag-c{background:#fef9c3;color:#854d0e}
+.tag-p{background:#dcfce7;color:#16a34a}
+.tag-l{background:#ede9fe;color:#7c3aed}
+
+/* reactions */
+.reactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.reaction{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid var(--border);border-radius:12px;font-size:11px;cursor:default;background:var(--surface)}
+.reaction:hover{background:#f5f5f2}
+
+/* ticket pill */
+.ticket{display:inline-flex;align-items:center;gap:5px;background:#f5f5f2;border:1px solid var(--border);padding:2px 9px;border-radius:4px;font-family:'SF Mono',monospace;font-size:10px;color:#555;vertical-align:middle;margin:1px}
+.ticket-new{background:#ede9fe;border-color:#c4b5fd;color:#7c3aed}
+.ticket-exists{background:#dcfce7;border-color:#bbf7d0;color:#15803d}
+
+/* decision box */
+.decision{background:#fff;border:1px solid var(--border);border-left:3px solid #7c3aed;padding:12px 16px;margin:10px 0;border-radius:0 6px 6px 0}
+.decision-label{font-family:'SF Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#7c3aed;margin-bottom:6px;font-weight:700}
+
+/* sprint table */
+.sprint-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+.sprint-table th{font-family:'SF Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.sprint-table td{padding:7px 10px;border-bottom:1px solid #f5f5f2;vertical-align:middle}
+.sprint-table tr:last-child td{border:none}
+.sprint-table tr:hover td{background:#fafaf8}
+
+/* reply indent */
+.thread-reply{margin-left:46px;border-left:2px solid var(--border);padding-left:16px}
+
+/* sticky bar */
+.sticky-nav{position:sticky;top:0;background:rgba(246,246,243,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:8px 40px;display:flex;align-items:center;gap:16px;z-index:100;font-size:12px;color:var(--muted)}
+.nav-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-family:'SF Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="thread-title">Audit ingestion admin — Résultats & plan d'action</div>
+    <div class="thread-meta">
+      <span>180 Degrés · Équipe produit</span>
+      <span>7 juin 2026</span>
+      <span>Session test @tobifilmsofficial</span>
+      <span>3 bloquants · 6 majeurs · 7 cosmétiques</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:-4px;margin-left:auto;align-items:center">
+    <div class="av av-sophie" title="Sophie — PM">S</div>
+    <div class="av av-camille" title="Camille — Research" style="margin-left:-8px">C</div>
+    <div class="av av-marie" title="Marie — Designer" style="margin-left:-8px">M</div>
+    <div class="av av-alex" title="Alex — Tech Lead" style="margin-left:-8px">A</div>
+    <div class="av av-thomas" title="Thomas — Frontend" style="margin-left:-8px">T</div>
+    <div class="av av-leo" title="Léo — Backend" style="margin-left:-8px">L</div>
+    <div class="av av-sam" title="Sam — Full-stack" style="margin-left:-8px">S</div>
+    <div class="av av-jordan" title="Jordan — Product Ops" style="margin-left:-8px">J</div>
+    <div class="av av-antoine" title="Antoine — HOE" style="margin-left:-8px">A</div>
+  </div>
+</div>
+
+<div class="sticky-nav">
+  <span>Aller à :</span>
+  <a href="#s1" class="nav-pill">📋 Ouverture</a>
+  <a href="#s2" class="nav-pill">💼 PM · Sophie</a>
+  <a href="#s3" class="nav-pill">🔍 Research · Camille</a>
+  <a href="#s4" class="nav-pill">🎨 Design · Marie</a>
+  <a href="#s5" class="nav-pill">⚙️ Tech · Alex</a>
+  <a href="#s6" class="nav-pill">🛠 Devs</a>
+  <a href="#s7" class="nav-pill">🏗 HOE · Antoine</a>
+  <a href="#s9" class="nav-pill">🏷 Médiathèque tags</a>
+  <a href="#s8" class="nav-pill">✅ Décisions</a>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════ SECTION 1 — OUVERTURE ═══ -->
+<div class="section-divider" id="s1">Ouverture du thread · Jordan</div>
+
+<div class="msg">
+  <div class="av av-jordan">J</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Jordan</span>
+      <span class="msg-role role-ops">Product Ops</span>
+      <span class="msg-time">09:14</span>
+    </div>
+    <div class="msg-content">
+      <p>👋 Salut la team. On vient de boucler l'audit complet du parcours d'ingestion admin — 2 sessions : revue de code + test live sur <code>@tobifilmsofficial</code>. Je lance ce thread pour qu'on s'aligne collectivement avant de passer aux tickets.</p>
+      <p><strong>Livrables disponibles :</strong></p>
+      <ul>
+        <li>📄 <code>docs/audit-ux-ingestion-2026-06.md</code> — findings complets avec code source</li>
+        <li>🗺 <code>docs/userflow-ingestion-annotated.html</code> — user flow annoté 7 écrans (ouvrir dans Chrome)</li>
+      </ul>
+      <p><strong>Résumé en 30 secondes :</strong> le happy path fonctionne — form → scan → triage → garder/rejeter. Mais 3 bloquants critiques rendent le parcours cassé dès qu'on sort des rails : <span class="tag tag-b">B2</span> navigation = perte de session TRIAGE, <span class="tag tag-b">B3</span> NL search silencieusement cassée, <span class="tag tag-b">B1</span> TagEditor déconnecté de la taxonomie Claude.</p>
+      <p>Je vous demande à chacun de réagir sur votre périmètre avant 11h pour qu'on sorte un plan sprint en fin de matinée.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">👀 5</span>
+      <span class="reaction">🔥 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 2 — PM ═══ -->
+<div class="section-divider" id="s2">Vue PM · Sophie</div>
+
+<div class="msg">
+  <div class="av av-sophie">S</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Sophie</span>
+      <span class="msg-role role-pm">Product Manager</span>
+      <span class="msg-time">09:31</span>
+    </div>
+    <div class="msg-content">
+      <p>Merci Jordan. J'ai lu les deux docs ce matin. Mon angle PM :</p>
+      <p><strong>Ce qui me préoccupe le plus, c'est B2.</strong> La perte de session TRIAGE n'est pas qu'un bug UX — c'est un risque de donnée. Si Andri navigue accidentellement en dehors du TRIAGE, les 6-8 refs qui attendent ne sont plus accessibles <em>visuellement</em> même si elles existent en base. On a de la chance qu'elles ne soient pas perdues en DB, mais côté expérience c'est comme si elles l'étaient. Ça va se produire à chaque session d'ingestion un peu longue.</p>
+      <p><strong>B3 me frustre</strong> parce qu'on a fait l'effort de brancher Claude pour le smart search — et actuellement cette feature n'existe pas dans les faits. Le endpoint plante silencieusement. Aucune valeur livrée.</p>
+      <p><strong>Sur la priorisation globale,</strong> je propose :</p>
+      <ul>
+        <li>🔴 <strong>Sprint en cours</strong> : B2 + B3 + L1 + L2 (les 2 live findings sont XS, on les embarque)</li>
+        <li>🟠 <strong>Sprint suivant</strong> : B1 + M1 + M4 + M6</li>
+        <li>🟡 <strong>Backlog</strong> : C1–C7 + M2 + M3 + M5</li>
+      </ul>
+      <p>Alex, tu peux valider les efforts avant qu'on commite ça ? Et Camille, ton regard research sur B2 m'intéresse — est-ce qu'on a des signaux utilisateurs sur ce point ?</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">✅ 4</span>
+      <span class="reaction">💯 2</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 3 — RESEARCH ═══ -->
+<div class="section-divider" id="s3">Vue Research · Camille</div>
+
+<div class="msg">
+  <div class="av av-camille">C</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Camille</span>
+      <span class="msg-role role-research">UX Research</span>
+      <span class="msg-time">09:48</span>
+    </div>
+    <div class="msg-content">
+      <p>Sophie — sur B2, oui. Dans la session discovery qu'on a faite avec Andri, un des verbatims les plus forts était <em>"je perds le fil quand je bascule entre les onglets"</em>. B2 est exactement ça : l'état de session TRIAGE n'est pas persisté, donc dès qu'il navigue pour vérifier quelque chose dans /références, retour à zéro. C'est un pattern de <strong>coût mental élevé</strong> — l'admin doit se souvenir lui-même où il en est.</p>
+      <p>Ce que l'audit live révèle de nouveau :</p>
+      <ul>
+        <li><span class="tag tag-l">L1</span> Le compteur "8 À TRIER" qui scrolle hors vue est une conséquence directe du même problème de contexte perdu — même <em>dans</em> la page, l'admin perd le signal de progression. C'est cohérent avec le thème "manque de repères d'état".</li>
+        <li><span class="tag tag-b">B3</span> La recherche NL cassée est doublement problématique : on a vendu ce feature comme différenciant ("tu décris ce que tu cherches en langage naturel"). Si ça échoue silencieusement dès le 1er essai, on casse la confiance dans l'outil Claude-powered.</li>
+      </ul>
+      <p><strong>Recommandation research :</strong> avant de lancer la v0.6 beta, prévoir une session de test d'utilisabilité de 45 min sur le parcours d'ingestion avec un vrai vidéaste qui aurait le rôle d'admin (Andri ou quelqu'un de proche). Les findings code sont solides mais il manque les données comportementales — combien de temps on perd sur un TRIAGE type, où sont les vraies frictions micro.</p>
+      <p>Je peux préparer le guide d'entretien si on valide ça.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🎯 3</span>
+      <span class="reaction">👏 2</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 4 — DESIGN ═══ -->
+<div class="section-divider" id="s4">Vue Design · Marie</div>
+
+<div class="msg">
+  <div class="av av-marie">M</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Marie</span>
+      <span class="msg-role role-design">Product Designer</span>
+      <span class="msg-time">10:02</span>
+    </div>
+    <div class="msg-content">
+      <p>J'ai parcouru le user flow annoté — franchement beau travail de documentation, ça rend les findings très concrets.</p>
+      <p><strong>Mes remarques design par ordre de priorité :</strong></p>
+      <p><strong>B2 — solution proposée</strong> : deux choses à faire conjointement. (1) Restauration de session au load via <code>GET sessions?status=RUNNING</code> — côté code. (2) <strong>Indicateur visuel permanent dans le nav</strong> : quand une session TRIAGE est active, le point pulsant dans "Curation" devrait afficher le compteur restant — ex: <code>Curation ● 6</code>. Comme ça même si l'admin navigue ailleurs, il voit toujours qu'il a 6 refs à trier. Effort design : XS (juste un badge sur le nav item).</p>
+      <p><strong>L1 — compteur sticky</strong> : je veux juste confirmer que la solution n'est pas simplement de le rendre sticky, mais de le mettre dans un <strong>sticky header qui inclut aussi la NL search et les bulk actions</strong>. Sinon le compteur sticky seul va se retrouver flottant bizarrement. En un seul bloc sticky, on règle L1 + L2 (le FILTRER sans loading) + la hiérarchie des bulk actions C2, tout d'un coup. Thomas, c'est faisable en un composant ?</p>
+      <p><strong>B1 — TagEditor</strong> : c'est le finding qui me tient le plus à cœur d'un point de vue design system. On a 18 axes × ~130 slugs en taxonomie Claude, et le picker affiche 32 tags génériques. La solution n'est pas juste d'importer la liste — il faut <strong>grouper par axe</strong> (Esthétique / Technique / Sujet / Tonalité / Contexte...) sinon 130 tags à plat dans un dropdown c'est inutilisable. Je prépare un wireframe du TagEditor groupé ce soir.</p>
+      <p><strong>C1 — labels anglais</strong> : petite chose mais "Set Live" et "Make a change" dans une interface FR ça fait vraiment tache. "Mettre en ligne" / "En attente" — 5 min de fix, on le met dans n'importe quel sprint.</p>
+      <p><strong>M1 — window.confirm()** :</strong> window.confirm sur fond dark cinema, ça fait très 2010. Je veux proposer un pattern de confirmation inline qu'on pourrait réutiliser partout (suppression, rejet en masse). Je le documente dans le design system en même temps que le TagEditor.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🔥 5</span>
+      <span class="reaction">💡 3</span>
+      <span class="reaction">👍 4</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 5 — TECH LEAD ═══ -->
+<div class="section-divider" id="s5">Vue Tech Lead · Alex</div>
+
+<div class="msg">
+  <div class="av av-alex">A</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Alex</span>
+      <span class="msg-role role-tech">Tech Lead</span>
+      <span class="msg-time">10:18</span>
+    </div>
+    <div class="msg-content">
+      <p>OK, j'ai lu l'audit en détail. Mes estimations techniques (en heures dev, hors tests) :</p>
+
+      <table class="sprint-table">
+        <thead>
+          <tr><th>Finding</th><th>Fichier(s) touchés</th><th>Complexité</th><th>Heures</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="tag tag-b">B2</span> Session restore</td><td><code>CurationPage.jsx</code> + <code>AdminLayout.jsx</code></td><td>M</td><td>3–4h</td></tr>
+          <tr><td><span class="tag tag-b">B3</span> NL search endpoint</td><td><code>search.route.js</code> + <code>search.service.js</code></td><td>M</td><td>4–6h</td></tr>
+          <tr><td><span class="tag tag-b">B1</span> TagEditor taxonomy</td><td><code>CurationPage.jsx</code> + <code>config/taxonomy.js</code></td><td>M</td><td>3–4h</td></tr>
+          <tr><td><span class="tag tag-l">L1</span>+<span class="tag tag-l">L2</span> Sticky header</td><td><code>CurationPage.jsx</code> (TriageView)</td><td>XS</td><td>1–2h</td></tr>
+          <tr><td><span class="tag tag-m">M1</span> Confirm inline</td><td><code>CurationPage.jsx</code></td><td>XS</td><td>1h</td></tr>
+          <tr><td><span class="tag tag-m">M4</span> Dirty indicator</td><td><code>CurationPage.jsx</code> (RefRow)</td><td>XS</td><td>1h</td></tr>
+          <tr><td><span class="tag tag-m">M6</span> FilterRules types</td><td><code>CurationPage.jsx</code> + backend</td><td>S–M</td><td>2–3h</td></tr>
+          <tr><td><span class="tag tag-m">M2</span> Polling 2s</td><td><code>CurationPage.jsx</code></td><td>XS</td><td>15 min</td></tr>
+          <tr><td><span class="tag tag-m">M3</span> startScan error</td><td><code>CurationPage.jsx</code></td><td>XS</td><td>30 min</td></tr>
+          <tr><td><span class="tag tag-c">C1–C7</span> (tous)</td><td>Divers</td><td>XS</td><td>3–4h total</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Point d'attention sur B3 :</strong> avant d'estimer correctement, il faut comprendre pourquoi <code>POST /api/v1/admin/search</code> retourne 500. Deux scénarios : (a) l'endpoint n'est pas implémenté du tout — dans ce cas c'est 4h de dev côté service + prompt engineering, (b) il est implémenté mais le context de session n'est pas passé correctement — dans ce cas c'est 1–2h de debug. Léo, tu peux checker ça en premier ?</p>
+      <p><strong>Point d'attention sur B1 :</strong> Marie a raison sur le groupage par axe. Le risque c'est qu'on livre un TagEditor avec 130 tags non groupés et que c'est pire qu'avant. Sam, quand tu prends B1, attends le wireframe de Marie avant de coder.</p>
+      <p><strong>Concernant M5 (pagination) :</strong> je le monte en priorité vs Sophie. Sans pagination, dès qu'on a 200+ refs dans une session, le composant RefRow va ramer sérieusement. Ça devrait être dans le sprint suivant au plus tard, pas en backlog.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🙏 3</span>
+      <span class="reaction">✅ 2</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 6 — DEVS ═══ -->
+<div class="section-divider" id="s6">Devs · Thomas · Léo · Sam</div>
+
+<div class="msg">
+  <div class="av av-thomas">T</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Thomas</span>
+      <span class="msg-role role-dev">Frontend Dev</span>
+      <span class="msg-time">10:33</span>
+    </div>
+    <div class="msg-content">
+      <p>Marie — oui, le sticky header tout-en-un est la bonne approche. Je confirme c'est faisable proprement. La structure que j'envisage :</p>
+      <p><code>TriageView</code> → refactoring en deux zones : <code>&lt;TriageStickyHeader /&gt;</code> (compteur + NL search + bulk actions + état de chargement FILTRER) + <code>&lt;TriageGrid /&gt;</code> (les cards). Le sticky header se comporte comme une toolbar persistante. Ça règle L1, L2, C2 d'un coup.</p>
+      <p><strong>Sur B2</strong> (state navigation) — j'ai regardé <code>CurationPage.jsx</code> : <code>phase</code> est bien un état local React. La restauration se fait en 2 étapes :</p>
+      <ul>
+        <li><code>useEffect</code> au mount : <code>GET /api/v1/ingestion/sessions?status=RUNNING</code> → si session trouvée, <code>setPhase('triage')</code> + <code>setCurrentSession(session)</code></li>
+        <li>AdminLayout fait déjà ce poll toutes les 30s — on peut juste réutiliser ce signal au lieu de dupliquer l'appel</li>
+      </ul>
+      <p>Je prends <span class="ticket ticket-new">#B2</span> et <span class="ticket ticket-new">#L1/L2</span>. Je peux commencer aujourd'hui.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">💪 3</span>
+    </div>
+  </div>
+</div>
+
+<div class="msg" style="margin-top:16px">
+  <div class="av av-leo">L</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Léo</span>
+      <span class="msg-role role-dev">Backend Dev</span>
+      <span class="msg-time">10:41</span>
+    </div>
+    <div class="msg-content">
+      <p>Alex — j'ai checké <code>search.route.js</code>. C'est le scénario (a) : l'endpoint existe en tant que route mais le handler appelle <code>searchService.searchReferences()</code> qui n'est pas implémenté — il y a juste un <code>return { results: [] }</code> commenté et en dessous un throw non catchable. D'où le 500.</p>
+      <p>L'implémentation correcte :</p>
+      <ul>
+        <li>Parser la query NL via Claude API (on a déjà <code>search.service.js</code> pour le smart search front — adapter le prompt pour le contexte admin/session)</li>
+        <li>Traduire en filtres Prisma : <code>WHERE sessionId = X AND (title ILIKE % OR tags @&gt; %)</code></li>
+        <li>Retourner les IDs des refs qui matchent → le frontend filtre le grid</li>
+      </ul>
+      <p>Estimation réaliste : 5h dev + 1h prompt engineering + tests. Je prends <span class="ticket ticket-new">#B3</span>.</p>
+      <p>En parallèle je règle <span class="tag tag-m">M2</span> (polling 1s → 2s) et <span class="tag tag-m">M3</span> (error handling startScan) ce soir — c'est 45 min en tout.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🔍 2</span>
+      <span class="reaction">✅ 3</span>
+    </div>
+  </div>
+</div>
+
+<div class="msg" style="margin-top:16px">
+  <div class="av av-sam">S</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Sam</span>
+      <span class="msg-role role-dev">Full-stack Dev</span>
+      <span class="msg-time">10:52</span>
+    </div>
+    <div class="msg-content">
+      <p>Alex, Marie — compris pour B1. J'attends le wireframe TagEditor groupé avant de toucher quoi que ce soit. Par contre je peux préparer la structure de données dès maintenant :</p>
+      <ul>
+        <li>Lire <code>taxonomy.js</code> (ou l'équivalent actuel) pour comprendre la structure des 18 axes</li>
+        <li>Préparer le mapper <code>slugToAxisGroup(slug)</code> pour le groupage</li>
+        <li>Pas de rendu UI avant le wireframe validé</li>
+      </ul>
+      <p>Je prends aussi <span class="tag tag-m">M6</span> (FilterRulesPanel — ajout <code>duration_max</code>). C'est front + back donc c'est mon périmètre naturel. Côté back : ajouter le champ dans le schema Prisma <code>FilterRule</code> et mettre à jour le service de filtrage. Côté front : nouveau type de règle dans le panel avec un champ numérique (secondes). 2–3h.</p>
+      <p>Question pour Alex : est-ce que <code>duration_max</code> doit s'appliquer <em>au scan YouTube</em> (filtrer avant ingestion) ou <em>au grid TRIAGE</em> (filtrer ce qui est déjà en base) ? Les deux ont des implications différentes côté back.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🤔 2</span>
+    </div>
+  </div>
+</div>
+
+<div class="thread-reply">
+  <div class="msg">
+    <div class="av av-alex av-sm">A</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Alex</span>
+        <span class="msg-role role-tech">Tech Lead</span>
+        <span class="msg-time">11:01</span>
+      </div>
+      <div class="msg-content">
+        <p>Sam — les deux idéalement, mais si on doit choisir : <strong>au scan d'abord</strong>. On filtre avant d'ingérer pour ne pas polluer la base avec des Shorts qui passeraient le filtre actuel de 3 min mais qu'on veut écarter (ex: on veut uniquement les vidéos &gt; 8 min). L'implémentation dans le grid TRIAGE vient en second et peut attendre le sprint suivant.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 7 — HOE ═══ -->
+<div class="section-divider" id="s7">Vue HOE · Antoine</div>
+
+<div class="msg">
+  <div class="av av-antoine">A</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Antoine</span>
+      <span class="msg-role role-hoe">Head of Engineering</span>
+      <span class="msg-time">11:09</span>
+    </div>
+    <div class="msg-content">
+      <p>Bonne lecture du thread. Quelques points de mon côté :</p>
+      <p><strong>Validation des efforts :</strong> les estimations d'Alex sont réalistes. Je valide. Un point de vigilance sur B2 : Thomas, quand tu fais le <code>useEffect</code> au mount pour restaurer la session, fais attention à la race condition — si AdminLayout et CurationPage font tous les deux un GET sessions au mount, on risque deux appels simultanés. Centralise dans un custom hook <code>useActiveSession()</code> partagé entre les deux composants.</p>
+      <p><strong>Sur B3 :</strong> Léo, avant d'implémenter le NL search admin, vérifie que le <code>search.service.js</code> existant a bien le prompt caching configuré (<code>cache_control ephemeral 1h</code>). Si on ajoute un appel Claude par recherche admin sans caching, ça va peser sur le coût API. Le system prompt de recherche admin est probablement stable — à mettre en cache.</p>
+      <p><strong>M5 (pagination) :</strong> je suis d'accord avec Alex pour le monter. 200 refs sans pagination sur une table React contrôlée, c'est une régression de perf assurée dès les premières vraies sessions. Ça devrait être sprint S+1, pas backlog.</p>
+      <p><strong>Process PR :</strong> pour B2 et B3, je veux une PR par ticket (pas une mega-PR). Tests manuels documentés dans la PR description (cf. CLAUDE.md — DoD obligatoire). Pas de merge sans avoir testé le chemin d'erreur, pas seulement le happy path.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🎯 4</span>
+      <span class="reaction">✅ 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 8b — MÉDIATHÈQUE TAGS ═══ -->
+<div class="section-divider" id="s9">Nouveau sujet · Médiathèque admin — liste de tags · Camille + Marie</div>
+
+<div class="msg">
+  <div class="av av-jordan">J</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Jordan</span>
+      <span class="msg-role role-ops">Product Ops</span>
+      <span class="msg-time">11:38</span>
+    </div>
+    <div class="msg-content">
+      <p>Un point supplémentaire remonté pendant la session d'audit — la page <code>/admin/références</code> (Médiathèque admin). En arrivant sur la page, <strong>la quasi-totalité du viewport est occupée par une liste de tags bruts</strong> avant même de voir une seule référence. Camille, Marie — votre regard là-dessus ?</p>
+      <p style="font-size:12px;color:#888;font-family:'SF Mono',monospace;margin-top:6px">Capture : 477 RÉFÉRENCES · liste de ~400 tags triés par occurrence (WEDDING 469, WEDDING FILM 35, DAVINCI RESOLVE 25, SONY FX3 21...) · refs complètement sous la fold</p>
+    </div>
+  </div>
+</div>
+
+<div class="msg" style="margin-top:16px">
+  <div class="av av-camille">C</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Camille</span>
+      <span class="msg-role role-research">UX Research</span>
+      <span class="msg-time">11:51</span>
+    </div>
+    <div class="msg-content">
+      <p>Je l'ai regardée. C'est un pattern classique de <strong>paralysie par surcharge de choix</strong> (Hick's Law + paradoxe de Schwartz). Quand on présente ~400 options à plat dès le premier regard, le cerveau ne sait pas par où commencer — il bascule en mode scan anxieux plutôt qu'en mode décision.</p>
+      <p><strong>Trois problèmes distincts identifiés :</strong></p>
+      <p><strong>1. L'objectif de la page est inversé.</strong> L'admin arrive ici pour qualifier et publier des références — c'est son job primaire. La liste de tags est un <em>outil de filtre secondaire</em>, pas le contenu. En l'état, on l'oblige à traverser un mur de taxonomie avant d'accéder à ce pourquoi il est venu. C'est comme si une bibliothèque vous donnait l'index complet avant de vous laisser entrer dans les rayons.</p>
+      <p><strong>2. Les tags sont sémantiquement hétérogènes.</strong> On voit mélangés : des mots-clés YouTube bruts (<code>PREMIERE PRO 19</code>, <code>SONY FX3 21</code>, <code>DAVINCI RESOLVE 25</code>) · des noms propres (<code>MAYAD STUDIOS 27</code>, <code>JUSTIN PORTER 18</code>) · des catégories éditoriales (<code>WEDDING 469</code>, <code>CINEMATIC 11</code>) · des hashtags sociaux (<code>#CASTLEHILLINNWEDDING</code>, <code>#NEWPORTWEDDING</code>). Ce ne sont pas des tags — c'est le dump brut des métadonnées YouTube. L'utilisateur ne peut pas construire de modèle mental sur cette base.</p>
+      <p><strong>3. Signal/bruit défavorable.</strong> Les tags à count=1 (majoritaires dans la partie basse) occupent autant d'espace visuel que WEDDING 469. Après une dizaine de secondes de scan, l'admin renonce et utilise la barre de recherche texte en haut à droite — ce qui confirme que la liste de tags échoue à son usage primaire de filtre.</p>
+      <p><strong>Recommandation research :</strong> tester en session utilisabilité la question "Trouve-moi toutes les références de mariage filmées en Italie" — je parie qu'aucun admin n'utilise spontanément la liste de tags pour ça. Le chemin naturel sera toujours la search bar. Ce qui remet en question l'espace que prend cette liste.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🎯 4</span>
+      <span class="reaction">😬 2</span>
+    </div>
+  </div>
+</div>
+
+<div class="msg" style="margin-top:16px">
+  <div class="av av-marie">M</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Marie</span>
+      <span class="msg-role role-design">Product Designer</span>
+      <span class="msg-time">12:07</span>
+    </div>
+    <div class="msg-content">
+      <p><strong>Verdict design : rework majeur nécessaire.</strong> Camille a posé le why — je m'occupe du what.</p>
+
+      <p><strong>🔴 Critique 1 — Le contenu est sous la fold</strong><br>
+      Les 477 références, qui sont la raison d'être de cette page, ne sont pas visibles à l'ouverture. L'entièreté du viewport (1540×784) est occupée par la liste de tags. C'est une inversion totale de la hiérarchie de contenu : l'index prend la place du contenu. Règle de base : le contenu primaire doit être visible dans les 3 premières secondes sans scroll.</p>
+
+      <p><strong>🔴 Critique 2 — Taxonomie brute exposée</strong><br>
+      Ce qu'on voit n'est pas notre taxonomie éditoriale à 18 axes — c'est le dump des <code>tags[]</code> YouTube directement remontés de l'API. <code>DAVINCI RESOLVE</code>, <code>SONY A7SIII</code>, <code>PREMIERE PRO</code>, <code>#CASTLEHILLINNWEDDING</code> ne sont pas des tags éditoriaux, ce sont des métadonnées techniques YouTube. Les exposer comme filtres crée une confusion entre "ce que YouTube dit de la vidéo" et "ce que 180° dit de la référence". C'est exactement le même problème que B1 (TagEditor) mais côté affichage.</p>
+
+      <p><strong>🟡 Critique 3 — Pas de groupement, pas de hiérarchie</strong><br>
+      Les tags sont triés par count décroissant — ce qui n'aide pas l'admin à trouver une catégorie. Il aurait besoin d'un groupement par axe : Sujet / Style / Technique / Géographie / Tonalité. Un tag <code>ITALY</code> (2) et un tag <code>DESTINATION WEDDING</code> (10) appartiennent à la même famille "Géographie" mais sont séparés par des dizaines de tags hétérogènes.</p>
+
+      <p><strong>🟢 Ce qui fonctionne</strong><br>
+      Les compteurs par statut en haut (TOUS 477 · À TRIER 6 · DRAFT 1 · PUBLIÉ 469 · REJETÉ 1) sont bons — navigation immédiate par état. La search bar "Titre, auteur, tag..." est visible et semble fonctionnelle. Ce sont les deux éléments à conserver et à valoriser.</p>
+
+      <p><strong>Direction design proposée — 3 options (par effort croissant) :</strong></p>
+      <ul>
+        <li><strong>Option A · Quick win (XS) :</strong> Replier la liste de tags sous un accordéon <code>▶ Filtrer par tag (412)</code>, fermé par défaut. La liste des refs apparaît immédiatement. L'admin ouvre l'accordéon s'il en a besoin.</li>
+        <li><strong>Option B · Clean (S) :</strong> Garder uniquement les 20 tags les plus fréquents visibles + bouton "Voir les 392 autres". Grouper visuellement par type (Sujet / Style / Gear) avec un séparateur léger. Ça réduit le mur à une bande horizontale de 2 lignes.</li>
+        <li><strong>Option C · Proper (M — post-B1) :</strong> Remplacer le tag dump par un panel de filtres structuré sur les 18 axes de la taxonomie propre. Uniquement les tags issus de l'enrichissement Claude (pas les tags YouTube bruts). C'est la solution correcte, mais elle dépend de la résolution de B1 d'abord.</li>
+      </ul>
+      <p>Je recommande <strong>Option A en quick win immédiat</strong> (XS, sans attendre B1) + <strong>Option C en objectif v0.6</strong> une fois B1 résolu. L'Option B est un entre-deux qui crée plus de questions qu'elle n'en résout.</p>
+      <p>Je prépare le wireframe accordéon ce soir en même temps que le TagEditor groupé — les deux sont liés dans le même système de filtrage par taxonomie.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🔥 5</span>
+      <span class="reaction">✅ 4</span>
+      <span class="reaction">💡 3</span>
+    </div>
+  </div>
+</div>
+
+<div class="thread-reply">
+  <div class="msg">
+    <div class="av av-sophie av-sm">S</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Sophie</span>
+        <span class="msg-role role-pm">Product Manager</span>
+        <span class="msg-time">12:14</span>
+      </div>
+      <div class="msg-content">
+        <p>Marie — Option A validée pour le sprint en cours. XS, pas de dépendance sur B1, ça débloque l'accès aux refs immédiatement. Jordan ajoute un ticket. Option C en scope v0.6 avec B1.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg" style="margin-top:8px">
+    <div class="av av-alex av-sm">A</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Alex</span>
+        <span class="msg-role role-tech">Tech Lead</span>
+        <span class="msg-time">12:18</span>
+      </div>
+      <div class="msg-content">
+        <p>Option A c'est 30 min de CSS + état React. Thomas, tu l'embarques avec le sticky header (même PR si ça touche <code>ReferencesAdminPage</code>). Marie — confirme juste si l'accordéon est fermé par défaut même quand un filtre tag est actif (i.e. si l'admin arrive sur la page via un lien avec <code>?tag=WEDDING</code>, est-ce qu'on l'ouvre automatiquement ?)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg" style="margin-top:8px">
+    <div class="av av-marie av-sm">M</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Marie</span>
+        <span class="msg-role role-design">Product Designer</span>
+        <span class="msg-time">12:21</span>
+      </div>
+      <div class="msg-content">
+        <p>Alex — oui, si un tag est actif (URL ou state) l'accordéon s'ouvre automatiquement avec le tag en surbrillance. Sinon fermé par défaut. Je note dans le wireframe.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg" style="margin-top:8px">
+    <div class="av av-jordan av-sm">J</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Jordan</span>
+        <span class="msg-role role-ops">Product Ops</span>
+        <span class="msg-time">12:24</span>
+      </div>
+      <div class="msg-content">
+        <p>Ticket créé : <span class="ticket ticket-new">#180-37</span> — <em>Médiathèque admin : replier la liste de tags sous accordéon fermé par défaut</em>. Assigné Thomas. Sprint en cours. Effort XS (30 min). Dépend du wireframe Marie pour le comportement ouvert/fermé si tag actif.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg" style="margin-top:8px">
+    <div class="av av-antoine av-sm">N</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Antoine</span>
+        <span class="msg-role role-hoe">Head of Engineering</span>
+        <span class="msg-time">12:31</span>
+      </div>
+      <div class="msg-content">
+        <p>Je viens de regarder le composant. C'est <code>ReferencesAdminPage.jsx</code> — le rendu du bloc tags est un simple <code>.map()</code> sur <code>allTags</code> sans aucun filtre ni limite. Aucune pagination, aucun seuil. Le fix accordéon est trivial : c'est un <code>useState(false)</code> + une classe CSS. Thomas, 20 min maxi, wireframe de Marie ou pas — le comportement ouvert/fermé sur tag actif, tu peux le déduire du <code>activeTag</code> déjà en state. Ce ticket peut partir en fin de journée si t'as la main.</p>
+        <p>Ce qui me préoccupe plus : l'origine. Ces 400+ tags viennent de <code>video.tags[]</code> YouTube bruts stockés en base sans nettoyage. Ça veut dire qu'on a des milliers de tags orphelins dans Postgres qui ne servent à rien — ni au filtre admin, ni à la search. Quand B1 sera résolu et qu'on aura la vraie taxonomie Claude en base, il faudra une migration de nettoyage. Je l'inscris en dette technique visible — ça ne bloque pas aujourd'hui mais ça ne doit pas être oublié.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg" style="margin-top:8px">
+    <div class="av av-sophie av-sm">S</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name">Sophie</span>
+        <span class="msg-role role-pm">Product Manager</span>
+        <span class="msg-time">12:38</span>
+      </div>
+      <div class="msg-content">
+        <p>Pour mettre ça en perspective avec le reste du thread : on a aujourd'hui deux problèmes liés mais distincts autour de la taxonomie.</p>
+        <p><strong>Problème A — côté saisie (B1, TagEditor) :</strong> quand l'admin qualifie une référence, il voit une liste plate de tags non groupés qui mélange YouTube et éditorial. Il ne sait pas quoi choisir. → Fix : wireframe Marie + S+1.</p>
+        <p><strong>Problème B — côté affichage (ici, #180-37) :</strong> quand l'admin arrive sur la Médiathèque, il voit un mur de 400 tags YouTube avant les refs. → Fix : accordéon, ce sprint.</p>
+        <p>Ces deux problèmes ont la même cause racine : <strong>on expose les données YouTube brutes là où on devrait exposer la taxonomie éditoriale 180°</strong>. C'est un problème de data pipeline autant qu'un problème de UI. La vraie solution long terme c'est qu'après enrichissement Claude, les tags YouTube bruts disparaissent de la surface — ils peuvent rester en base pour traçabilité, mais ils ne doivent jamais être affichés comme filtres ou comme options de qualification.</p>
+        <p>Je vais l'écrire proprement dans la ROADMAP comme prérequis technique de v0.6 : <em>"Les champs <code>tags[]</code> YouTube doivent être distincts des champs <code>taxonomy</code> Claude dans le schéma et dans l'UI."</em> Sam, Antoine — ça vous parle comme formulé ?</p>
+      </div>
+      <div class="reactions">
+        <span class="reaction">💡 5</span>
+        <span class="reaction">✅ 4</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 8 — DÉCISIONS ═══ -->
+<div class="section-divider" id="s8">Décisions & plan sprint · Sophie + Jordan</div>
+
+<div class="msg">
+  <div class="av av-sophie">S</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Sophie</span>
+      <span class="msg-role role-pm">Product Manager</span>
+      <span class="msg-time">11:22</span>
+    </div>
+    <div class="msg-content">
+      <p>Bon, on a suffisamment de matière. Je synthétise et on valide :</p>
+
+      <div class="decision">
+        <div class="decision-label">Décision #1 — Sprint en cours</div>
+        <p>On embarque dans ce sprint : <span class="tag tag-b">B2</span> session restore + nav badge (Thomas) · <span class="tag tag-b">B3</span> NL search backend (Léo) · <span class="tag tag-l">L1/L2</span> sticky header (Thomas) · <span class="tag tag-m">M2</span> polling 2s (Léo) · <span class="tag tag-m">M3</span> error handling (Léo). Effort estimé : ~14h. On ne touche pas à B1 ni M6 ce sprint — pas de wireframe TagEditor et pas de spec duration_max côté scan encore.</p>
+      </div>
+
+      <div class="decision">
+        <div class="decision-label">Décision #2 — Sprint S+1</div>
+        <p><span class="tag tag-b">B1</span> TagEditor groupé par axe (Sam — après wireframe Marie) · <span class="tag tag-m">M6</span> FilterRules + duration_max scan (Sam) · <span class="tag tag-m">M1</span> confirm inline (Thomas) · <span class="tag tag-m">M4</span> dirty indicator (Thomas) · <span class="tag tag-m">M5</span> pagination (Léo). Effort estimé : ~12h.</p>
+      </div>
+
+      <div class="decision">
+        <div class="decision-label">Décision #3 — Cosmétiques (ongoing)</div>
+        <p>C1 (labels FR), C3 (Escape TagEditor), C4 (aria-label), C5 (aria-live), C6 (placeholder), C7 (form tab). Total ~3h. À embarquer opportunément dans les PR des tickets adjacents — pas de ticket dédié, juste des commits atomiques au passage.</p>
+      </div>
+
+      <div class="decision">
+        <div class="decision-label">Décision #4 — Research</div>
+        <p>Camille prépare le guide de test utilisabilité ingestion admin pour une session avant la v0.6 beta. Durée : 45 min. Cible : Andri en tant qu'admin, ou un vidéaste proche de la team.</p>
+      </div>
+    </div>
+    <div class="reactions">
+      <span class="reaction">✅ 6</span>
+      <span class="reaction">🚀 3</span>
+    </div>
+  </div>
+</div>
+
+<div class="msg" style="margin-top:20px">
+  <div class="av av-jordan">J</div>
+  <div class="msg-body">
+    <div class="msg-header">
+      <span class="msg-name">Jordan</span>
+      <span class="msg-role role-ops">Product Ops</span>
+      <span class="msg-time">11:35</span>
+    </div>
+    <div class="msg-content">
+      <p>Tickets créés dans Linear. Assignations :</p>
+
+      <table class="sprint-table">
+        <thead>
+          <tr><th>Ticket</th><th>Titre</th><th>Assigné à</th><th>Sprint</th><th>Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ticket ticket-exists">#180-29</span></td>
+            <td><span class="tag tag-b">B2</span> Restaurer session TRIAGE à la navigation + badge nav</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-thomas av-sm">T</div>Thomas</div></td>
+            <td>En cours</td>
+            <td>3–4h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-exists">#180-31</span></td>
+            <td><span class="tag tag-b">B3</span> Implémenter POST /admin/search + feedback erreur UI</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-leo av-sm">L</div>Léo</div></td>
+            <td>En cours</td>
+            <td>5–6h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-new">#180-32</span></td>
+            <td><span class="tag tag-l">L1/L2</span> TriageStickyHeader — compteur sticky + loading FILTRER</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-thomas av-sm">T</div>Thomas</div></td>
+            <td>En cours</td>
+            <td>1–2h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-new">#180-33</span></td>
+            <td><span class="tag tag-m">M2/M3</span> Polling 2s + error handling startScan</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-leo av-sm">L</div>Léo</div></td>
+            <td>En cours</td>
+            <td>1h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-exists">#180-T05</span></td>
+            <td><span class="tag tag-b">B1</span> TagEditor groupé par axe taxonomie Claude</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-sam av-sm">S</div>Sam</div></td>
+            <td>S+1</td>
+            <td>3–4h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-exists">#180-30</span></td>
+            <td><span class="tag tag-m">M6</span> FilterRules duration_max + tag_contains</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-sam av-sm">S</div>Sam</div></td>
+            <td>S+1</td>
+            <td>2–3h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-new">#180-34</span></td>
+            <td><span class="tag tag-m">M1/M4</span> Confirm inline suppression + dirty indicator RefRow</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-thomas av-sm">T</div>Thomas</div></td>
+            <td>S+1</td>
+            <td>2h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-new">#180-35</span></td>
+            <td><span class="tag tag-m">M5</span> Pagination ResultsTable 50/page</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-leo av-sm">L</div>Léo</div></td>
+            <td>S+1</td>
+            <td>3h</td>
+          </tr>
+          <tr>
+            <td><span class="ticket ticket-new">#180-36</span></td>
+            <td>Guide test utilisabilité ingestion admin v0.6</td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="av av-camille av-sm">C</div>Camille</div></td>
+            <td>S+1</td>
+            <td>2h</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Total sprint en cours : ~11h. Total S+1 : ~13h. Wireframe TagEditor (Marie) à livrer avant que Sam commence B1. Le doc user flow annoté est attaché aux tickets concernés.</p>
+      <p>Thread clos. On se retrouve en standup demain pour un point d'avancement.</p>
+    </div>
+    <div class="reactions">
+      <span class="reaction">🙏 5</span>
+      <span class="reaction">✅ 4</span>
+      <span class="reaction">🚀 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- résumé bas de page -->
+<div style="margin-top:40px;padding:20px 24px;background:#fff;border:1px solid var(--border);border-radius:8px">
+  <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;font-family:'SF Mono',monospace">Résumé des engagements</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:13px">
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-thomas av-sm">T</div>Thomas</div>
+      <div style="color:var(--muted);font-size:12px">#180-29 · #180-32 · #180-34<br>B2, L1/L2, M1/M4</div>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-leo av-sm">L</div>Léo</div>
+      <div style="color:var(--muted);font-size:12px">#180-31 · #180-33 · #180-35<br>B3, M2/M3, M5</div>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-sam av-sm">S</div>Sam</div>
+      <div style="color:var(--muted);font-size:12px">#T05 · #180-30<br>B1 (après wireframe), M6</div>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-marie av-sm">M</div>Marie</div>
+      <div style="color:var(--muted);font-size:12px">Wireframe TagEditor groupé<br>Design system inline confirm</div>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-camille av-sm">C</div>Camille</div>
+      <div style="color:var(--muted);font-size:12px">#180-36<br>Guide test utilisabilité v0.6</div>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px"><div class="av av-jordan av-sm">J</div>Jordan</div>
+      <div style="color:var(--muted);font-size:12px">Linear sync · standup demain<br>User flow → attaché aux tickets</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>
