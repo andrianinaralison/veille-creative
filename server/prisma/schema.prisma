@@ -82,6 +82,7 @@ model Digest {
   intro       String       @default("")
   status      DigestStatus @default(DRAFT)
   publishedAt DateTime?    @db.Timestamptz(6)
+  emailSentAt DateTime?    @db.Timestamptz(6)
   createdAt   DateTime     @default(now()) @db.Timestamptz(6)
   items       DigestItem[]
 
@@ -106,6 +107,7 @@ model User {
   email        String   @unique
   passwordHash String
   firstName    String   @default("")
+  digestOptIn  Boolean  @default(true)
   createdAt    DateTime @default(now()) @db.Timestamptz(6)
 }
 

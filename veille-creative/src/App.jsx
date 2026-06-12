@@ -9,6 +9,7 @@ import ProjectDetail from './pages/ProjectDetail'
 import MoodboardBuilder from './pages/MoodboardBuilder'
 import CategoryPage from './pages/CategoryPage'
 import DigestPage from './pages/DigestPage'
+import SettingsPage from './pages/SettingsPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import RequireAuth from './components/RequireAuth'
@@ -47,6 +48,7 @@ export default function App() {
         {/* Digest éditorial (180-19) */}
         <Route path="/digest" element={withLayout(DigestPage)} />
         <Route path="/digest/:id" element={withLayout(DigestPage)} />
+        <Route path="/settings" element={withLayout(SettingsPage)} />
         <Route path="/surprises" element={<Navigate to="/" replace />} />
         {/* Moodboard gets full screen — no sidebar */}
         <Route path="/projects/:id/moodboard" element={<RequireAuth><MoodboardBuilder /></RequireAuth>} />

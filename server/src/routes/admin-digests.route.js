@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { validate, asyncHandler } from '../middleware/validate.js';
+import { sendDigestEmail } from '../services/email.service.js';
 
 const router = Router();
 
@@ -127,6 +128,36 @@ router.put('/:id/items', validate({ body: itemsSchema }), asyncHandler(async (re
 
   const updated = await prisma.digest.findUnique({ where: { id }, include: itemsInclude });
   res.json(updated);
+}));
+
+/**
+ * POST /api/v1/admin/digests/:id/send — envoie le digest aux abonnés (180-20)
+ * Exige un digest PUBLISHED. Refuse le double-envoi sauf { force: true }.
+ */
+router.post('/:id/send', asyncHandler(async (req, res) => {
+  const digest = await prisma.digest.findUnique({ where: { id: req.params.id }, include: itemsInclude });
+  if (!digest) return res.status(404).json({ error: 'Digest introuvable' });
+  if (digest.status !== 'PUBLISHED') {
+    return res.status(400).json({ error: 'Publie le digest avant de l\'envoyer' });
+  }
+  if (digest.emailSentAt && !req.body?.force) {
+    return res.status(409).json({
+      error: `Déjà envoyé le ${new Date(digest.emailSentAt).toLocaleString('fr-FR')} — renvoie avec force:true pour confirmer`,
+    });
+  }
+
+  const recipients = await prisma.user.findMany({
+    where: { digestOptIn: true },
+    select: { email: true },
+  });
+  if (recipients.length === 0) {
+    return res.status(400).json({ error: 'Aucun abonné actif' });
+  }
+
+  const { sent, failed } = await sendDigestEmail(digest, recipients);
+  await prisma.digest.update({ where: { id: digest.id }, data: { emailSentAt: new Date() } });
+
+  res.json({ ok: true, sent, failed });
 }));
 
 /**

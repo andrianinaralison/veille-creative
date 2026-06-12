@@ -19,6 +19,7 @@
     "express-rate-limit": "^8.5.2",
     "jose": "^6.2.3",
     "prisma": "^5.22.0",
+    "resend": "^6.12.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
