@@ -9,6 +9,49 @@ function mondayOfWeek(d = new Date()) {
   return date.toISOString().slice(0, 10)
 }
 
+async function sendDigest(digest, { force = false } = {}) {
+  return adminFetch(`/api/v1/admin/digests/${digest.id}/send`, {
+    method: 'POST',
+    body: JSON.stringify({ force }),
+  })
+}
+
+function SendButton({ digest, onSent }) {
+  const [state, setState] = useState('idle') // idle | sending | done
+  const [info, setInfo] = useState(null)
+
+  async function handleSend() {
+    if (state === 'sending') return
+    if (digest.emailSentAt && !window.confirm('Déjà envoyé. Renvoyer à tous les abonnés ?')) return
+    setState('sending'); setInfo(null)
+    try {
+      const r = await sendDigest(digest, { force: !!digest.emailSentAt })
+      setState('done')
+      setInfo(`${r.sent} envoyé${r.sent > 1 ? 's' : ''}`)
+      onSent?.()
+      setTimeout(() => setState('idle'), 3000)
+    } catch (err) {
+      let msg = 'Erreur d\'envoi.'
+      try { msg = JSON.parse(err.message).error ?? msg } catch { /* texte brut */ }
+      setInfo(msg)
+      setState('idle')
+    }
+  }
+
+  return (
+    <span className="flex items-center gap-2">
+      {info && <span className="font-mono text-[9px] text-ink-muted max-w-[200px] truncate" title={info}>{info}</span>}
+      <button
+        onClick={handleSend}
+        disabled={state === 'sending'}
+        className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink disabled:opacity-40"
+      >
+        {state === 'sending' ? 'Envoi…' : state === 'done' ? 'Envoyé ✓' : digest.emailSentAt ? 'Renvoyer ✉' : 'Envoyer ✉'}
+      </button>
+    </span>
+  )
+}
+
 function weekLabel(weekOf) {
   const d = new Date(weekOf)
   return `Semaine du ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
@@ -297,6 +340,7 @@ export default function DigestAdminPage() {
             }`}>
               {d.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
             </span>
+            {d.status === 'PUBLISHED' && <SendButton digest={d} onSent={load} />}
             <button
               onClick={() => setEditing(d)}
               className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink"

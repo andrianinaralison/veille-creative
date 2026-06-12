@@ -21,7 +21,12 @@ const signupSchema = z.object({
   firstName: z.string().trim().max(80).optional().default(''),
 })
 
-const publicUser = ({ id, email, firstName, createdAt }) => ({ id, email, firstName, createdAt })
+const publicUser = ({ id, email, firstName, digestOptIn, createdAt }) => ({ id, email, firstName, digestOptIn, createdAt })
+
+const profilePatchSchema = z.object({
+  firstName: z.string().trim().max(80).optional(),
+  digestOptIn: z.boolean().optional(),
+})
 
 async function signUserToken(userId) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET)
@@ -76,6 +81,21 @@ router.post('/login', validate({ body: loginSchema }), asyncHandler(async (req, 
 router.get('/me', requireUser, asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId } })
   if (!user) return res.status(401).json({ error: 'Compte introuvable' })
+  res.json({ user: publicUser(user) })
+}))
+
+/**
+ * PATCH /api/v1/auth/me — préférences (prénom, abonnement digest) (180-20)
+ */
+router.patch('/me', requireUser, validate({ body: profilePatchSchema }), asyncHandler(async (req, res) => {
+  const { firstName, digestOptIn } = req.body
+  const data = {}
+  if (firstName !== undefined) data.firstName = firstName
+  if (digestOptIn !== undefined) data.digestOptIn = digestOptIn
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'Aucun champ à mettre à jour' })
+  }
+  const user = await prisma.user.update({ where: { id: req.userId }, data })
   res.json({ user: publicUser(user) })
 }))
 

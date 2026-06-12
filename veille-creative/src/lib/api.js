@@ -25,6 +25,7 @@ export const api = {
     signup: (data) => apiFetch('/api/v1/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
     login: (data) => apiFetch('/api/v1/auth/login', { method: 'POST', body: JSON.stringify(data) }),
     me: () => apiFetch('/api/v1/auth/me'),
+    updateMe: (data) => apiFetch('/api/v1/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
   },
   references: {
     list: (params = {}) => {

@@ -30,6 +30,10 @@ export const useAuthStore = create((set) => ({
     set({ user, status: 'authenticated' })
   },
 
+  setUser(user) {
+    set({ user })
+  },
+
   logout() {
     clearUserToken()
     set({ user: null, status: 'anonymous' })
