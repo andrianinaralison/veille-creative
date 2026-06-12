@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Section {
+  id          String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  title       String
+  slug        String      @unique
+  description String      @default("")
+  position    Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  references  Reference[]
+
+  @@index([position])
+}
+
+model Reference {
+  id                  String            @id @default(dbgenerated("(gen_random_uuid())::text"))
+  url                 String            @unique
+  platform            Platform
+  sourceMode          SourceMode        @default(MANUAL)
+  title               String
+  description         String            @default("")
+  channelName         String            @default("")
+  channelUrl          String            @default("")
+  thumbnailUrl        String            @default("")
+  thumbnailSourceUrl  String?
+  thumbnailStorageKey String?
+  channelAvatarUrl    String            @default("")
+  tags                String[]          @default([])
+  mood                String?
+  typeContenu         String?
+  context             String            @default("")
+  status              RefStatus         @default(DRAFT)
+  sectionId           String?
+  ingestionSessionId  String?
+  createdAt           DateTime          @default(now()) @db.Timestamptz(6)
+  publishedAt         DateTime?         @db.Timestamptz(6)
+  videoPublishedAt    DateTime?         @db.Timestamptz(6)
+  section             Section?          @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  ingestionSession    IngestionSession? @relation(fields: [ingestionSessionId], references: [id], onUpdate: NoAction)
+
+  @@index([status])
+  @@index([platform])
+  @@index([sectionId])
+  @@index([createdAt(sort: Desc)])
+  @@index([ingestionSessionId])
+}
+
+model IngestionSession {
+  id          String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  mode        SourceMode
+  status      SessionStatus @default(RUNNING)
+  brief       String        @default("")
+  totalFound              Int           @default(0)
+  totalFiltered           Int           @default(0)
+  totalSaved              Int           @default(0)
+  totalFilteredByDuration Int           @default(0)
+  totalFilteredByRules    Int           @default(0)
+  totalAlreadyPublished   Int           @default(0)
+  totalConflicts          Int           @default(0)
+  conflicts               Json          @default("[]")
+  errorMessage            String?
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  completedAt DateTime?     @db.Timestamptz(6)
+  references  Reference[]
+}
+
+model Creator {
+  id              String       @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name            String
+  url             String?      @unique
+  youtubeHandle   String?
+  platform        Platform     @default(YOUTUBE)
+  channelId       String?
+  instagramHandle String?
+  vimeoUrl        String?
+  websiteUrl      String?
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(6)
+  filterRules     FilterRule[]
+
+  // Partial index on active creators: creator_active_name_idx — managed via 20260604_partial_indexes migration
+}
+
+model FilterRule {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  creatorId String
+  type      String   // 'keyword_title' | 'channel_name'
+  pattern   String   // mot-clé ou fragment, insensible à la casse
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([active])
+}
+
+enum Platform {
+  YOUTUBE
+  VIMEO
+  WEB
+}
+
+enum SourceMode {
+  TOPIC_DISCOVERY
+  CREATOR_SCAN
+  MANUAL
+}
+
+enum RefStatus {
+  TRIAGE
+  DRAFT
+  PUBLISHED
+  REJECTED
+}
+
+enum SessionStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}

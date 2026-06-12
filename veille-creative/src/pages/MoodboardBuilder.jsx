@@ -31,13 +31,13 @@ function GridLayout({ refs }) {
   return (
     <div className="grid grid-cols-3 gap-2 h-full">
       {refs.slice(0, 6).map((ref, i) => (
-        <div key={ref.id} className={`rounded-xl overflow-hidden relative ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
+        <div key={ref.id} className={`overflow-hidden relative ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
           <img src={ref.thumbnail} alt={ref.title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-2 left-2 right-2">
             <div className="flex gap-1 flex-wrap">
               {ref.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-black/50 text-white/80">{tag}</span>
+                <span key={tag} className="text-[9px] px-1.5 py-0.5 bg-black/50 text-white/80">{tag}</span>
               ))}
             </div>
           </div>
@@ -51,8 +51,8 @@ function NarrativeLayout({ refs }) {
   return (
     <div className="space-y-3 h-full overflow-y-auto">
       {refs.slice(0, 4).map((ref, i) => (
-        <div key={ref.id} className="flex gap-4 p-3 rounded-xl bg-surface-raised border border-surface-border">
-          <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0">
+        <div key={ref.id} className="flex gap-4 p-3 bg-surface-raised border border-surface-border">
+          <div className="w-20 h-16 overflow-hidden flex-shrink-0">
             <img src={ref.thumbnail} alt={ref.title} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1">
@@ -62,7 +62,7 @@ function NarrativeLayout({ refs }) {
             <p className="text-[11px] text-ink-muted leading-relaxed line-clamp-2">{ref.context}</p>
             <div className="flex gap-1 mt-1.5">
               {ref.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-surface-raised text-ink-faint border border-surface-border">{tag}</span>
+                <span key={tag} className="text-[9px] px-1.5 py-0.5 bg-surface-raised text-ink-faint border border-surface-border">{tag}</span>
               ))}
             </div>
           </div>
@@ -83,7 +83,7 @@ function ColorLayout({ refs }) {
       {colorGroups.map(group => (
         <div key={group.label} className="flex items-center gap-4">
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
-            <div className="w-10 h-16 rounded-xl" style={{ backgroundColor: group.color }} />
+            <div className="w-10 h-16" style={{ backgroundColor: group.color }} />
             <span className="text-[9px] text-ink-muted font-mono">
               {group.color.toUpperCase()}
             </span>
@@ -91,7 +91,7 @@ function ColorLayout({ refs }) {
           </div>
           <div className="flex gap-2 flex-1">
             {group.refs.map(ref => (
-              <div key={ref.id} className="flex-1 rounded-lg overflow-hidden" style={{ height: '80px' }}>
+              <div key={ref.id} className="flex-1 overflow-hidden" style={{ height: '80px' }}>
                 <img src={ref.thumbnail} alt={ref.title} className="w-full h-full object-cover" />
               </div>
             ))}
@@ -145,14 +145,14 @@ export default function MoodboardBuilder() {
         </div>
 
         {/* Layout selector */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-raised border border-surface-border">
+        <div className="flex items-center gap-1 p-1 bg-surface-raised border border-surface-border">
           {layouts.map(({ id: lId, label, icon: Icon }) => (
             <button
               key={lId}
               onClick={() => setSelectedLayout(lId)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium transition-all ${
                 selectedLayout === lId
-                  ? 'bg-gold text-canvas'
+                  ? 'bg-ink text-canvas'
                   : 'text-ink-muted hover:text-ink'
               }`}
             >
@@ -166,10 +166,10 @@ export default function MoodboardBuilder() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopyLink}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 border text-sm font-medium transition-all ${
               copied
                 ? 'border-green-500/40 bg-green-500/10 text-green-400'
-                : 'border-surface-border text-ink-muted hover:border-gold/30 hover:text-ink'
+                : 'border-surface-border text-ink-muted hover:border-ink/20 hover:text-ink'
             }`}
           >
             {copied ? <Check size={14} /> : <Share2 size={14} />}
@@ -177,10 +177,10 @@ export default function MoodboardBuilder() {
           </button>
           <button
             onClick={handleExportPDF}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all ${
               exported
                 ? 'bg-green-500 text-white'
-                : 'bg-gold hover:bg-gold-light text-canvas'
+                : 'bg-ink hover:opacity-90 text-canvas'
             }`}
           >
             {exported ? <Check size={14} /> : <FileText size={14} />}
@@ -202,25 +202,25 @@ export default function MoodboardBuilder() {
                 <span className="w-1 h-1 rounded-full bg-surface-border" />
                 <div className="flex gap-1">
                   {project.moodPresets.map(mood => (
-                    <span key={mood} className="px-2 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20">
+                    <span key={mood} className="px-2 py-0.5 border border-ink/20 bg-ink/8 text-ink-muted">
                       {mood}
                     </span>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="text-xs text-ink-faint">VeilleCreative · {new Date().toLocaleDateString('fr-FR')}</div>
+            <div className="text-xs text-ink-faint">180Degrés · {new Date().toLocaleDateString('fr-FR')}</div>
           </div>
 
           {/* Layout preview */}
-          <div className="rounded-2xl border border-surface-border bg-surface p-6 min-h-96">
+          <div className="border border-surface-border bg-surface p-6 min-h-96">
             {selectedLayout === 'grid' && <GridLayout refs={allRefs} />}
             {selectedLayout === 'narrative' && <NarrativeLayout refs={allRefs} />}
             {selectedLayout === 'color' && <ColorLayout refs={allRefs} />}
           </div>
 
           {/* Brief excerpt */}
-          <div className="mt-4 p-4 rounded-xl border border-surface-border bg-surface-raised">
+          <div className="mt-4 p-4 border border-surface-border bg-surface-raised">
             <div className="text-xs text-ink-faint mb-2 font-medium uppercase tracking-wider">Brief</div>
             <p className="text-xs text-ink-muted leading-relaxed">{project.brief}</p>
           </div>
@@ -231,8 +231,8 @@ export default function MoodboardBuilder() {
           <div className="text-xs font-semibold text-ink-muted mb-3 uppercase tracking-wider">Références ({allRefs.length})</div>
           <div className="space-y-2">
             {allRefs.map(ref => (
-              <div key={ref.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-raised transition-all group">
-                <div className="w-10 h-8 rounded-md overflow-hidden flex-shrink-0">
+              <div key={ref.id} className="flex items-center gap-2.5 p-2 hover:bg-surface-raised transition-all group">
+                <div className="w-10 h-8 overflow-hidden flex-shrink-0">
                   <img src={ref.thumbnail} alt={ref.title} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -252,21 +252,21 @@ export default function MoodboardBuilder() {
             <div className="space-y-2">
               <button
                 onClick={handleCopyLink}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-surface-border text-xs text-ink-muted hover:text-ink hover:border-gold/30 transition-all"
+                className="w-full flex items-center gap-2 px-3 py-2.5 border border-surface-border text-xs text-ink-muted hover:text-ink hover:border-ink/20 transition-all"
               >
                 <Share2 size={12} />
                 Lien interactif (sans compte)
               </button>
               <button
                 onClick={handleExportPDF}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gold/10 border border-gold/20 text-xs text-gold hover:bg-gold/20 transition-all"
+                className="w-full flex items-center gap-2 px-3 py-2.5 bg-ink/8 border border-ink/15 text-xs text-ink-muted hover:bg-ink/15 transition-all"
               >
                 <Download size={12} />
                 Export PDF one-click
               </button>
             </div>
             {exported && (
-              <div className="mt-3 p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] text-green-400 flex items-center gap-2">
+              <div className="mt-3 p-2.5 bg-green-500/10 border border-green-500/20 text-[11px] text-green-400 flex items-center gap-2">
                 <Check size={11} />
                 PDF prêt à envoyer au client
               </div>

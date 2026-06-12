@@ -24,12 +24,12 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
   }
 
   return (
-    <div className={`group relative overflow-hidden rounded-xl bg-surface card-cinematic cursor-pointer ${size === 'large' ? 'aspect-[4/3]' : 'aspect-[3/2]'}`}>
+    <div className="group relative overflow-hidden bg-surface card-cinematic cursor-pointer aspect-video">
       {/* Image */}
       <img
-        src={reference.thumbnail}
+        src={reference.thumbnailUrl}
         alt={reference.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
 
       {/* Gradient overlay */}
@@ -38,7 +38,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
       {/* Top: platform + save */}
       <div className="absolute top-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
         <span
-          className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase px-2 py-1 rounded-md"
+          className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase px-2 py-1"
           style={{ backgroundColor: `${platformDot[reference.platform] || '#666'}22`, color: platformDot[reference.platform] || '#fff', border: `1px solid ${platformDot[reference.platform] || '#666'}44` }}
         >
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: platformDot[reference.platform] || '#666' }} />
@@ -46,7 +46,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
         </span>
         <button
           onClick={handleSave}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all backdrop-blur-md ${saved ? 'bg-gold text-canvas' : 'bg-black/40 text-white hover:bg-gold hover:text-canvas'}`}
+          className={`w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md ${saved ? 'bg-ink text-canvas' : 'bg-black/40 text-white hover:bg-ink hover:text-canvas'}`}
         >
           {saved ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
         </button>
@@ -54,7 +54,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
 
       {/* Relevance (IA) */}
       {reference.relevanceScore && (
-        <div className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gold/90 text-canvas">
+        <div className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 bg-ink/90 text-canvas">
           {Math.round(reference.relevanceScore * 100)}%
         </div>
       )}
@@ -64,7 +64,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
         <h3 className="text-sm font-medium text-white leading-snug mb-2 line-clamp-2">{reference.title}</h3>
         <div className="flex gap-1 flex-wrap">
           {reference.tags.slice(0, 4).map(tag => (
-            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/70 backdrop-blur-sm">
+            <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-white/10 text-white/70 backdrop-blur-sm">
               {tag}
             </span>
           ))}
@@ -78,7 +78,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
           <h3 className="text-xs font-semibold text-white">{reference.title}</h3>
           <div className="flex gap-1 mt-1.5 flex-wrap">
             {reference.tags.slice(0, 5).map(tag => (
-              <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">
+              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-white/10 text-white/60">
                 {tag}
               </span>
             ))}
@@ -88,8 +88,8 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
 
       {/* Save flash */}
       {flash && (
-        <div className="absolute inset-0 bg-gold/10 flex items-center justify-center animate-fade-in pointer-events-none">
-          <div className="bg-gold text-canvas text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+        <div className="absolute inset-0 bg-ink/10 flex items-center justify-center animate-fade-in pointer-events-none">
+          <div className="bg-ink text-canvas text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
             <BookmarkCheck size={12} /> Sauvegardé
           </div>
         </div>

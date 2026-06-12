@@ -1,12 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Bibliothèque', end: true },
-  { to: '/digest', label: 'Digest', dot: true },
   { to: '/projects', label: 'Projets' },
-  { to: '/surprises', label: 'Découvertes' },
+]
+
+const comingSoonItems = [
+  { label: 'Digest' }, // v0.6
 ]
 
 const USER_NAME = 'Andri'
@@ -17,8 +19,8 @@ export default function Layout({ children }) {
   const mainRef = useRef(null)
 
 
-  // Reset scroll position on route change
-  useEffect(() => {
+  // Reset scroll avant le paint — useLayoutEffect garantit l'exécution synchrone
+  useLayoutEffect(() => {
     const el = mainRef.current
     if (!el) return
     el.scrollTop = 0
@@ -33,8 +35,9 @@ export default function Layout({ children }) {
 
           {/* Left: Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-5 h-5 rounded-sm bg-gold flex items-center justify-center">
-              <span className="text-canvas font-black text-[9px] leading-none tracking-tight">°</span>
+            <div className="w-5 h-5 rounded-sm bg-ink flex items-center justify-center relative overflow-hidden">
+              <span className="text-canvas font-black text-[9px] leading-none tracking-tight relative z-10">°</span>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, transparent 49%, rgba(0,0,0,0.18) 50%)' }} />
             </div>
             <span className="text-sm font-bold tracking-tight text-ink">180Degre</span>
           </Link>
@@ -61,7 +64,7 @@ export default function Layout({ children }) {
                       <span className="absolute bottom-0 left-3 right-3 h-px bg-ink" />
                     )}
                     {dot && !isActive && (
-                      <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-gold" />
+                      <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-ink" />
                     )}
                   </>
                 )}
@@ -91,6 +94,20 @@ export default function Layout({ children }) {
         onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 2)}
       >
         {children}
+
+        {/* ── Footer ── */}
+        <footer className="border-t border-white/[0.06] px-8 py-6 flex items-center gap-6">
+          <span className="text-[11px] font-mono tracking-widest uppercase text-ink-faint">À venir</span>
+          {comingSoonItems.map(({ label }) => (
+            <span
+              key={label}
+              className="text-[13px] text-ink-faint flex items-center gap-1.5 cursor-default select-none"
+            >
+              {label}
+              <span className="font-mono text-[8px] tracking-widest uppercase border border-ink-faint/40 text-ink-faint px-1.5 py-0.5">soon</span>
+            </span>
+          ))}
+        </footer>
       </main>
     </div>
   )

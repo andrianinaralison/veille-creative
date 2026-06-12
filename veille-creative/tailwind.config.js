@@ -7,7 +7,7 @@ export default {
         serif: ['"DM Serif Display"', 'Georgia', 'serif'],
       },
       colors: {
-        canvas: '#0c0a09',
+        canvas: '#000000',
         ink: {
           DEFAULT: '#f0ebe4',
           muted: '#8a7e74',
@@ -19,8 +19,8 @@ export default {
           dark: '#8a6525',
         },
         surface: {
-          DEFAULT: '#141110',
-          raised: '#1c1916',
+          DEFAULT: '#000000',
+          raised: '#000000',
           border: 'rgba(240,235,228,0.07)',
         },
       },

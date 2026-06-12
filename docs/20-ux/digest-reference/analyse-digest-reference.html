@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analyse Pages Digest — Référence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #ffffff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --indigo: #6366f1;
+    --amber: #f59e0b;
+    --fs-black: #000000;
+    --fs-accent: #6366f1;
+    --efa-dark: #1a1a1a;
+    --efa-gold: #f59e0b;
+    --now-bg: #f5f5f5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e5e7eb;
+    line-height: 1.6;
+  }
+
+  /* ── GLOBAL NAV ─────────────────────────────────────── */
+  .global-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #0f0f0f;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    gap: 2px;
+    padding: 0 24px;
+  }
+  .global-nav a {
+    display: inline-block;
+    padding: 14px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .global-nav a:hover { color: #fff; }
+  .global-nav a.active { color: #fff; border-bottom-color: #6366f1; }
+
+  /* ── SECTIONS ───────────────────────────────────────── */
+  section {
+    padding: 80px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: #6366f1;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 40px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 48px;
+  }
+
+  /* ── SITE TABS ──────────────────────────────────────── */
+  .site-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #1f2937;
+  }
+  .site-tab {
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    color: #6b7280;
+    transition: all .2s;
+    user-select: none;
+  }
+  .site-tab.active { color: #fff; border-bottom-color: #6366f1; }
+  .site-tab:hover:not(.active) { color: #d1d5db; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── ARCH CARD ──────────────────────────────────────── */
+  .arch-overview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1f2937;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+  .arch-site {
+    background: #111;
+    padding: 32px;
+  }
+  .arch-site-name {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .arch-site-name.fs { color: #6366f1; }
+  .arch-site-name.efa { color: #f59e0b; }
+  .arch-site-name.now { color: #10b981; }
+
+  .arch-block {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #d1d5db;
+  }
+  .arch-block .tag {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .arch-block .desc {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  .bg-fs { background: #1e1b4b; }
+  .tag-fs { background: #312e81; color: #a5b4fc; }
+  .bg-efa { background: #1c1508; }
+  .tag-efa { background: #78350f; color: #fcd34d; }
+  .bg-now { background: #f0fdf4; color: #111; }
+  .tag-now { background: #d1fae5; color: #065f46; }
+
+  /* ── COLOR SWATCHES ─────────────────────────────────── */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .color-site {
+    background: #111;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .color-site-header {
+    padding: 20px 24px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .color-site-header.fs { color: #6366f1; background: #0d0d1a; border-bottom: 1px solid #1e1b4b; }
+  .color-site-header.efa { color: #f59e0b; background: #0d0a00; border-bottom: 1px solid #1c1508; }
+  .color-site-header.now { color: #10b981; background: #0a0d0b; border-bottom: 1px solid #0f1f15; }
+  .swatches {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,.1);
+    flex-shrink: 0;
+  }
+  .swatch-info { display: flex; flex-direction: column; gap: 1px; }
+  .swatch-name { color: #d1d5db; font-weight: 500; font-size: 12px; }
+  .swatch-val { color: #6b7280; font-family: monospace; font-size: 11px; }
+
+  /* ── TYPO TABLE ─────────────────────────────────────── */
+  .typo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 48px;
+    font-size: 13px;
+  }
+  .typo-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #111;
+    color: #6b7280;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-bottom: 1px solid #1f2937;
+  }
+  .typo-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #111;
+    color: #d1d5db;
+    vertical-align: top;
+  }
+  .typo-table tr:last-child td { border-bottom: none; }
+  .typo-table tr:hover td { background: rgba(99,102,241,.04); }
+  .mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: #a5b4fc; }
+
+  /* ── FLOWCHART (Mermaid) ────────────────────────────── */
+  .flow-site-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 60px;
+  }
+  .flow-site-panel {
+    background: #111;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .flow-site-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    display: block;
+  }
+  .flow-site-label.fs { background: #1e1b4b; color: #a5b4fc; border-bottom: 1px solid #312e81; }
+  .flow-site-label.efa { background: #1c1508; color: #fcd34d; border-bottom: 1px solid #78350f; }
+  .flow-site-label.now { background: #052e16; color: #6ee7b7; border-bottom: 1px solid #065f46; }
+
+  .mermaid-wrap {
+    background: #111;
+    padding: 24px 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+  .mermaid-wrap pre.mermaid {
+    background: transparent;
+    border: none;
+    padding: 0;
+    white-space: pre;
+    color: transparent;
+  }
+  /* Override Mermaid SVG bg */
+  .mermaid svg {
+    background: transparent !important;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ── TONE CARDS ─────────────────────────────────────── */
+  .tone-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .tone-card {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .tone-header {
+    padding: 24px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .tone-header.fs { background: #1e1b4b; color: #a5b4fc; }
+  .tone-header.efa { background: #1c1508; color: #fcd34d; }
+  .tone-header.now { background: #052e16; color: #6ee7b7; }
+  .tone-body {
+    background: #111;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .tone-quote {
+    font-size: 13px;
+    color: #d1d5db;
+    font-style: italic;
+    line-height: 1.5;
+    padding-left: 12px;
+    border-left: 2px solid #374151;
+  }
+  .tone-meta { display: flex; flex-direction: column; gap: 8px; }
+  .tone-row { display: flex; gap: 8px; align-items: flex-start; }
+  .tone-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #4b5563;
+    min-width: 80px;
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+  .tone-val { font-size: 12px; color: #9ca3af; line-height: 1.4; }
+  .tone-formula {
+    background: #0a0a0a;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #a5b4fc;
+    line-height: 1.5;
+    border: 1px solid #1f2937;
+  }
+
+  /* ── COMPONENT MATRIX ──────────────────────────────── */
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 48px;
+  }
+  .matrix th {
+    padding: 14px 20px;
+    background: #0a0a0a;
+    color: #6b7280;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 1px solid #1f2937;
+    text-align: left;
+  }
+  .matrix th:first-child { width: 160px; }
+  .matrix th.fs-col { color: #a5b4fc; }
+  .matrix th.efa-col { color: #fcd34d; }
+  .matrix th.now-col { color: #6ee7b7; }
+  .matrix td {
+    padding: 14px 20px;
+    border: 1px solid #111;
+    color: #d1d5db;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .matrix td:first-child {
+    background: #0d0d0d;
+    font-weight: 600;
+    font-size: 11px;
+    color: #6b7280;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .matrix tr:hover td { background: rgba(255,255,255,.02); }
+  .matrix tr:hover td:first-child { background: #0d0d0d; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .pill-fs { background: #1e1b4b; color: #a5b4fc; }
+  .pill-efa { background: #1c1508; color: #fcd34d; }
+  .pill-now { background: #052e16; color: #6ee7b7; }
+  .pill-shared { background: #1f2937; color: #9ca3af; }
+
+  /* ── SYNTHESIS ──────────────────────────────────────── */
+  .synth-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .synth-card {
+    background: #111;
+    border-radius: 12px;
+    padding: 28px;
+    border: 1px solid #1f2937;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .synth-num {
+    font-size: 32px;
+    font-weight: 900;
+    color: #1f2937;
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 40px;
+  }
+  .synth-content h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .synth-content p { font-size: 12px; color: #6b7280; line-height: 1.6; }
+
+  /* ── FOOTER ─────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid #1f2937;
+    padding: 32px 48px;
+    font-size: 11px;
+    color: #374151;
+    text-align: center;
+    letter-spacing: .06em;
+  }
+
+  /* ── UTILS ──────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: #1f2937;
+    margin: 64px 0;
+  }
+  .code-block {
+    background: #070707;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #a5b4fc;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .chip-fs { background: #1e1b4b; color: #a5b4fc; }
+  .chip-efa { background: #1c1508; color: #fcd34d; }
+  .chip-now { background: #052e16; color: #6ee7b7; }
+
+  .section-sep {
+    width: 48px;
+    height: 3px;
+    background: #6366f1;
+    margin-bottom: 48px;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 900px) {
+    .arch-overview, .color-grid, .tone-grid, .flow-site-grid { grid-template-columns: 1fr; }
+    section { padding: 48px 24px; }
+    .synth-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── GLOBAL NAV ─────────────────────────────────────── -->
+<nav class="global-nav">
+  <a href="#architecture" class="active">Architecture</a>
+  <a href="#flowchart">Flowchart</a>
+  <a href="#tone">Ton & Voice</a>
+  <a href="#design">Design UI</a>
+  <a href="#synthese">Synthèse</a>
+</nav>
+
+<!-- ────────────────────────────────────────────────────── -->
+<!-- 1. ARCHITECTURE FRONT                                  -->
+<!-- ────────────────────────────────────────────────────── -->
+<section id="architecture">
+  <div class="section-label">Section 01</div>
+  <h2 class="section-title">Architecture front<br><span style="color:#6b7280;font-weight:400;font-size:28px">Nomenclature Tailwind</span></h2>
+  <div class="section-sep"></div>
+
+  <!-- Vue d'ensemble par couche -->
+  <div class="arch-overview">
+
+    <!-- FRAMESET -->
+    <div class="arch-site">
+      <div class="arch-site-name fs">⬛ Frameset.app</div>
+
+      <div class="arch-block bg-fs">
+        <span class="tag tag-fs">bg</span>
+        <div><div>bg-black min-h-screen text-white</div><div class="desc">Dark mode intégral</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0d0d">
+        <span class="tag tag-fs">nav</span>
+        <div><div>fixed top-0 w-full z-50</div><div class="desc">backdrop-blur-sm bg-black/90 border-b border-gray-800</div></div>
+      </div>
+      <div class="arch-block bg-fs">
+        <span class="tag tag-fs">logo</span>
+        <div><div>w-8 h-8 text-white</div><div class="desc">Icône grille monochrome SVG</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0d0d">
+        <span class="tag tag-fs">tabs</span>
+        <div><div>flex gap-8 text-sm font-medium</div><div class="desc">text-gray-400 hover:text-white · active: border-b-2 border-white</div></div>
+      </div>
+      <div class="arch-block bg-fs">
+        <span class="tag tag-fs">cta</span>
+        <div><div>bg-indigo-500 text-white</div><div class="desc">text-xs px-3 py-1 rounded-sm font-semibold</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0d0d">
+        <span class="tag tag-fs">hero</span>
+        <div><div>relative w-full aspect-[16/9]</div><div class="desc">text-7xl font-black text-center</div></div>
+      </div>
+      <div class="arch-block bg-fs">
+        <span class="tag tag-fs">label</span>
+        <div><div>text-xs tracking-widest uppercase</div><div class="desc">text-gray-400 — overline / eyebrow</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0d0d">
+        <span class="tag tag-fs">btn</span>
+        <div><div>bg-white text-black px-6 py-3</div><div class="desc">inline-flex items-center gap-2 rounded-sm</div></div>
+      </div>
+      <div class="arch-block bg-fs">
+        <span class="tag tag-fs">grid</span>
+        <div><div>grid grid-cols-3 gap-6 px-6</div><div class="desc">lg:grid-cols-3 md:grid-cols-2</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0d0d">
+        <span class="tag tag-fs">card</span>
+        <div><div>group cursor-pointer</div><div class="desc">aspect-video · hover:opacity-75 transition · text-sm font-semibold mt-0.5</div></div>
+      </div>
+    </div>
+
+    <!-- EFA -->
+    <div class="arch-site">
+      <div class="arch-site-name efa">🟡 EFA / Vimeo</div>
+
+      <div class="arch-block bg-efa">
+        <span class="tag tag-efa">bg</span>
+        <div><div>bg-white (nav) + bg-[#1a1a1a] (content)</div><div class="desc">Double mode — dual background</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0a00">
+        <span class="tag tag-efa">nav</span>
+        <div><div>sticky top-0 bg-white border-b</div><div class="desc">border-gray-200 z-50 flex items-center justify-between px-8</div></div>
+      </div>
+      <div class="arch-block bg-efa">
+        <span class="tag tag-efa">logo</span>
+        <div><div>flex items-center gap-3</div><div class="desc">SVG wireframe + text-xs font-bold tracking-widest uppercase</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0a00">
+        <span class="tag tag-efa">hero</span>
+        <div><div>relative w-full h-screen bg-[#1a1a1a]</div><div class="desc">Carousel split 50/50 : image left, texte right</div></div>
+      </div>
+      <div class="arch-block bg-efa">
+        <span class="tag tag-efa">accent</span>
+        <div><div>bg-amber-500 / border-amber-500</div><div class="desc">Or omniprésent : dots, hr, bouton +, hover</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0a00">
+        <span class="tag tag-efa">display</span>
+        <div><div>text-9xl font-black text-white</div><div class="desc">Titre "Staff Picks" oversized</div></div>
+      </div>
+      <div class="arch-block bg-efa">
+        <span class="tag tag-efa">search</span>
+        <div><div>rounded-full border border-gray-600 px-6 py-4</div><div class="desc">flex items-center gap-3 · icon amber</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0a00">
+        <span class="tag tag-efa">pills</span>
+        <div><div>rounded-full border border-gray-600 px-4 py-2</div><div class="desc">text-sm text-white hover:bg-amber-500 transition</div></div>
+      </div>
+      <div class="arch-block bg-efa">
+        <span class="tag tag-efa">grid</span>
+        <div><div>grid grid-cols-3 gap-6</div><div class="desc">md:grid-cols-3 · badge overlay top-right</div></div>
+      </div>
+      <div class="arch-block" style="background:#0d0a00">
+        <span class="tag tag-efa">card</span>
+        <div><div>aspect-video + avatar w-8 h-8 rounded-full</div><div class="desc">title font-bold + director text-gray-400</div></div>
+      </div>
+    </div>
+
+    <!-- NOWNESS -->
+    <div class="arch-site">
+      <div class="arch-site-name now">⬜ Nowness.com</div>
+
+      <div class="arch-block bg-now">
+        <span class="tag tag-now">bg</span>
+        <div style="color:#111"><div>bg-gray-50 text-gray-900 min-h-screen</div><div class="desc" style="color:#374151">Editorial light — fond off-white</div></div>
+      </div>
+      <div class="arch-block" style="background:#f0fdf4;color:#111">
+        <span class="tag tag-now">nav</span>
+        <div><div>sticky top-0 bg-white border-b border-gray-100 z-50</div><div class="desc" style="color:#374151">Logo centré + icons droite</div></div>
+      </div>
+      <div class="arch-block bg-now">
+        <span class="tag tag-now">logo</span>
+        <div style="color:#111"><div>text-3xl font-black tracking-[.25em] uppercase</div><div class="desc" style="color:#374151">NOWNESS — centré dans header</div></div>
+      </div>
+      <div class="arch-block" style="background:#f0fdf4;color:#111">
+        <span class="tag tag-now">subnav</span>
+        <div><div>text-xs tracking-widest uppercase font-medium</div><div class="desc" style="color:#374151">SERIES · TOPICS · PICKS · active: border-b-2 border-black</div></div>
+      </div>
+      <div class="arch-block bg-now">
+        <span class="tag tag-now">h1</span>
+        <div style="color:#111"><div>text-5xl font-black tracking-widest uppercase</div><div class="desc" style="color:#374151">Eyebrow text-xs + titre display</div></div>
+      </div>
+      <div class="arch-block" style="background:#f0fdf4;color:#111">
+        <span class="tag tag-now">featured</span>
+        <div><div>grid grid-cols-2 gap-0.5</div><div class="desc" style="color:#374151">Cards aspect-video full-bleed · overlay gradient to-black/80</div></div>
+      </div>
+      <div class="arch-block bg-now">
+        <span class="tag tag-now">overlay</span>
+        <div style="color:#111"><div>absolute inset-0 bg-gradient-to-t</div><div class="desc" style="color:#374151">from-black/80 via-black/20 to-transparent</div></div>
+      </div>
+      <div class="arch-block" style="background:#f0fdf4;color:#111">
+        <span class="tag tag-now">duration</span>
+        <div><div>absolute bottom-3 right-3 bg-black/60</div><div class="desc" style="color:#374151">text-white text-xs px-2 py-0.5 — badge durée</div></div>
+      </div>
+      <div class="arch-block bg-now">
+        <span class="tag tag-now">list</span>
+        <div style="color:#111"><div>flex gap-4 py-4 border-b border-gray-100</div><div class="desc" style="color:#374151">"Curated by us" — date + thumbnail + texte</div></div>
+      </div>
+      <div class="arch-block" style="background:#f0fdf4;color:#111">
+        <span class="tag tag-now">action</span>
+        <div><div>text-sm underline text-gray-500</div><div class="desc" style="color:#374151">"Load more" — CTA ultra-discret</div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider" style="margin:0"></div>
+
+<!-- ────────────────────────────────────────────────────── -->
+<!-- 2. FLOWCHART                                           -->
+<!-- ────────────────────────────────────────────────────── -->
+<section id="flowchart">
+  <div class="section-label">Section 02</div>
+  <h2 class="section-title">Flowchart<br><span style="color:#6b7280;font-weight:400;font-size:28px">Parcours utilisateur</span></h2>
+  <div class="section-sep"></div>
+
+  <!-- 2A. ARCHITECTURE FONCTIONNELLE COMMUNE -->
+  <div style="margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:24px;">
+      Architecture fonctionnelle commune aux 3 sites
+    </div>
+    <div class="mermaid-wrap">
+      <pre class="mermaid">
+%%{init: {'theme': 'dark', 'flowchart': {'curve': 'linear'}, 'themeVariables': {'primaryColor':'#1e1b4b','primaryTextColor':'#e5e7eb','primaryBorderColor':'#4338ca','lineColor':'#6366f1','secondaryColor':'#111827','tertiaryColor':'#0f172a','background':'#0f0f0f','mainBkg':'#1e1b4b','nodeBorder':'#4338ca','clusterBkg':'#111827','titleColor':'#e5e7eb','edgeLabelBackground':'#1f2937','fontFamily':'ui-sans-serif,system-ui,sans-serif','fontSize':'13px'}}}%%
+flowchart TD
+    FETCH["Fetch contenus\nAPI / CMS"] --> SPOT
+
+    SPOT["Hero / Spotlight\n— 1 item éditorial fixe —\nRendu indépendant de l'état de filtre"]
+
+    SPOT --> FSTATE
+
+    FSTATE{"État de filtre\ninitial ?"}
+    FSTATE -->|"Aucun filtre"| GRID
+    FSTATE -->|"Filtre actif"| FILTER
+
+    FILTER["Calcul liste filtrée\ntabs · catégorie · sort · recherche"] --> GRID
+
+    GRID["Rendu grille\ngrid-cols-3 · aspect-video\nCard = thumbnail + attribution + titre"]
+
+    GRID --> PSTATE
+
+    PSTATE{"Données\nsuffisantes ?"}
+    PSTATE -->|"Oui"| RENDER
+    PSTATE -->|"Non — batch suivant"| LOAD
+
+    LOAD["Chargement pagination\nappend to list"] --> GRID
+
+    RENDER["Rendu complet\nde la grille"]
+
+    RENDER --> DETAIL
+
+    DETAIL["Vue détail\nPlayer · Métadonnées\nDescription éditoriale · Contenus liés"]
+
+    DETAIL -->|"related content"| DETAIL
+
+    style FETCH fill:#111827,stroke:#374151,color:#9ca3af
+    style SPOT fill:#1e1b4b,stroke:#4338ca,color:#e0e7ff
+    style FSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style FILTER fill:#111827,stroke:#374151,color:#d1d5db
+    style GRID fill:#0f172a,stroke:#1e3a5f,color:#d1d5db
+    style PSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style LOAD fill:#111,stroke:#374151,color:#6b7280
+    style RENDER fill:#111827,stroke:#374151,color:#d1d5db
+    style DETAIL fill:#1e1b4b,stroke:#4338ca,color:#e0e7ff
+      </pre>
+    </div>
+  </div>
+
+  <!-- 2B. FLOWCHARTS FONCTIONNELS PAR SITE -->
+  <div style="margin-top:64px;margin-bottom:16px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;">
+    Logique fonctionnelle par site
+  </div>
+
+  <div class="flow-site-grid">
+
+    <!-- FRAMESET -->
+    <div class="flow-site-panel">
+      <div class="flow-site-label fs">⬛ Frameset.app/featured</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'flowchart': {'curve': 'linear'}, 'themeVariables': {'primaryColor':'#1e1b4b','primaryTextColor':'#e5e7eb','primaryBorderColor':'#4338ca','lineColor':'#6366f1','secondaryColor':'#111827','background':'#111','fontFamily':'ui-sans-serif,system-ui,sans-serif','fontSize':'12px'}}}%%
+flowchart TD
+    FETCH["Fetch featured title\n+ commentaries list"] --> HERO
+
+    HERO["Rendu Hero\nSpotlight item\nThumbnail + CTA embed"]
+
+    HERO --> TABSTATE
+
+    TABSTATE{"État tab\nactif"}
+    TABSTATE -->|"Commentaries"| CATFILTER
+    TABSTATE -->|"Titles"| CATFILTER
+
+    CATFILTER{"Catégorie\nsélectionnée ?"}
+    CATFILTER -->|"All"| FULLLIST
+    CATFILTER -->|"Catégorie X"| FILTERED
+
+    FILTERED["Filtrage en mémoire\nliste réduite"] --> GRID
+    FULLLIST["Liste complète\n30+ items préchargés"] --> GRID
+
+    GRID["Rendu grille\ngrid-cols-3\nCard = thumbnail + filmmaker + titre"]
+
+    GRID --> LOCKED
+
+    LOCKED{"Item\naccessible ?"}
+    LOCKED -->|"Oui"| COMMENTARY
+    LOCKED -->|"Non — paywall"| UPGRADE
+
+    COMMENTARY["Page Commentary\nPlayer embed\nTexte process créatif\nMétadonnées film"]
+
+    UPGRADE["Gate upgrade\nCTA souscription"]
+
+    style FETCH fill:#111827,stroke:#374151,color:#9ca3af
+    style HERO fill:#1e1b4b,stroke:#4338ca,color:#e0e7ff
+    style TABSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style CATFILTER fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style FILTERED fill:#111827,stroke:#374151,color:#d1d5db
+    style FULLLIST fill:#111827,stroke:#374151,color:#d1d5db
+    style GRID fill:#0f172a,stroke:#1e3a5f,color:#d1d5db
+    style LOCKED fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style COMMENTARY fill:#312e81,stroke:#4338ca,color:#e0e7ff
+    style UPGRADE fill:#7f1d1d,stroke:#b91c1c,color:#fecaca
+        </pre>
+      </div>
+    </div>
+
+    <!-- EFA -->
+    <div class="flow-site-panel">
+      <div class="flow-site-label efa">🟡 EFA / Vimeo</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'flowchart': {'curve': 'linear'}, 'themeVariables': {'primaryColor':'#1c1508','primaryTextColor':'#fef3c7','primaryBorderColor':'#b45309','lineColor':'#f59e0b','secondaryColor':'#111827','background':'#111','fontFamily':'ui-sans-serif,system-ui,sans-serif','fontSize':'12px'}}}%%
+flowchart TD
+    FETCH["Fetch collections\n+ Staff Picks list"] --> CAROUSEL
+
+    CAROUSEL["Carousel\nÉtat : slideIndex 0–4\nManuel uniquement — pas d'autoplay"]
+
+    CAROUSEL --> SLIDETYPE
+
+    SLIDETYPE{"Type de slide"}
+    SLIDETYPE -->|"Collection thématique"| COLPAGE
+    SLIDETYPE -->|"Toujours"| STAFFSEC
+
+    COLPAGE["Page collection\nPlayer Vimeo embedded\nDescription courte"]
+
+    STAFFSEC["Section Staff Picks\nRendu en dessous du carousel"]
+
+    STAFFSEC --> SEARCHSTATE
+
+    SEARCHSTATE{"État recherche\n/ filtre catégorie"}
+    SEARCHSTATE -->|"Vide + All"| FULLPICKS
+    SEARCHSTATE -->|"Query ou catégorie"| FILTPICKS
+
+    FULLPICKS["Liste complète\nStaff Picks"] --> GRID
+    FILTPICKS["Liste filtrée\ncôté serveur"] --> GRID
+
+    GRID["Rendu grille\ngrid-cols-3\nCard = thumbnail + badge + avatar + titre"]
+
+    GRID --> BATCHSTATE
+
+    BATCHSTATE{"Batch\nsuivant ?"}
+    BATCHSTATE -->|"Oui"| LOADMORE
+    BATCHSTATE -->|"Non"| PLAYER
+
+    LOADMORE["Load more\nAppend batch"] --> GRID
+
+    PLAYER["Player Vimeo\nFull-page embed"]
+
+    style FETCH fill:#111827,stroke:#374151,color:#9ca3af
+    style CAROUSEL fill:#1c1508,stroke:#b45309,color:#fef3c7
+    style SLIDETYPE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style COLPAGE fill:#1c1508,stroke:#92400e,color:#fef3c7
+    style STAFFSEC fill:#1c1508,stroke:#92400e,color:#fef3c7
+    style SEARCHSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style FULLPICKS fill:#111827,stroke:#374151,color:#d1d5db
+    style FILTPICKS fill:#111827,stroke:#374151,color:#d1d5db
+    style GRID fill:#0a0700,stroke:#1c1508,color:#d1d5db
+    style BATCHSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style LOADMORE fill:#111,stroke:#374151,color:#6b7280
+    style PLAYER fill:#78350f,stroke:#b45309,color:#fef3c7
+        </pre>
+      </div>
+    </div>
+
+    <!-- NOWNESS -->
+    <div class="flow-site-panel">
+      <div class="flow-site-label now">⬜ Nowness.com/picks</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+%%{init: {'theme': 'dark', 'flowchart': {'curve': 'linear'}, 'themeVariables': {'primaryColor':'#052e16','primaryTextColor':'#d1fae5','primaryBorderColor':'#059669','lineColor':'#10b981','secondaryColor':'#111827','background':'#111','fontFamily':'ui-sans-serif,system-ui,sans-serif','fontSize':'12px'}}}%%
+flowchart TD
+    FETCH["Fetch picks\n2 sources distinctes"] --> SPLIT
+
+    SPLIT{"Type de\ncollection"}
+    SPLIT -->|"Premiered by us"| FEATURED
+    SPLIT -->|"Curated by us"| SORTSTATE
+
+    FEATURED["Grille featured\n2 colonnes · full-bleed\nOverlay gradient · badge durée"]
+
+    SORTSTATE{"État de tri\nactif"}
+    SORTSTATE -->|"Most recent"| SORTED
+    SORTSTATE -->|"Most popular"| SORTED
+    SORTSTATE -->|"Highest rated"| SORTED
+
+    SORTED["Re-fetch / re-sort\nliste ordonnée"] --> LIST
+
+    LIST["Rendu liste\nDate · Thumbnail · Titre\nDescription · Durée · Actions"]
+
+    LIST --> QUEUESTATE
+
+    QUEUESTATE{"Action\nsur item"}
+    QUEUESTATE -->|"Add to queue"| QUEUE
+    QUEUESTATE -->|"Play"| PLAYER
+    QUEUESTATE -->|"Batch suivant"| LOADMORE
+
+    QUEUE["État queue\npersisté en session\nwatch later"]
+
+    PLAYER["Player in-page\nProse éditoriale\nContenus liés → boucle"]
+
+    LOADMORE["Load more\nAppend page+1"] --> LIST
+
+    style FETCH fill:#111827,stroke:#374151,color:#9ca3af
+    style SPLIT fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style FEATURED fill:#052e16,stroke:#065f46,color:#d1fae5
+    style SORTSTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style SORTED fill:#111827,stroke:#374151,color:#d1d5db
+    style LIST fill:#0a1a0f,stroke:#065f46,color:#d1d5db
+    style QUEUESTATE fill:#1f2937,stroke:#4b5563,color:#d1d5db
+    style QUEUE fill:#052e16,stroke:#059669,color:#d1fae5
+    style PLAYER fill:#065f46,stroke:#059669,color:#d1fae5
+    style LOADMORE fill:#111,stroke:#374151,color:#6b7280
+        </pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider" style="margin:0"></div>
+
+<!-- ────────────────────────────────────────────────────── -->
+<!-- 3. TON & VOICE                                         -->
+<!-- ────────────────────────────────────────────────────── -->
+<section id="tone">
+  <div class="section-label">Section 03</div>
+  <h2 class="section-title">Ton & Voice</h2>
+  <div class="section-sep"></div>
+
+  <div class="tone-grid">
+
+    <!-- FRAMESET -->
+    <div class="tone-card">
+      <div class="tone-header fs">⬛ Frameset — Practitioner-to-practitioner</div>
+      <div class="tone-body">
+        <div class="tone-quote">"Rigging A Tire Swing for A Slo-Mo Shot"</div>
+        <div class="tone-quote">"Making 'Crapamatics' To Nail Match Cut Timing"</div>
+        <div class="tone-quote">"Dropping a Camera From a Tree in a (Fake) Rainstorm"</div>
+        <div class="tone-meta">
+          <div class="tone-row"><span class="tone-label">Registre</span><span class="tone-val">Technique, direct, humble. Réalisateur → réalisateur. Jamais pontifiant.</span></div>
+          <div class="tone-row"><span class="tone-label">Formule</span>
+            <div class="tone-formula">[Réalisateur] on [Film]</div>
+          </div>
+          <div class="tone-row"><span class="tone-label">Contenu</span><span class="tone-val">Le <em>problème résolu</em>, pas le film lui-même</span></div>
+          <div class="tone-row"><span class="tone-label">Mots-clés</span><span class="tone-val">concret · précis · artisanal · transparent</span></div>
+          <div class="tone-row"><span class="tone-label">Ton global</span><span class="tone-val">Éducatif + aspirationnel. Transparence sur le processus.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EFA -->
+    <div class="tone-card">
+      <div class="tone-header efa">🟡 EFA — Institutionnel-curatorial</div>
+      <div class="tone-body">
+        <div class="tone-quote">"Get ready for Oscar night with these past nominees."</div>
+        <div class="tone-quote">"Encourage cultural dialogue and showcase layered richness."</div>
+        <div class="tone-quote">"Exceptional short films curated by the European Film Academy."</div>
+        <div class="tone-meta">
+          <div class="tone-row"><span class="tone-label">Registre</span><span class="tone-val">Prestige institutionnel. Légitimité académique. Langage des festivals.</span></div>
+          <div class="tone-row"><span class="tone-label">Formule</span>
+            <div class="tone-formula">[Collection thématique] + sous-titre factuel court</div>
+          </div>
+          <div class="tone-row"><span class="tone-label">Contenu</span><span class="tone-val">La collection / la sélection comme acte éditorial</span></div>
+          <div class="tone-row"><span class="tone-label">Mots-clés</span><span class="tone-val">exceptional · cultural · layered · dialogue · showcase</span></div>
+          <div class="tone-row"><span class="tone-label">Ton global</span><span class="tone-val">Autorité bienveillante. Invite par le prestige.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOWNESS -->
+    <div class="tone-card">
+      <div class="tone-header now">⬜ Nowness — Literary editorial</div>
+      <div class="tone-body">
+        <div class="tone-quote">"Artist Alexandre de Betak transplants a Japanese ceremonial space to a Swiss barn, exploring light, reflection, and memory within rural architecture."</div>
+        <div class="tone-quote">"Poet Sonny Hall performs an intimate verse, releasing the weight of past memories onto the River Seine."</div>
+        <div class="tone-meta">
+          <div class="tone-row"><span class="tone-label">Registre</span><span class="tone-val">Prose poétique courte. Précision du détail artistique. Micro-critique.</span></div>
+          <div class="tone-row"><span class="tone-label">Formule</span>
+            <div class="tone-formula">[Artiste] + verbe fort + complément évocateur<br>
+transplants · performs · dismantles · casts · animates</div>
+          </div>
+          <div class="tone-row"><span class="tone-label">Mots-clés</span><span class="tone-val">intimate · brooding · supernatural · ephemeral · surreal</span></div>
+          <div class="tone-row"><span class="tone-label">Longueur</span><span class="tone-val">1 à 2 phrases maximum. Jamais plus.</span></div>
+          <div class="tone-row"><span class="tone-label">Ton global</span><span class="tone-val">Premium éditorial. Luxury cultural media. L'image = art.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider" style="margin:0"></div>
+
+<!-- ────────────────────────────────────────────────────── -->
+<!-- 4. DESIGN UI                                           -->
+<!-- ────────────────────────────────────────────────────── -->
+<section id="design">
+  <div class="section-label">Section 04</div>
+  <h2 class="section-title">Design UI</h2>
+  <div class="section-sep"></div>
+
+  <!-- Couleurs -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin-bottom:24px;">Palettes</div>
+  <div class="color-grid">
+
+    <div class="color-site">
+      <div class="color-site-header fs">Frameset</div>
+      <div class="swatches">
+        <div class="swatch-row"><div class="swatch" style="background:#000000"></div><div class="swatch-info"><span class="swatch-name">Background</span><span class="swatch-val">bg-black — #000000</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#ffffff"></div><div class="swatch-info"><span class="swatch-name">Text principal</span><span class="swatch-val">text-white — #ffffff</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#9ca3af"></div><div class="swatch-info"><span class="swatch-name">Text secondaire</span><span class="swatch-val">text-gray-400 — #9ca3af</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#1f2937"></div><div class="swatch-info"><span class="swatch-name">Bordures</span><span class="swatch-val">border-gray-800 — #1f2937</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#6366f1"></div><div class="swatch-info"><span class="swatch-name">Accent unique</span><span class="swatch-val">bg-indigo-500 — #6366f1</span></div></div>
+      </div>
+    </div>
+
+    <div class="color-site">
+      <div class="color-site-header efa">European Film Awards</div>
+      <div class="swatches">
+        <div class="swatch-row"><div class="swatch" style="background:#1a1a1a"></div><div class="swatch-info"><span class="swatch-name">Dark sections</span><span class="swatch-val">bg-[#1a1a1a]</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#ffffff;border:1px solid #374151"></div><div class="swatch-info"><span class="swatch-name">Nav / light</span><span class="swatch-val">bg-white — #ffffff</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#111111"></div><div class="swatch-info"><span class="swatch-name">Text nav</span><span class="swatch-val">text-gray-900 — #111111</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#9ca3af"></div><div class="swatch-info"><span class="swatch-name">Text secondaire</span><span class="swatch-val">text-gray-400 — #9ca3af</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#f59e0b"></div><div class="swatch-info"><span class="swatch-name">Accent or</span><span class="swatch-val">amber-500 — #f59e0b</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#e5e7eb"></div><div class="swatch-info"><span class="swatch-name">Bordures light</span><span class="swatch-val">border-gray-200 — #e5e7eb</span></div></div>
+      </div>
+    </div>
+
+    <div class="color-site">
+      <div class="color-site-header now">Nowness</div>
+      <div class="swatches">
+        <div class="swatch-row"><div class="swatch" style="background:#f5f5f5;border:1px solid #e5e7eb"></div><div class="swatch-info"><span class="swatch-name">Background</span><span class="swatch-val">bg-gray-50 — #f5f5f5</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#ffffff;border:1px solid #e5e7eb"></div><div class="swatch-info"><span class="swatch-name">Surfaces</span><span class="swatch-val">bg-white — #ffffff</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#111111"></div><div class="swatch-info"><span class="swatch-name">Text principal</span><span class="swatch-val">text-gray-900 — #111111</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#6b7280"></div><div class="swatch-info"><span class="swatch-name">Text secondaire</span><span class="swatch-val">text-gray-500 — #6b7280</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#f3f4f6;border:1px solid #e5e7eb"></div><div class="swatch-info"><span class="swatch-name">Bordures</span><span class="swatch-val">border-gray-100 — #f3f4f6</span></div></div>
+        <div class="swatch-row"><div class="swatch" style="background:#000000"></div><div class="swatch-info"><span class="swatch-name">Accent (zero)</span><span class="swatch-val">Monochrome pur — pas d'accent couleur</span></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Typographie -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin-bottom:24px;margin-top:48px;">Typographie</div>
+  <table class="typo-table">
+    <thead>
+      <tr>
+        <th>Élément</th>
+        <th class="fs-col">Frameset</th>
+        <th class="efa-col">EFA / Vimeo</th>
+        <th class="now-col">Nowness</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Famille</td>
+        <td>Sans-serif système (Inter-like)</td>
+        <td>Sans-serif custom (peut-être GT Walsheim)</td>
+        <td>Sans-serif haute qualité, tracking élevé</td>
+      </tr>
+      <tr>
+        <td>Hero H1</td>
+        <td><span class="mono">text-7xl font-black text-center</span></td>
+        <td><span class="mono">text-5xl font-bold</span></td>
+        <td><span class="mono">text-5xl font-black tracking-widest uppercase</span></td>
+      </tr>
+      <tr>
+        <td>Display section</td>
+        <td><span class="mono">text-9xl font-black</span> (EFA-like)</td>
+        <td><span class="mono">text-9xl font-black</span> "Staff Picks"</td>
+        <td><span class="mono">text-2xl font-black uppercase</span></td>
+      </tr>
+      <tr>
+        <td>Overline / label</td>
+        <td><span class="mono">text-xs tracking-widest uppercase text-gray-400</span></td>
+        <td><span class="mono">text-xs uppercase tracking-wide</span></td>
+        <td><span class="mono">text-xs tracking-widest uppercase</span></td>
+      </tr>
+      <tr>
+        <td>Card titre</td>
+        <td><span class="mono">text-sm font-semibold text-white</span></td>
+        <td><span class="mono">text-lg font-bold text-white</span></td>
+        <td><span class="mono">font-bold text-gray-900</span></td>
+      </tr>
+      <tr>
+        <td>Corps / desc</td>
+        <td><span class="mono">text-sm leading-relaxed text-gray-400</span></td>
+        <td><span class="mono">text-base text-gray-300</span></td>
+        <td><span class="mono">text-sm text-gray-500 line-clamp-2</span></td>
+      </tr>
+      <tr>
+        <td>Nav links</td>
+        <td><span class="mono">text-sm font-medium text-gray-400</span></td>
+        <td><span class="mono">text-sm font-medium tracking-wide uppercase</span></td>
+        <td><span class="mono">text-xs tracking-widest uppercase font-medium</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Matrix composants -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin-bottom:24px;margin-top:48px;">Matrice composants</div>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th>Composant</th>
+        <th class="fs-col">⬛ Frameset</th>
+        <th class="efa-col">🟡 EFA / Vimeo</th>
+        <th class="now-col">⬜ Nowness</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Navbar</td>
+        <td>Dark fixed · tabs centrées · auth droite</td>
+        <td>Blanc sticky · mega-menu dropdowns · search icon</td>
+        <td>Logo centré oversized · burger gauche · icons droite</td>
+      </tr>
+      <tr>
+        <td>Hero</td>
+        <td>Spotlight full-bleed 16/9 · 1 contenu · CTA centré</td>
+        <td>Carousel split 50/50 · arrows + dots amber</td>
+        <td>Header textuel léger · pas d'image hero</td>
+      </tr>
+      <tr>
+        <td>Cards</td>
+        <td>Image brute sans border-radius · byline + titre sous image</td>
+        <td>Badge "Staff Pick" overlay · avatar réal. + nom</td>
+        <td>2 modes : full-bleed overlay / liste horizontale datée</td>
+      </tr>
+      <tr>
+        <td>CTA principal</td>
+        <td><span class="pill pill-fs">bg-white text-black</span> inversé · rounded-sm</td>
+        <td><span class="pill pill-efa">bg-amber-500</span> carré + (bouton flottant)</td>
+        <td>Quasiment absent · "Play" inline texte</td>
+      </tr>
+      <tr>
+        <td>Filtres</td>
+        <td>Tabs + combobox dropdown texte</td>
+        <td>Search bar ovale + pills catégories rounded-full</td>
+        <td>Tabs sort (recent / popular / rated) · underline active</td>
+      </tr>
+      <tr>
+        <td>Badge durée</td>
+        <td>Non affiché sur grille principale</td>
+        <td>Affiché sur player / titre</td>
+        <td><span class="pill pill-now">absolute bottom-3 right-3 bg-black/60</span></td>
+      </tr>
+      <tr>
+        <td>Pagination</td>
+        <td>Scroll implicite (30+ cards chargées)</td>
+        <td>"View all →" link + bouton "Load more"</td>
+        <td>"Load more" underline discret + queue personnelle</td>
+      </tr>
+      <tr>
+        <td>Espacement</td>
+        <td>Dense · gap-6 · peu de whitespace</td>
+        <td>Aéré dans sections · serré dans grille</td>
+        <td>Whitespace éditorial généreux · header py-10</td>
+      </tr>
+      <tr>
+        <td>Ratings / likes</td>
+        <td colspan="3" style="text-align:center;color:#374151;font-style:italic;">
+          <span class="pill pill-shared">Aucun sur les 3 sites</span> — la curation éditoriale remplace le signal social
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</section>
+
+<div class="divider" style="margin:0"></div>
+
+<!-- ────────────────────────────────────────────────────── -->
+<!-- 5. SYNTHÈSE POUR VOTRE DIGEST                         -->
+<!-- ────────────────────────────────────────────────────── -->
+<section id="synthese">
+  <div class="section-label">Section 05</div>
+  <h2 class="section-title">Synthèse<br><span style="color:#6b7280;font-weight:400;font-size:28px">Ce que votre page Digest doit intégrer</span></h2>
+  <div class="section-sep"></div>
+
+  <div class="synth-grid">
+    <div class="synth-card">
+      <div class="synth-num">01</div>
+      <div class="synth-content">
+        <h4>Spotlight hero éditorial</h4>
+        <p>1 contenu mis en avant avec une intention claire, pas un algorithme. Le hero établit le ton de toute la page. Il justifie la sélection.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">02</div>
+      <div class="synth-content">
+        <h4>Formule de card identifiable</h4>
+        <p>Auteur → titre court, image dominante. La hiérarchie auteur + titre est constante sur les 3 sites. Jamais l'inverse.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">03</div>
+      <div class="synth-content">
+        <h4>Curatorial statement court</h4>
+        <p>1–2 phrases max qui expliquent pourquoi cette sélection existe. Le "Premiered by us" de Nowness, le descriptif de Frameset, la mission EFA.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">04</div>
+      <div class="synth-content">
+        <h4>Typographie display forte</h4>
+        <p>Un titre de section exceptionnellement grand ("Staff Picks" à text-9xl) ancre chaque bloc. Crée des repères visuels puissants en scroll.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">05</div>
+      <div class="synth-content">
+        <h4>Zéro gamification visible</h4>
+        <p>Pas de compteurs, pas de likes, pas de trending scores. La légitimité vient de la curation humaine, pas du signal social quantifié.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">06</div>
+      <div class="synth-content">
+        <h4>Position éditoriale assumée</h4>
+        <p>Choisir un ton (technique / institutionnel / poétique) et s'y tenir. Le mélange des trois registres dilue l'identité. Une voix, une posture.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">07</div>
+      <div class="synth-content">
+        <h4>Badge durée systématique</h4>
+        <p>Affiché sur chaque card — c'est l'unique information "utilitaire" tolérée. Elle aide la décision d'engagement sans casser le design.</p>
+      </div>
+    </div>
+    <div class="synth-card">
+      <div class="synth-num">08</div>
+      <div class="synth-content">
+        <h4>Grille 3 col. comme étalon desktop</h4>
+        <p>Les 3 sites convergent sur grid-cols-3 en desktop. 2 colonnes pour les formats featured plein-bleed. Liste en mobile.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  Analyse produite par Claude · Plateforme Web Veille Vidéo · Avril 2026
+</footer>
+
+<script>
+  // Init Mermaid
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: {
+      curve: 'linear',
+      padding: 20,
+      nodeSpacing: 40,
+      rankSpacing: 50,
+      htmlLabels: true
+    },
+    themeVariables: {
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+      fontSize: '13px'
+    }
+  });
+
+  // Tab switching pour la section architecture
+  document.querySelectorAll('.site-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.target;
+      document.querySelectorAll('.site-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(target)?.classList.add('active');
+    });
+  });
+
+  // Smooth scroll nav
+  document.querySelectorAll('.global-nav a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.global-nav a').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const target = document.querySelector(link.getAttribute('href'));
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Active nav on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.global-nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      if (window.scrollY >= section.offsetTop - 100) {
+        current = section.getAttribute('id');
+      }
+    });
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  });
+</script>
+</body>
+</html>

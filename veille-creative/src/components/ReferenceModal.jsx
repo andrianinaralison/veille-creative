@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, Bookmark, BookmarkCheck, ExternalLink, Play } from 'lucide-react'
 
 function getEmbedUrl(url) {
@@ -46,15 +46,24 @@ export default function ReferenceModal({ reference, onClose }) {
   const embedUrl = getEmbedUrl(reference.url)
   const specs = deriveSpecs(reference)
 
+  // Stable ref to always call the latest onClose without re-running the effect
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
+
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose()
+    const onKey = (e) => e.key === 'Escape' && onCloseRef.current()
     window.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
+    const scrollContainer = document.querySelector('main')
+    const savedScrollTop = scrollContainer?.scrollTop ?? 0
+    if (scrollContainer) scrollContainer.style.overflow = 'hidden'
     return () => {
       window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      if (scrollContainer) {
+        scrollContainer.style.overflow = ''
+        scrollContainer.scrollTop = savedScrollTop
+      }
     }
-  }, [onClose])
+  }, [])
 
   // Extract display tags (non-camera, non-technical identifiers)
   const displayTags = (reference.tags || [])
@@ -99,7 +108,7 @@ export default function ReferenceModal({ reference, onClose }) {
               <>
                 {/* Thumbnail */}
                 <img
-                  src={reference.thumbnail}
+                  src={reference.thumbnailUrl}
                   alt={reference.title}
                   className="w-full h-full object-cover opacity-80"
                   style={{ aspectRatio: '16/10' }}
@@ -202,12 +211,12 @@ export default function ReferenceModal({ reference, onClose }) {
             </div>
 
             {/* Footer actions */}
-            <div className="px-8 py-7 flex items-center gap-3 border-t border-surface-border" style={{ background: '#0a0a0a' }}>
+            <div className="px-8 py-7 flex items-center gap-3 border-t border-surface-border" style={{ background: '#000000' }}>
               <button
                 onClick={() => setSaved(!saved)}
                 className={`flex flex-1 items-center justify-center gap-2.5 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all ${
                   saved
-                    ? 'bg-gold text-canvas'
+                    ? 'bg-surface-raised text-ink border border-ink/20'
                     : 'bg-ink text-canvas hover:bg-ink/90'
                 }`}
               >

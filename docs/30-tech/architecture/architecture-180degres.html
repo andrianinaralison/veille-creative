@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>180 Degrés — Architecture complète</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #0a0a0f;
+      color: #e8e6e1;
+      padding: 32px;
+      min-width: 1400px;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      font-weight: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e8e6e1;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #666;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+    }
+
+    /* ── LAYERS ── */
+    .layer {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .layer-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #444;
+      min-width: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .layer-content {
+      flex: 1;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      border-radius: 4px;
+      padding: 14px 16px;
+      position: relative;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .card-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0.7;
+    }
+    .card-body {
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    /* ── COULEURS PAR COUCHE ── */
+
+    /* Infra — gris anthracite */
+    .infra { background: #1a1a24; border: 1px solid #2a2a38; }
+    .infra .card-title { color: #9090a8; }
+    .infra .badge { background: #2a2a38; color: #9090a8; }
+
+    /* Frontend public — bleu acier */
+    .frontend-public { background: #0d1b2e; border: 1px solid #1a3a5c; }
+    .frontend-public .card-title { color: #4a9eff; }
+    .frontend-public .badge { background: #1a3a5c; color: #4a9eff; }
+
+    /* Frontend admin — bleu indigo */
+    .frontend-admin { background: #0f0d2e; border: 1px solid #2a1f6e; }
+    .frontend-admin .card-title { color: #8b7fff; }
+    .frontend-admin .badge { background: #2a1f6e; color: #8b7fff; }
+
+    /* Backend routes — vert sauge */
+    .backend { background: #0d2018; border: 1px solid #1a4030; }
+    .backend .card-title { color: #4aca8a; }
+    .backend .badge { background: #1a4030; color: #4aca8a; }
+
+    /* Services — vert émeraude */
+    .service { background: #0a1f14; border: 1px solid #164028; }
+    .service .card-title { color: #2ecc71; }
+    .service .badge { background: #164028; color: #2ecc71; }
+
+    /* Pipeline — orange */
+    .pipeline { background: #1f1205; border: 1px solid #4a2800; }
+    .pipeline .card-title { color: #f5924a; }
+    .pipeline .badge { background: #4a2800; color: #f5924a; }
+    .pipeline-step { color: #cc7733; }
+
+    /* BDD — violet */
+    .database { background: #160d2a; border: 1px solid #341a5e; }
+    .database .card-title { color: #c084fc; }
+    .database .badge { background: #341a5e; color: #c084fc; }
+
+    /* APIs externes — rouge-bordeaux */
+    .external { background: #1f0d0d; border: 1px solid #4a1a1a; }
+    .external .card-title { color: #f87171; }
+    .external .badge { background: #4a1a1a; color: #f87171; }
+
+    /* Auth (à faire) — jaune amber */
+    .auth-todo { background: #1a1500; border: 1px dashed #5a4500; opacity: 0.7; }
+    .auth-todo .card-title { color: #f59e0b; }
+    .auth-todo .badge { background: #5a4500; color: #f59e0b; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 2px 7px;
+      border-radius: 2px;
+      margin: 2px 3px 2px 0;
+      font-weight: 600;
+    }
+    .tag-ok { background: #0f2e1a; color: #2ecc71; }
+    .tag-todo { background: #2e1a00; color: #f59e0b; border: 1px dashed #5a3300; }
+
+    /* ── ROUTES ── */
+    .route {
+      font-size: 10px;
+      color: #888;
+      margin: 3px 0;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .route:last-child { border-bottom: none; }
+    .method {
+      display: inline-block;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 1px 5px;
+      border-radius: 2px;
+      margin-right: 6px;
+    }
+    .GET { background: #0f2e1a; color: #2ecc71; }
+    .POST { background: #0d1b2e; color: #4a9eff; }
+    .PATCH { background: #2a1f6e; color: #8b7fff; }
+    .DELETE { background: #2e0d0d; color: #f87171; }
+
+    /* ── ARROWS BETWEEN LAYERS ── */
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+      position: relative;
+      margin: -4px 0;
+    }
+    .arrow-row svg {
+      width: 100%;
+      height: 24px;
+    }
+
+    /* ── FLEX WIDTHS ── */
+    .w1 { flex: 1; }
+    .w2 { flex: 2; }
+    .w3 { flex: 3; }
+    .w4 { flex: 4; }
+    .w5 { flex: 5; }
+
+    /* ── PIPELINE STEPS ── */
+    .steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .step {
+      font-size: 9px;
+      padding: 3px 8px;
+      background: rgba(245,146,74,0.12);
+      border: 1px solid rgba(245,146,74,0.2);
+      border-radius: 2px;
+      color: #cc7733;
+      letter-spacing: 0.05em;
+    }
+    .step-arrow {
+      font-size: 10px;
+      color: #666;
+      self-align: center;
+      padding: 3px 0;
+    }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #1a1a24;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #666;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── TABLE STRUCTURE ── */
+    .db-table {
+      margin-bottom: 8px;
+    }
+    .db-table-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .db-field {
+      font-size: 9px;
+      color: #7755aa;
+      padding: 1px 0;
+    }
+    .db-field .field-type { color: #555; }
+
+    /* ── STATUS BADGES ── */
+    .status-draft { color: #f59e0b; }
+    .status-published { color: #2ecc71; }
+    .status-rejected { color: #f87171; }
+
+    /* ── CONNECTOR SVG ── */
+    .connectors-row {
+      height: 32px;
+      position: relative;
+      margin: 2px 18px;
+    }
+
+    /* ── SECTION DIVIDER ── */
+    .section-divider {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #333;
+      text-align: center;
+      margin: 6px 0;
+      position: relative;
+    }
+    .section-divider::before, .section-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: #1a1a24;
+    }
+    .section-divider::before { left: 0; }
+    .section-divider::after { right: 0; }
+
+    .pill {
+      display: inline-block;
+      font-size: 8px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: #666;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<h1>180 Degrés — Architecture</h1>
+<div class="subtitle">Plateforme de veille créative · Stack complète · État au 3 juin 2026</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 0 — INFRA                                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Infra</div>
+  <div class="layer-content">
+
+    <div class="card infra w2">
+      <div class="card-title">Vercel</div>
+      <div class="card-body">
+        <span class="badge">CDN Edge</span>
+        <span class="badge">HTTPS</span><br>
+        Frontend React — build Vite<br>
+        <span style="font-size:9px;color:#555">veillecreative.vercel.app</span>
+      </div>
+    </div>
+
+    <div class="card infra w2">
+      <div class="card-title">Railway</div>
+      <div class="card-body">
+        <span class="badge">Node.js 22</span>
+        <span class="badge">Always-on</span><br>
+        Backend Express<br>
+        <span style="font-size:9px;color:#555">api.180degres.railway.app</span>
+      </div>
+    </div>
+
+    <div class="card infra w3">
+      <div class="card-title">Supabase</div>
+      <div class="card-body">
+        <span class="badge">PostgreSQL 16</span>
+        <span class="badge">Storage CDN</span>
+        <span class="badge">Session pooler AWS eu-west-3</span><br>
+        Base de données + bucket <code>thumbnails</code> public<br>
+        <span style="font-size:9px;color:#555">refs/youtube/{videoId}.jpg</span>
+      </div>
+    </div>
+
+    <div class="card infra w3">
+      <div class="card-title">APIs Externes</div>
+      <div class="card-body">
+        <span class="badge">YouTube Data API v3</span>
+        <span class="badge">Claude claude-sonnet-4-6</span>
+        <span style="font-size:9px;color:#555">Quotas YouTube · Prompt caching 1h Anthropic</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 1 — FRONTEND PUBLIC                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Frontend public</div>
+  <div class="layer-content">
+
+    <div class="card frontend-public w3">
+      <div class="card-title">LibraryPage <span class="pill">/</span></div>
+      <div class="card-body">
+        Grille références · filtres thématiques · smart search<br>
+        <span class="badge tag-ok">API réelle</span>
+        <code style="font-size:9px;color:#2a5a8a">GET /api/v1/references</code><br>
+        <code style="font-size:9px;color:#2a5a8a">GET /api/v1/references/sections</code>
+      </div>
+    </div>
+
+    <div class="card frontend-public w2">
+      <div class="card-title">CategoryPage <span class="pill">/library/section/:id</span></div>
+      <div class="card-body">
+        Section thématique avec moodboard<br>
+        <span class="badge tag-ok">API réelle</span>
+        <code style="font-size:9px;color:#2a5a8a">GET /api/v1/references/sections</code>
+      </div>
+    </div>
+
+    <div class="card frontend-public w2">
+      <div class="card-title">Smart Search</div>
+      <div class="card-body">
+        Input → <code>POST /api/v1/search</code><br>
+        <span class="badge tag-todo">⚠ results: []</span>
+        Non branché BDD encore
+      </div>
+    </div>
+
+    <div class="card frontend-public w3" style="opacity:0.55;">
+      <div class="card-title">ProjectsPage · MoodboardBuilder</div>
+      <div class="card-body">
+        <span class="badge tag-todo">Mock data</span>
+        Backend Projets non développé<br>
+        <span style="font-size:9px;color:#555">CRUD projets + export PDF — backlog</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 2 — FRONTEND ADMIN                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer" style="margin-top:4px;">
+  <div class="layer-label">Frontend admin</div>
+  <div class="layer-content">
+
+    <div class="card frontend-admin w1">
+      <div class="card-title">AdminLayout <span class="pill">/admin</span></div>
+      <div class="card-body">
+        Sidebar nav<br>
+        React Router Outlet
+        <div style="margin-top:6px;font-size:9px;color:#555">
+          → /admin/curation<br>
+          → /admin/references<br>
+          → /admin/sections
+        </div>
+      </div>
+    </div>
+
+    <div class="card frontend-admin w4">
+      <div class="card-title">CurationPage <span class="pill">/admin/curation</span></div>
+      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:9px;color:#5a4aaa;font-weight:600;margin-bottom:4px;letter-spacing:0.1em">TAB CRÉATEURS</div>
+          Formulaire : nom + dropdown plateforme<br>
+          Champs : YouTube / Instagram / Vimeo / Site<br>
+          <span style="font-size:9px;color:#8b7fff">→ Scan auto YouTube au submit</span><br><br>
+          <div style="font-size:9px;color:#5a4aaa;font-weight:600;margin-bottom:4px;letter-spacing:0.1em">MONITORING LIVE</div>
+          Polling toutes les 2s · compteurs live<br>
+          trouvées / filtrées / sauvegardées
+        </div>
+        <div>
+          <div style="font-size:9px;color:#5a4aaa;font-weight:600;margin-bottom:4px;letter-spacing:0.1em">TAB LIENS MANUELS</div>
+          Textarea URLs YouTube → import<br><br>
+          <div style="font-size:9px;color:#5a4aaa;font-weight:600;margin-bottom:4px;letter-spacing:0.1em">RESULTS TABLE</div>
+          <span class="badge">TagEditor</span>
+          <span class="badge">SectionSelector</span>
+          <span class="badge">StatusDropdown</span><br>
+          Sauvegarde ligne par ligne<br>
+          <span class="status-draft">DRAFT</span> · <span class="status-published">PUBLISHED</span> · <span class="status-rejected">REJECTED</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card frontend-admin w2">
+      <div class="card-title">ReferencesAdminPage <span class="pill">/admin/references</span></div>
+      <div class="card-body">
+        Toutes références · filtres statut<br>
+        Prévisualisation vidéo<br>
+        Édition inline tags / section
+      </div>
+    </div>
+
+    <div class="card frontend-admin w2">
+      <div class="card-title">SectionsAdminPage <span class="pill">/admin/sections</span></div>
+      <div class="card-body">
+        CRUD sections éditoriales<br>
+        Assign / unassign références<br>
+        Position · slug · active
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕ HTTP REST</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 3 — BACKEND ROUTES                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Routes API</div>
+  <div class="layer-content">
+
+    <div class="card backend w3">
+      <div class="card-title">Ingestion Routes</div>
+      <div class="card-body">
+        <div class="route"><span class="method POST">POST</span>/api/v1/ingestion/sessions <span style="color:#555;font-size:9px">→ Topic Discovery</span></div>
+        <div class="route"><span class="method POST">POST</span>/api/v1/ingestion/creator-scan <span style="color:#555;font-size:9px">→ Creator Scan</span></div>
+        <div class="route"><span class="method POST">POST</span>/api/v1/ingestion/links <span style="color:#555;font-size:9px">→ Liens manuels</span></div>
+        <div class="route"><span class="method GET">GET</span>/api/v1/ingestion/sessions/:id <span style="color:#555;font-size:9px">→ polling status</span></div>
+      </div>
+    </div>
+
+    <div class="card backend w3">
+      <div class="card-title">Admin Routes</div>
+      <div class="card-body">
+        <div class="route"><span class="method GET">GET</span> <span class="method POST">POST</span> <span class="method PATCH">PATCH</span> <span class="method DELETE">DEL</span>/api/v1/admin/creators</div>
+        <div class="route"><span class="method GET">GET</span> <span class="method PATCH">PATCH</span> <span class="method DELETE">DEL</span>/api/v1/admin/references</div>
+        <div class="route"><span class="method GET">GET</span> <span class="method POST">POST</span> <span class="method PATCH">PATCH</span> <span class="method DELETE">DEL</span>/api/v1/admin/sections</div>
+        <div class="route"><span class="method POST">POST</span>/api/v1/admin/sections/:id/assign</div>
+      </div>
+    </div>
+
+    <div class="card backend w2">
+      <div class="card-title">Public Routes</div>
+      <div class="card-body">
+        <div class="route"><span class="method GET">GET</span>/api/v1/references <span style="color:#555;font-size:9px">bibliothèque</span></div>
+        <div class="route"><span class="method GET">GET</span>/api/v1/references/sections</div>
+        <div class="route"><span class="method GET">GET</span>/health</div>
+      </div>
+    </div>
+
+    <div class="card backend w2">
+      <div class="card-title">Search Route</div>
+      <div class="card-body">
+        <div class="route"><span class="method POST">POST</span>/api/v1/search</div>
+        <span class="badge tag-todo">⚠ results: []</span><br>
+        <span style="font-size:9px;color:#555">Claude API branché<br>mais BDD non connectée</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 4 — SERVICES                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Services</div>
+  <div class="layer-content">
+
+    <div class="card service w4">
+      <div class="card-title">ingestion.service.js</div>
+      <div class="card-body">
+        <code>runIngestionAgent()</code> · <code>runCreatorScanAgent()</code> · <code>fetchAndSaveLinks()</code><br>
+        Orchestre pipeline 3 modes · gère status IngestionSession · upsert Prisma
+      </div>
+    </div>
+
+    <div class="card service w2">
+      <div class="card-title">thumbnail.service.js</div>
+      <div class="card-body">
+        DL thumbnail YouTube<br>
+        Upload Supabase Storage CDN<br>
+        <code style="font-size:9px;color:#2ecc71">refs/youtube/{videoId}.jpg</code>
+      </div>
+    </div>
+
+    <div class="card service w2">
+      <div class="card-title">search.service.js</div>
+      <div class="card-body">
+        Claude API<br>
+        Prompt caching <code style="font-size:9px">ttl: 1h</code><br>
+        JSON schema structured output
+      </div>
+    </div>
+
+    <div class="card service w2">
+      <div class="card-title">lib/supabase.js</div>
+      <div class="card-body">
+        Client Supabase singleton<br>
+        Service role key<br>
+        <span style="font-size:9px;color:#555">Ne jamais exposer côté client</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕ Pipeline ingestion</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 5 — PIPELINE 3 MODES                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Pipeline</div>
+  <div class="layer-content">
+
+    <div class="card pipeline w4">
+      <div class="card-title">Mode 1 — Topic Discovery</div>
+      <div class="steps">
+        <span class="step">Brief NL</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Claude génère 5-8 requêtes</span>
+        <span class="step-arrow">→</span>
+        <span class="step">YouTube search.list</span>
+        <span class="step-arrow">→</span>
+        <span class="step">videos.list + contentDetails</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Filtre &gt; 3 min</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Scoring Claude 0-100 (seuil 65)</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Enrichissement Claude batch 15</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Thumbnail → CDN</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Upsert DRAFT</span>
+      </div>
+    </div>
+
+    <div class="card pipeline w3">
+      <div class="card-title">Mode 2 — Creator Scan <span class="pill">auto au submit</span></div>
+      <div class="steps">
+        <span class="step">@handle / URL YouTube</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Résolution channelId</span>
+        <span class="step-arrow">→</span>
+        <span class="step">playlistItems.list</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Filtre &gt; 3 min</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Enrichissement Claude</span>
+        <span class="step-arrow">→</span>
+        <span class="step">DRAFT</span>
+      </div>
+    </div>
+
+    <div class="card pipeline w3">
+      <div class="card-title">Mode 3 — Liens Manuels</div>
+      <div class="steps">
+        <span class="step">URLs YouTube</span>
+        <span class="step-arrow">→</span>
+        <span class="step">videos.list</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Enrichissement Claude</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Thumbnail → CDN</span>
+        <span class="step-arrow">→</span>
+        <span class="step">DRAFT</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕ Prisma ORM</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 6 — BASE DE DONNÉES                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Base de données</div>
+  <div class="layer-content">
+
+    <div class="card database w4">
+      <div class="card-title">Reference</div>
+      <div class="card-body">
+        <span class="badge">url UNIQUE</span>
+        <span class="badge">platform</span>
+        <span class="badge">sourceMode</span>
+        <span class="badge">title</span>
+        <span class="badge">channelName</span>
+        <span class="badge">thumbnailUrl</span>
+        <span class="badge">tags[]</span>
+        <span class="badge">mood</span>
+        <span class="badge">typeContenu</span>
+        <span class="badge">context</span>
+        <br>
+        statut : <span class="status-draft">DRAFT</span> · <span class="status-published">PUBLISHED</span> · <span class="status-rejected">REJECTED</span>
+        &nbsp;·&nbsp; <span style="font-size:9px;color:#666">sectionId FK · ingestionSessionId FK</span>
+      </div>
+    </div>
+
+    <div class="card database w2">
+      <div class="card-title">IngestionSession</div>
+      <div class="card-body">
+        <span class="badge">mode</span>
+        <span class="badge">brief</span>
+        <br>
+        <span class="badge">totalFound</span>
+        <span class="badge">totalFiltered</span>
+        <span class="badge">totalSaved</span>
+        <br>
+        statut : <span style="color:#4a9eff">RUNNING</span> · <span style="color:#2ecc71">COMPLETED</span> · <span style="color:#f87171">FAILED</span>
+      </div>
+    </div>
+
+    <div class="card database w2">
+      <div class="card-title">Creator</div>
+      <div class="card-body">
+        <span class="badge">name</span>
+        <span class="badge">youtubeHandle</span>
+        <span class="badge">channelId</span>
+        <span class="badge">platform</span>
+        <br>
+        <span class="badge" style="opacity:0.5">instagramHandle</span>
+        <span class="badge" style="opacity:0.5">vimeoUrl</span>
+        <span class="badge" style="opacity:0.5">websiteUrl</span>
+        <br>
+        <span style="font-size:9px;color:#555">scan non développé pour les 3 derniers</span>
+      </div>
+    </div>
+
+    <div class="card database w2">
+      <div class="card-title">Section</div>
+      <div class="card-body">
+        <span class="badge">title</span>
+        <span class="badge">slug UNIQUE</span>
+        <span class="badge">description</span>
+        <span class="badge">position</span>
+        <span class="badge">active</span>
+        <br>
+        ↳ 1-N References
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">↕ API calls</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 7 — APIS EXTERNES                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">APIs externes</div>
+  <div class="layer-content">
+
+    <div class="card external w4">
+      <div class="card-title">YouTube Data API v3</div>
+      <div class="card-body">
+        <span class="badge">search.list</span> requêtes NL → vidéos<br>
+        <span class="badge">videos.list</span> metadata + <span class="badge">contentDetails</span> durée<br>
+        <span class="badge">playlistItems.list</span> chaîne créateur (quota-efficient)<br>
+        <span style="font-size:9px;color:#555">YOUTUBE_API_KEY dans server/.env</span>
+      </div>
+    </div>
+
+    <div class="card external w4">
+      <div class="card-title">Claude API — claude-sonnet-4-6</div>
+      <div class="card-body">
+        <span class="badge">Génération requêtes</span> brief → 5-8 queries YouTube<br>
+        <span class="badge">Scoring</span> pertinence 0-100 par vidéo (seuil 65)<br>
+        <span class="badge">Enrichissement batch 15</span> tags / mood / typeContenu / context<br>
+        <span class="badge">Smart search</span> requêtes sémantiques<br>
+        <code style="font-size:9px;color:#cc4444">cache_control: ephemeral ttl:1h</code> · <code style="font-size:9px;color:#cc4444">json_schema</code> · pas de prefill
+      </div>
+    </div>
+
+    <div class="card external w2">
+      <div class="card-title">Supabase Storage CDN</div>
+      <div class="card-body">
+        Bucket <code>thumbnails</code> public<br>
+        <code style="font-size:9px;color:#cc4444">refs/youtube/{videoId}.jpg</code><br>
+        <span style="font-size:9px;color:#555">SUPABASE_SERVICE_KEY serveur only</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider">— Backlog —</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LAYER 8 — À FAIRE                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-label">Backlog</div>
+  <div class="layer-content">
+
+    <div class="card auth-todo w2">
+      <div class="card-title">Auth JWT <span class="pill">priorité 1</span></div>
+      <div class="card-body">
+        jose + bcrypt<br>
+        POST /auth/signup · /login · /me<br>
+        Protéger routes <code>/admin</code>
+      </div>
+    </div>
+
+    <div class="card auth-todo w2">
+      <div class="card-title">Smart Search → BDD <span class="pill">priorité 2</span></div>
+      <div class="card-body">
+        Remplacer <code>results: []</code><br>
+        Brancher Prisma dans search.route.js
+      </div>
+    </div>
+
+    <div class="card auth-todo w2">
+      <div class="card-title">Projets + Moodboard <span class="pill">priorité 3-4</span></div>
+      <div class="card-body">
+        CRUD /api/v1/projects<br>
+        Moodboard + export PDF<br>
+        react-pdf / html2canvas
+      </div>
+    </div>
+
+    <div class="card auth-todo w2">
+      <div class="card-title">Scan Vimeo <span class="pill">priorité 5</span></div>
+      <div class="card-body">
+        API Vimeo /users/{id}/videos<br>
+        Pipeline proche YouTube scan
+      </div>
+    </div>
+
+    <div class="card auth-todo w2">
+      <div class="card-title">Scan Site Web / Instagram <span class="pill">priorité 6</span></div>
+      <div class="card-body">
+        Cheerio / Playwright scraping<br>
+        Instagram : décision API vs tiers
+      </div>
+    </div>
+
+    <div class="card auth-todo w2" style="opacity:0.4">
+      <div class="card-title">Digest Hebdomadaire <span class="pill">déprioritisé</span></div>
+      <div class="card-body">
+        BullMQ + Redis<br>
+        Resend email<br>
+        Post-MVP
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- LÉGENDE                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1a1a24;border:1px solid #2a2a38"></div>Infra hébergement</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0d1b2e;border:1px solid #1a3a5c"></div>Frontend public</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0f0d2e;border:1px solid #2a1f6e"></div>Frontend admin</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0d2018;border:1px solid #1a4030"></div>Backend routes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0a1f14;border:1px solid #164028"></div>Services</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1f1205;border:1px solid #4a2800"></div>Pipeline ingestion</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#160d2a;border:1px solid #341a5e"></div>Base de données</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1f0d0d;border:1px solid #4a1a1a"></div>APIs externes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a1500;border:1px dashed #5a4500"></div>Backlog / À faire</div>
+  <div class="legend-item"><span class="badge tag-ok">✓ API réelle</span> Branché</div>
+  <div class="legend-item"><span class="badge tag-todo">⚠ Mock</span> Non branché</div>
+</div>
+
+</body>
+</html>

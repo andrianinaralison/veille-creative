@@ -23,3 +23,15 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Unrelated projects
+Product-Manager-Skills/
+
+# Local thumbnail cache (stocké sur Supabase CDN en prod)
+thumbnails/
+
+# Binaires lourds non versionnés (réorganisés sous docs/ — intention conservée)
+docs/00-cadrage/business/*.xlsx
+docs/00-cadrage/business/*.docx
+docs/30-tech/data/*.csv
+*.pptx
