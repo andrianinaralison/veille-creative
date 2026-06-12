@@ -34,6 +34,14 @@ export const api = {
     },
     sections: () => apiFetch('/api/v1/references/sections'),
   },
+  projects: {
+    list: () => apiFetch('/api/v1/projects'),
+    get: (id) => apiFetch(`/api/v1/projects/${id}`),
+    create: (data) => apiFetch('/api/v1/projects', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/api/v1/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    setItems: (id, items) => apiFetch(`/api/v1/projects/${id}/items`, { method: 'PUT', body: JSON.stringify({ items }) }),
+    remove: (id) => apiFetch(`/api/v1/projects/${id}`, { method: 'DELETE' }),
+  },
   search: {
     query: (q) => apiFetch('/api/v1/search', {
       method: 'POST',

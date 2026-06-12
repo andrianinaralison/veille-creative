@@ -12,6 +12,7 @@ import filterRulesRoute from './routes/filter-rules.route.js';
 import adminSearchRoute from './routes/admin-search.route.js';
 import adminDigestsRoute from './routes/admin-digests.route.js';
 import digestsRoute from './routes/digests.route.js';
+import projectsRoute from './routes/projects.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
 import { requireUser } from './middleware/require-user.js';
 import { prisma } from './lib/prisma.js';
@@ -37,6 +38,7 @@ export function createApp() {
   app.use('/api/v1/search', requireUser, searchRoute);
   app.use('/api/v1/references', requireUser, referencesRoute);
   app.use('/api/v1/digests', requireUser, digestsRoute);
+  app.use('/api/v1/projects', requireUser, projectsRoute);
 
   // ── Login admin (public) ────────────────────────────────────────────────────
   app.use('/api/v1/admin/login', authRoute);
