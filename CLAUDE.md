@@ -127,7 +127,7 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 > ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/10-produit/roadmap.md`** — source de vérité unique.
 
-✅ v0.4 et v0.5 Done — auth `requireAdmin` (JWT jose) en place sur `/admin` + `/ingestion`, CI Vitest, taxonomie centralisée, structured output. Prochain jalon : **v0.6** (auth utilisateurs, feed veille, digest éditorial + email).
+✅ v0.4, v0.5, et le **code** de v0.5C/v0.6/v0.7 sont livrés (2026-06-12) en train de PRs stackées #2→#11 — voir l'état dans `docs/10-produit/roadmap.md`. Restent les tâches humaines : merge du train, clé Resend, test utilisabilité (180-48), session JTBD treatment (180-24), recettes device (180-25/27), checklist bêta (180-26).
 
 Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
 
@@ -153,11 +153,13 @@ Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + dige
 - ✅ Agent Claude enrichissement — tags taxonomie, mood, typeContenu, context (prompt caching, batch 15)
 - ✅ Backoffice `/admin` — CurationPage, monitoring live, tableau validation DRAFT/PUBLISHED/REJECTED
 - ✅ Profils créateurs 4 sources — YouTube (scan auto au submit), Instagram, Vimeo, site web
-- ❌ Auth utilisateurs (JWT)
+- ✅ Auth utilisateurs (signup/login/me, JWT role 'user' ≠ 'admin', sessionStorage)
 - ✅ Bibliothèque branchée sur API réelle — LibraryPage + CategoryPage sur `/api/v1/references`
-- ❌ Smart search branché sur données réelles (`results: []` dans search.route.js)
-- ❌ Projets & Moodboard
-- ❌ Digest hebdomadaire
+- ✅ Smart search réel (public + admin) — filtre sur `taxonomy` (séparé des tags YouTube bruts, 180-49)
+- ✅ Feed de veille (`/` = Dashboard sur API, filtres mood/type)
+- ✅ Digest hebdo — compose admin + vue Léa + email Resend (⚠️ RESEND_API_KEY à configurer)
+- ✅ Projets/treatments — CRUD scopé user, builder (intention + réfs annotées), lien public `/t/:token`, PDF via CSS print
+- ❌ mockData — supprimé, tout le front est sur l'API
 
 ## Métriques north star
 
