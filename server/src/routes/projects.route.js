@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
@@ -124,6 +125,36 @@ router.put('/:id/items', validate({ body: itemsSchema }), asyncHandler(async (re
 
   const updated = await prisma.project.findUnique({ where: { id }, include: projectInclude });
   res.json(updated);
+}));
+
+/**
+ * POST /api/v1/projects/:id/share — génère (ou renvoie) le lien public (180-23)
+ */
+router.post('/:id/share', asyncHandler(async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, userId: req.userId },
+    select: { id: true, shareToken: true },
+  });
+  if (!project) return res.status(404).json({ error: 'Projet introuvable' });
+
+  let { shareToken } = project;
+  if (!shareToken) {
+    shareToken = crypto.randomUUID().replace(/-/g, '');
+    await prisma.project.update({ where: { id: project.id }, data: { shareToken } });
+  }
+  res.json({ shareToken });
+}));
+
+/**
+ * DELETE /api/v1/projects/:id/share — révoque le lien public
+ */
+router.delete('/:id/share', asyncHandler(async (req, res) => {
+  const { count } = await prisma.project.updateMany({
+    where: { id: req.params.id, userId: req.userId },
+    data: { shareToken: null },
+  });
+  if (count === 0) return res.status(404).json({ error: 'Projet introuvable' });
+  res.json({ ok: true });
 }));
 
 /**
