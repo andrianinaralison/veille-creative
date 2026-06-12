@@ -8,6 +8,7 @@ const router = Router();
 const refsQuerySchema = adminPaginationSchema.extend({
   status: refStatusSchema.optional(),
   page:   z.coerce.number().int().min(1).optional(),
+  includeTags: z.coerce.boolean().optional(), // 180-49 : tags YouTube bruts sur demande explicite uniquement
 });
 
 /**
@@ -16,16 +17,18 @@ const refsQuerySchema = adminPaginationSchema.extend({
  * Query params : ?status=TRIAGE|DRAFT|PUBLISHED|REJECTED, ?limit (max 200), ?offset
  */
 router.get('/references', validate({ query: refsQuerySchema }), asyncHandler(async (req, res) => {
-  const { status, limit, offset, page } = req.query;
+  const { status, limit, offset, page, includeTags } = req.query;
   const where = status ? { status } : {};
 
   // 180-46 M5 : si page fourni → pagination 1-indexed, sinon offset classique
   const skip = page ? (page - 1) * limit : offset;
 
-  const [references, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.reference.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit, skip }),
     prisma.reference.count({ where }),
   ]);
+
+  const references = includeTags ? rows : rows.map(({ tags, ...rest }) => rest);
 
   res.json({
     references,
@@ -90,16 +93,17 @@ router.post('/references/batch', async (req, res) => {
       if (!Array.isArray(value) || value.length === 0) {
         return res.status(400).json({ error: 'value doit être un tableau de tags' });
       }
+      // 180-49 : la qualification en masse alimente taxonomy, jamais les tags YouTube bruts.
       // Prisma n'expose pas d'opérateur array-append pour updateMany.
       // $transaction(array) envoie N updates en un seul round-trip réseau.
       const refs = await prisma.reference.findMany({
         where: { id: { in: ids } },
-        select: { id: true, tags: true },
+        select: { id: true, taxonomy: true },
       });
       await prisma.$transaction(
         refs.map(r => prisma.reference.update({
           where: { id: r.id },
-          data: { tags: [...new Set([...r.tags, ...value])] },
+          data: { taxonomy: [...new Set([...r.taxonomy, ...value])] },
         }))
       );
       return res.json({ ok: true, affected: ids.length });
@@ -137,15 +141,15 @@ router.get('/triage/count', async (req, res) => {
 /**
  * PATCH /api/v1/admin/references/:id
  * Édite les champs éditoriaux + status + sectionId en une seule transaction atomique.
- * Body (tous optionnels) : { title, tags, mood, context, typeContenu, status, sectionId }
+ * Body (tous optionnels) : { title, taxonomy, mood, context, typeContenu, status, sectionId }
  */
 router.patch('/references/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, tags, mood, context, typeContenu, status, sectionId } = req.body;
+  const { title, taxonomy, mood, context, typeContenu, status, sectionId } = req.body;
 
   const data = {};
   if (title !== undefined)       data.title = title;
-  if (tags !== undefined)        data.tags = tags;
+  if (taxonomy !== undefined)    data.taxonomy = taxonomy;
   if (mood !== undefined)        data.mood = mood;
   if (context !== undefined)     data.context = context;
   if (typeContenu !== undefined) data.typeContenu = typeContenu;

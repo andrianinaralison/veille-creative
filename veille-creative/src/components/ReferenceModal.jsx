@@ -14,7 +14,7 @@ function getEmbedUrl(url) {
 
 // Derive a few "spec" fields from the reference data
 function deriveSpecs(reference) {
-  const tags = reference.tags || []
+  const tags = reference.taxonomy || []
 
   const camera = tags.find(t =>
     ['Sony-FX3','Sony-A1','Canon-C70','Canon-C80','Lumix-S5ii','Lumix-S1','Blackmagic-BMPCC'].includes(t)
@@ -66,7 +66,7 @@ export default function ReferenceModal({ reference, onClose }) {
   }, [])
 
   // Extract display tags (non-camera, non-technical identifiers)
-  const displayTags = (reference.tags || [])
+  const displayTags = (reference.taxonomy || [])
     .filter(t => !['Sony-FX3','Sony-A1','Canon-C70','Canon-C80','Lumix-S5ii','Lumix-S1','Blackmagic-BMPCC'].includes(t))
     .slice(0, 4)
 

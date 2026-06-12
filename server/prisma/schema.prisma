@@ -34,7 +34,8 @@ model Reference {
   thumbnailSourceUrl  String?
   thumbnailStorageKey String?
   channelAvatarUrl    String            @default("")
-  tags                String[]          @default([])
+  tags                String[]          @default([]) // tags YouTube bruts — traçabilité uniquement, jamais exposés comme filtres
+  taxonomy            String[]          @default([]) // slugs taxonomie 180° (enrichissement Claude + qualification admin)
   mood                String?
   typeContenu         String?
   context             String            @default("")

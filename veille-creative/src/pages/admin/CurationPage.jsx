@@ -402,7 +402,7 @@ function TriageView({ session, onNewImport, onTriageDone }) {
 
 function RefRow({ ref, sections, onSaved }) {
   const { markDirty } = useAdminStore()
-  const [tags, setTags]               = useState(ref.tags ?? [])
+  const [taxonomy, setTaxonomy]       = useState(ref.taxonomy ?? [])
   const [sectionId, setSectionId]     = useState(ref.sectionId ?? null)
   const [status, setStatus]           = useState(ref.status ?? 'DRAFT')
   const [saving, setSaving]           = useState(false)
@@ -413,7 +413,7 @@ function RefRow({ ref, sections, onSaved }) {
 
   const thumb = ref.thumbnailUrl?.startsWith('http') ? ref.thumbnailUrl : ytThumb(ref.url)
   const isDirtyLocal =
-    JSON.stringify(tags) !== JSON.stringify(ref.tags ?? []) ||
+    JSON.stringify(taxonomy) !== JSON.stringify(ref.taxonomy ?? []) ||
     sectionId !== (ref.sectionId ?? null) ||
     status !== (ref.status ?? 'DRAFT')
 
@@ -429,14 +429,14 @@ function RefRow({ ref, sections, onSaved }) {
     setConfirmPublish(false)
     setSaving(true)
     try {
-      const patch = { tags }
+      const patch = { taxonomy }
       if (status !== ref.status) patch.status = status
       if (sectionId !== (ref.sectionId ?? null)) patch.sectionId = sectionId ?? null
       await apiFetch(`${ADMIN_API}/references/${ref.id}`, { method: 'PATCH', body: JSON.stringify(patch) })
       markDirty()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-      onSaved?.({ ...ref, tags, sectionId, status })
+      onSaved?.({ ...ref, taxonomy, sectionId, status })
     } catch (err) {
       console.error('[RefRow] save error', err)
     } finally {
@@ -483,7 +483,7 @@ function RefRow({ ref, sections, onSaved }) {
           )}
         </div>
       </td>
-      <td className="p-2 w-52"><TagEditor tags={tags} onChange={setTags} /></td>
+      <td className="p-2 w-52"><TagEditor tags={taxonomy} onChange={setTaxonomy} /></td>
       <td className="p-2 w-40"><SectionSelector sectionId={sectionId} sections={sections} onChange={setSectionId} /></td>
       <td className="p-2 w-32"><StatusDropdown status={status} onChange={setStatus} /></td>
       <td className="p-2 w-24">

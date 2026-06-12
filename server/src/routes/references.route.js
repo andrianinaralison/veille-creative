@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
   };
 
   try {
-    const [references, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.reference.findMany({
         where,
         orderBy: { publishedAt: 'desc' },
@@ -26,6 +26,8 @@ router.get('/', async (req, res) => {
       }),
       prisma.reference.count({ where }),
     ]);
+    // 180-49 : les tags YouTube bruts ne sortent jamais vers le front public
+    const references = rows.map(({ tags, ...rest }) => rest);
     res.json({ references, total });
   } catch (err) {
     console.error('[references] GET /', err);
@@ -39,7 +41,7 @@ router.get('/', async (req, res) => {
  */
 router.get('/sections', async (req, res) => {
   try {
-    const sections = await prisma.section.findMany({
+    const rows = await prisma.section.findMany({
       where: { active: true },
       orderBy: { position: 'asc' },
       include: {
@@ -49,6 +51,10 @@ router.get('/sections', async (req, res) => {
         },
       },
     });
+    const sections = rows.map(s => ({
+      ...s,
+      references: s.references.map(({ tags, ...rest }) => rest),
+    }));
     res.json({ sections });
   } catch (err) {
     console.error('[references] GET /sections', err);
