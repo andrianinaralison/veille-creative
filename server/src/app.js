@@ -7,9 +7,11 @@ import adminSectionsRoute from './routes/admin-sections.route.js';
 import referencesRoute from './routes/references.route.js';
 import ingestionRoute from './routes/ingestion.route.js';
 import authRoute from './routes/auth.route.js';
+import userAuthRoute from './routes/user-auth.route.js';
 import filterRulesRoute from './routes/filter-rules.route.js';
 import adminSearchRoute from './routes/admin-search.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
+import { requireUser } from './middleware/require-user.js';
 import { prisma } from './lib/prisma.js';
 
 export function createApp() {
@@ -18,9 +20,22 @@ export function createApp() {
   app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
   app.use(express.json());
 
-  // ── Routes publiques ────────────────────────────────────────────────────────
-  app.use('/api/v1/search', searchRoute);
-  app.use('/api/v1/references', referencesRoute);
+  // ── Auth utilisateurs (180-16) ─────────────────────────────────────────────
+  // Rate-limit anti brute-force sur signup/login (POST) — GET /me non limité
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { error: 'Trop de tentatives, réessaie dans 15 minutes.' },
+  });
+  const authPostLimiter = (req, res, next) =>
+    req.method === 'POST' ? authLimiter(req, res, next) : next();
+  app.use('/api/v1/auth', authPostLimiter, userAuthRoute);
+
+  // ── Contenu — réservé aux utilisateurs connectés (DoD 180-16) ──────────────
+  app.use('/api/v1/search', requireUser, searchRoute);
+  app.use('/api/v1/references', requireUser, referencesRoute);
+
+  // ── Login admin (public) ────────────────────────────────────────────────────
   app.use('/api/v1/admin/login', authRoute);
 
   // ── Routes admin (protégées) ────────────────────────────────────────────────
