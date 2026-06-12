@@ -31,9 +31,10 @@
 | **v0.4 — Structure propre** | Git · docs · arbo · sécu JWT | ✅ Done (2026-06-05) | Routes admin fermées, `main` protégé, CI verte |
 | **v0.5A — Dette qui sécurise** | Taxonomie · structured output · découpe service · zod | ✅ Done (2026-06-05) | `ingestion.service` découpé, qualif Claude fiable |
 | **v0.5B — Tri amont (3 paris)** | Lot+compteur · règles · smart search · UX cas non-noms | ✅ Done (2026-06-05) | Compteur → 0 = lot propre, règles persistent, search admin opérationnel |
-| **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟡 Code Done (2026-06-12) | Reste : test utilisabilité Camille (180-48) |
-| **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | 🟡 Code Done (2026-06-12) | Reste : clé Resend + recette device (180-25) |
-| **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | 🟡 Code Done (2026-06-12) | Reste : session JTBD (180-24) + recette (180-27) |
+| **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟡 Code Done, mergé main (2026-06-12) | Reste : test utilisabilité Camille (180-48) |
+| **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | 🟠 Mergé main **mais audit parcours = 2 trous** | **180-57 (bibliothèque cassée) + 180-58 (search sans UI)** puis recette device (180-25) |
+| **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | 🟡 Code Done, mergé main (2026-06-12) | Reste : session JTBD (180-24) + recette (180-27) |
+| **v0.6.1 — Colmatage audit parcours** | 6 US issues de l'audit du 2026-06-12 | 🔴 À faire | 180-57/58 avant beta ; 180-59→62 avant ouverture publique |
 
 ---
 
@@ -150,18 +151,37 @@ Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export 
 
 ## ▶️ Par où commencer maintenant
 
-**On est en v0.5C, sprint S.** Ordre recommandé :
+**Le train MVP est mergé ; on est en colmatage v0.6.1 avant beta.** Ordre recommandé :
 
-1. **180-41** (B3 — NL search 500) — ouvrir `search.route.js` + logs Railway → diagnostic < 30 min
-2. **180-40 + 180-47** en même PR — les deux touchent `CurationPage` / `ReferencesAdminPage`, XS+S, embarquables ensemble
-3. **180-42 + 180-43** — CSS sticky + intervalle polling, même PR ou deux commits atomiques
-4. Pendant ce temps : **Marie livre le wireframe TagEditor** → débloquer 180-44 → sprint S+1
+1. **180-57** (bibliothèque cassée) — fix mécanique apiFetch, < 1 h, débloque tout test du parcours veille
+2. **180-58** (UI smart search Léa) — reprendre le pattern admin éprouvé de `CurationPage`
+3. **180-59** (mot de passe oublié) — réutilise Resend déjà câblé
+4. En parallèle (humain) : **180-48** test utilisabilité Camille · **180-24** session JTBD (tranche aussi 180-60 favoris)
+5. Puis recettes device **180-25/27** — jouées **depuis l'UI**, pas via l'API
 
 ---
 
-## ▶️ État au 2026-06-12 — train de PRs MVP
+## 🩹 v0.6.1 — Colmatage audit parcours (issu de l'audit du 2026-06-12)
 
-Le code des trois jalons restants est livré en **PRs stackées** (chacune basée sur la précédente, merge dans l'ordre) :
+> Source : [`audit-parcours-mvp-2026-06-12.md`](../30-tech/audit/audit-parcours-mvp-2026-06-12.md) — relecture code réel des 3 parcours nominaux après merge du train. Parcours back ✅ et treatment ✅ complets ; parcours veille **cassé au milieu**.
+
+| Ticket | Finding | Quoi | Priorité | Quand |
+|---|---|---|---|---|
+| [**180-57**](https://linear.app/180degre/issue/180-57) | F1 🔴 | Bibliothèque cassée — fetch sans JWT + localhost en dur → 401 silencieux, page vide | Urgent | **Avant toute recette 180-25** |
+| [**180-58**](https://linear.app/180degre/issue/180-58) | F2 🔴 | UI smart search côté Léa — le backend tourne, aucune page ne l'appelle | High | Avant beta |
+| [**180-59**](https://linear.app/180degre/issue/180-59) | F5 🟠 | Mot de passe oublié (reset email Resend) | High | Avant beta |
+| [**180-60**](https://linear.app/180degre/issue/180-60) | F3 🟡 | Favoris persistés **ou** retrait du bouton bookmark (décision liée au JTBD 180-24) | Medium | Avant ouverture publique |
+| [**180-61**](https://linear.app/180degre/issue/180-61) | F6 🟡 | Changement de mdp + suppression de compte (RGPD art. 17) | Medium | Avant ouverture publique |
+| [**180-62**](https://linear.app/180degre/issue/180-62) | F4 🟡 | Désinscription one-click email (List-Unsubscribe — délivrabilité Gmail/Yahoo) | Medium | Avant ouverture publique |
+| [**180-63**](https://linear.app/180degre/issue/180-63) | F7 ⚪ | Pagination serveur bibliothèque (limit=2000 client-side) | Low | Backlog post-MVP |
+
+**Leçon retenue** : le smoke « 9/9 » testait l'API avec token, pas les pages qui l'appellent — un parcours n'est validé que joué depuis l'UI (c'est l'objet des recettes 180-25/27).
+
+---
+
+## ▶️ État au 2026-06-12 — train de PRs MVP ✅ mergé
+
+Le code des trois jalons est livré et **le train est entièrement mergé dans `main`** (2026-06-12, PRs #2→#11 dans l'ordre) :
 
 | PR | Branche | Tickets |
 |---|---|---|
@@ -176,14 +196,17 @@ Le code des trois jalons restants est livré en **PRs stackées** (chacune basé
 | #10 | `feat/treatment-share` | 180-23 (lien public /t/:token + PDF print) |
 | #11 | `chore/polish-mvp` | 180-25/27 partiels (42 tests, mockData supprimé) |
 
-Migrations BDD **déjà appliquées** sur Supabase (taxonomy, User, Digest, Project). Suite : 42/42 verts. Smoke E2E parcours Léa : 9/9.
+Migrations BDD **déjà appliquées** sur Supabase (taxonomy, User, Digest, Project, SessionStatus CANCELLED). Suite : 42/42 verts. Clé Resend configurée en local (`onboarding@resend.dev` — domaine à vérifier pour la prod).
 
-**Reste humain** : merger le train · clé `RESEND_API_KEY` · test utilisabilité (180-48) · session JTBD treatment (180-24) · recette device 375px (180-25/27) · checklist bêta (180-26).
+Post-merge : fix annulation d'import livré (**180-56**, commit `bfbe916`) + **audit parcours MVP** → 7 nouveaux tickets (section v0.6.1 ci-dessus).
+
+**Reste** : 180-57/58/59 (code, avant beta) · test utilisabilité (180-48) · session JTBD treatment (180-24) · recette device 375px (180-25/27) · checklist bêta (180-26) · domaine Resend prod.
 
 ---
 
 ## ✅ DONE (archive datée)
 
+- **2026-06-12** — Train de PRs #2→#11 mergé dans `main` · fix annulation d'import (180-56) · audit fonctionnel & technique des 3 parcours nominaux → 7 tickets 180-57→180-63 + [`audit-parcours-mvp-2026-06-12.md`](../30-tech/audit/audit-parcours-mvp-2026-06-12.md).
 - **2026-06-07** — Audit UX live `@tobifilmsofficial` + thread équipe produit (9 agents) + v0.5C lancée : 10 tickets 180-40→180-49 créés dans Linear.
 - **2026-06-05** — v0.5B close : P1 lot+compteur (180-29), P2 règles (180-30), P3 smart search (180-31), dette totalFiltered (180-32), bugs polling 429 (180-33) + 0 refs (180-34), UX cas non nominaux (180-35→180-39 — tous Done).
 - **2026-06-05** — v0.5A close : T-05 taxonomie, T-06 découpe service, T-07 structured output, T-08 zod+logs.

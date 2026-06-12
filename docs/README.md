@@ -57,7 +57,7 @@
 | `30-tech/specs/sprint-v05c.md` | Spec technique sprint v0.5C |
 | `30-tech/adr/` | Décisions d'architecture (ADR) |
 | `30-tech/architecture/` | Schémas archi & toolstack (HTML) |
-| `30-tech/audit/` | Audit code 2026-06-04 + plan de restructuration code |
+| `30-tech/audit/` | Audit code 2026-06-04 + plan de restructuration + [audit parcours MVP 2026-06-12](30-tech/audit/audit-parcours-mvp-2026-06-12.md) (→ tickets 180-57→63) |
 | `30-tech/data/` | Échantillons de données (csv non versionné) |
 
 ## 90 · Journal — instantanés datés (pas de source de vérité)
