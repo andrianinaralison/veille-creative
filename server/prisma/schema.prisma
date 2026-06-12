@@ -47,6 +47,7 @@ model Reference {
   videoPublishedAt    DateTime?         @db.Timestamptz(6)
   section             Section?          @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   ingestionSession    IngestionSession? @relation(fields: [ingestionSessionId], references: [id], onUpdate: NoAction)
+  digestItems         DigestItem[]
 
   @@index([status])
   @@index([platform])
@@ -72,6 +73,32 @@ model IngestionSession {
   createdAt   DateTime      @default(now()) @db.Timestamptz(6)
   completedAt DateTime?     @db.Timestamptz(6)
   references  Reference[]
+}
+
+model Digest {
+  id          String       @id @default(dbgenerated("(gen_random_uuid())::text"))
+  weekOf      DateTime     @unique @db.Date // lundi de la semaine couverte
+  title       String
+  intro       String       @default("")
+  status      DigestStatus @default(DRAFT)
+  publishedAt DateTime?    @db.Timestamptz(6)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  items       DigestItem[]
+
+  @@index([status, weekOf(sort: Desc)])
+}
+
+model DigestItem {
+  id          String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  digestId    String
+  referenceId String
+  position    Int       @default(0)
+  note        String    @default("") // commentaire éditorial sur cette référence
+  digest      Digest    @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  reference   Reference @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+
+  @@unique([digestId, referenceId])
+  @@index([digestId, position])
 }
 
 model User {
@@ -135,4 +162,9 @@ enum SessionStatus {
   RUNNING
   COMPLETED
   FAILED
+}
+
+enum DigestStatus {
+  DRAFT
+  PUBLISHED
 }

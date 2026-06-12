@@ -5,13 +5,12 @@ import { useAuthStore } from '../store/useAuthStore'
 
 const navItems = [
   { to: '/', label: 'Veille', end: true },
+  { to: '/digest', label: 'Digest' },
   { to: '/library', label: 'Bibliothèque' },
   { to: '/projects', label: 'Projets' },
 ]
 
-const comingSoonItems = [
-  { label: 'Digest' }, // v0.6
-]
+const comingSoonItems = []
 
 export default function Layout({ children }) {
   const [scrolled, setScrolled] = useState(false)
@@ -107,6 +106,7 @@ export default function Layout({ children }) {
         {children}
 
         {/* ── Footer ── */}
+        {comingSoonItems.length > 0 && (
         <footer className="border-t border-white/[0.06] px-8 py-6 flex items-center gap-6">
           <span className="text-[11px] font-mono tracking-widest uppercase text-ink-faint">À venir</span>
           {comingSoonItems.map(({ label }) => (
@@ -119,6 +119,7 @@ export default function Layout({ children }) {
             </span>
           ))}
         </footer>
+        )}
       </main>
     </div>
   )

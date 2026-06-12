@@ -8,6 +8,7 @@ import ProjectCreate from './pages/ProjectCreate'
 import ProjectDetail from './pages/ProjectDetail'
 import MoodboardBuilder from './pages/MoodboardBuilder'
 import CategoryPage from './pages/CategoryPage'
+import DigestPage from './pages/DigestPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import RequireAuth from './components/RequireAuth'
@@ -16,6 +17,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import CurationPage from './pages/admin/CurationPage'
 import ReferencesAdminPage from './pages/admin/ReferencesAdminPage'
 import SectionsAdminPage from './pages/admin/SectionsAdminPage'
+import DigestAdminPage from './pages/admin/DigestAdminPage'
 
 // Pages that use the full sidebar layout — réservées aux utilisateurs connectés (180-16)
 const withLayout = (Component) => (
@@ -42,8 +44,9 @@ export default function App() {
         <Route path="/projects" element={withLayout(ProjectsPage)} />
         <Route path="/projects/new" element={withLayout(ProjectCreate)} />
         <Route path="/projects/:id" element={withLayout(ProjectDetail)} />
-        {/* /digest et /surprises : retirées — Digest = v0.6, Surprises = abandonné */}
-        <Route path="/digest" element={<Navigate to="/" replace />} />
+        {/* Digest éditorial (180-19) */}
+        <Route path="/digest" element={withLayout(DigestPage)} />
+        <Route path="/digest/:id" element={withLayout(DigestPage)} />
         <Route path="/surprises" element={<Navigate to="/" replace />} />
         {/* Moodboard gets full screen — no sidebar */}
         <Route path="/projects/:id/moodboard" element={<RequireAuth><MoodboardBuilder /></RequireAuth>} />
@@ -55,6 +58,7 @@ export default function App() {
           <Route path="curation" element={<CurationPage />} />
           <Route path="references" element={<ReferencesAdminPage />} />
           <Route path="sections" element={<SectionsAdminPage />} />
+          <Route path="digest" element={<DigestAdminPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

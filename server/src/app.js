@@ -10,6 +10,8 @@ import authRoute from './routes/auth.route.js';
 import userAuthRoute from './routes/user-auth.route.js';
 import filterRulesRoute from './routes/filter-rules.route.js';
 import adminSearchRoute from './routes/admin-search.route.js';
+import adminDigestsRoute from './routes/admin-digests.route.js';
+import digestsRoute from './routes/digests.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
 import { requireUser } from './middleware/require-user.js';
 import { prisma } from './lib/prisma.js';
@@ -34,6 +36,7 @@ export function createApp() {
   // ── Contenu — réservé aux utilisateurs connectés (DoD 180-16) ──────────────
   app.use('/api/v1/search', requireUser, searchRoute);
   app.use('/api/v1/references', requireUser, referencesRoute);
+  app.use('/api/v1/digests', requireUser, digestsRoute);
 
   // ── Login admin (public) ────────────────────────────────────────────────────
   app.use('/api/v1/admin/login', authRoute);
@@ -43,6 +46,7 @@ export function createApp() {
   app.use('/api/v1/admin/sections', requireAdmin, adminSectionsRoute);
   app.use('/api/v1/admin/filter-rules', requireAdmin, filterRulesRoute);
   app.use('/api/v1/admin/search', requireAdmin, adminSearchRoute);
+  app.use('/api/v1/admin/digests', requireAdmin, adminDigestsRoute);
 
   // ── Routes ingestion (protégées) ────────────────────────────────────────────
   // Rate-limit sur les POST uniquement (lancement de scan) — les GET de polling

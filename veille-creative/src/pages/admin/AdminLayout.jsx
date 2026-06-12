@@ -7,6 +7,7 @@ const adminNav = [
   { to: '/admin/curation', label: 'Curation' },
   { to: '/admin/references', label: 'Références' },
   { to: '/admin/sections', label: 'Sections' },
+  { to: '/admin/digest', label: 'Digest' },
 ]
 
 export default function AdminLayout() {
