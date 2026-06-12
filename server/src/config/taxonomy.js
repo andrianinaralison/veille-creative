@@ -42,3 +42,15 @@ export const TAG_TAXONOMY = `
 
 **niveau_production** : solo-one-man-band, petite-équipe-2-3, équipe-complète, production-cinéma
 `.trim();
+
+// Axes structurés dérivés du prompt — garantit que la liste des slugs valides
+// est exactement celle que Claude voit (180-49 : séparation tags YT / taxonomy).
+const AXIS_LINE = /^\*\*([a-z_]+)\*\* : (.+)$/;
+
+export const TAXONOMY_AXES = TAG_TAXONOMY
+  .split('\n')
+  .map(line => line.trim().match(AXIS_LINE))
+  .filter(Boolean)
+  .map(m => ({ id: m[1], tags: m[2].split(',').map(t => t.trim()) }));
+
+export const ALL_VALID_TAGS = new Set(TAXONOMY_AXES.flatMap(a => a.tags));

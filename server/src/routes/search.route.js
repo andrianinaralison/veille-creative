@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
 
   // Construire la clause WHERE Prisma à partir des filtres extraits
   const semanticFilters = [];
-  if (filters.tags?.length)       semanticFilters.push({ tags: { hasSome: filters.tags } });
+  if (filters.tags?.length)       semanticFilters.push({ taxonomy: { hasSome: filters.tags } });
   if (filters.mood)               semanticFilters.push({ mood: { equals: filters.mood, mode: 'insensitive' } });
   if (filters.type_contenu)       semanticFilters.push({ typeContenu: { contains: filters.type_contenu, mode: 'insensitive' } });
   if (filters.platform)           semanticFilters.push({ platform: filters.platform.toUpperCase() });
@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
     select: {
       id: true, url: true, platform: true, title: true,
       channelName: true, channelUrl: true, channelAvatarUrl: true,
-      thumbnailUrl: true, tags: true, mood: true, typeContenu: true,
+      thumbnailUrl: true, taxonomy: true, mood: true, typeContenu: true,
       context: true, publishedAt: true, sectionId: true,
     },
   });

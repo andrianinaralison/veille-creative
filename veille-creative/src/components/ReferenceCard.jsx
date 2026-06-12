@@ -63,7 +63,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
       <div className="absolute bottom-0 left-0 right-0 p-4">
         <h3 className="text-sm font-medium text-white leading-snug mb-2 line-clamp-2">{reference.title}</h3>
         <div className="flex gap-1 flex-wrap">
-          {reference.tags.slice(0, 4).map(tag => (
+          {(reference.taxonomy ?? []).slice(0, 4).map(tag => (
             <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-white/10 text-white/70 backdrop-blur-sm">
               {tag}
             </span>
@@ -77,7 +77,7 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
           <p className="text-[11px] text-white/70 leading-relaxed line-clamp-3 mb-2">{reference.context}</p>
           <h3 className="text-xs font-semibold text-white">{reference.title}</h3>
           <div className="flex gap-1 mt-1.5 flex-wrap">
-            {reference.tags.slice(0, 5).map(tag => (
+            {(reference.taxonomy ?? []).slice(0, 5).map(tag => (
               <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-white/10 text-white/60">
                 {tag}
               </span>

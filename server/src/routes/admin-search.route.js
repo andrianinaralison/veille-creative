@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
 
     // Filtre tags : la référence doit avoir AU MOINS UN des tags extraits
     const tagFilter = filters.tags?.length
-      ? { tags: { hasSome: filters.tags } }
+      ? { taxonomy: { hasSome: filters.tags } }
       : null;
 
     // Filtre mood
@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
         title: true,
         channelName: true,
         thumbnailUrl: true,
-        tags: true,
+        taxonomy: true,
         mood: true,
         typeContenu: true,
         status: true,

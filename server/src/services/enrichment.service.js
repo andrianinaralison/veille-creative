@@ -5,7 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { TAG_TAXONOMY } from '../config/taxonomy.js';
+import { TAG_TAXONOMY, ALL_VALID_TAGS } from '../config/taxonomy.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -81,7 +81,7 @@ export async function enrichVideosBatch(videos) {
 
     for (const entry of enriched) {
       result[entry.videoId] = {
-        tags:        Array.isArray(entry.tags) ? entry.tags : [],
+        tags:        (Array.isArray(entry.tags) ? entry.tags : []).filter(t => ALL_VALID_TAGS.has(t)),
         mood:        entry.mood ?? null,
         typeContenu: entry.typeContenu ?? null,
         context:     entry.context ?? '',

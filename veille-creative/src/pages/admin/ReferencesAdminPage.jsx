@@ -95,7 +95,7 @@ function TagEditor({ tags, onChange, id }) {
 
 function RefModal({ ref, onClose, onUpdate, onDelete }) {
   const { markDirty } = useAdminStore()
-  const [tags, setTags] = useState(ref.tags ?? [])
+  const [tags, setTags] = useState(ref.taxonomy ?? [])
   const [mood, setMood] = useState(ref.mood ?? '')
   const [context, setContext] = useState(ref.context ?? '')
   const [saving, setSaving] = useState(false)
@@ -124,7 +124,7 @@ function RefModal({ ref, onClose, onUpdate, onDelete }) {
     try {
       const updated = await apiFetch(`/references/${ref.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ tags, mood, context }),
+        body: JSON.stringify({ taxonomy: tags, mood, context }),
       })
       onUpdate(updated)
       markDirty()
@@ -516,13 +516,13 @@ function RefRow({ ref, selected, onToggle, onOpen }) {
 
       {/* Tags */}
       <div className="hidden lg:flex gap-1 flex-shrink-0 max-w-[200px] overflow-hidden">
-        {(ref.tags ?? []).slice(0, 3).map(t => (
+        {(ref.taxonomy ?? []).slice(0, 3).map(t => (
           <span key={t} className="font-mono text-[9px] tracking-widest uppercase text-ink-muted border border-surface-border px-1.5 py-0.5 truncate">
             {t}
           </span>
         ))}
-        {(ref.tags ?? []).length > 3 && (
-          <span className="font-mono text-[9px] text-ink-faint">+{ref.tags.length - 3}</span>
+        {(ref.taxonomy ?? []).length > 3 && (
+          <span className="font-mono text-[9px] text-ink-faint">+{ref.taxonomy.length - 3}</span>
         )}
       </div>
 
@@ -608,7 +608,7 @@ export default function ReferencesAdminPage() {
       ))
     } else if (action === 'addTags') {
       setReferences(prev => prev.map(r =>
-        ids.includes(r.id) ? { ...r, tags: [...new Set([...(r.tags ?? []), ...value])] } : r
+        ids.includes(r.id) ? { ...r, taxonomy: [...new Set([...(r.taxonomy ?? []), ...value])] } : r
       ))
     }
   }
@@ -616,7 +616,7 @@ export default function ReferencesAdminPage() {
   // Tous les tags présents dans les références chargées, triés par fréquence
   const allTags = (() => {
     const freq = new Map()
-    references.forEach(r => (r.tags ?? []).forEach(t => freq.set(t, (freq.get(t) ?? 0) + 1)))
+    references.forEach(r => (r.taxonomy ?? []).forEach(t => freq.set(t, (freq.get(t) ?? 0) + 1)))
     return [...freq.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   })()
 
@@ -629,10 +629,10 @@ export default function ReferencesAdminPage() {
     const matchSearch = !q ||
       r.title.toLowerCase().includes(q) ||
       r.channelName?.toLowerCase().includes(q) ||
-      (r.tags ?? []).some(t => t.toLowerCase().includes(q))
+      (r.taxonomy ?? []).some(t => t.toLowerCase().includes(q))
     // ET logique : la ref doit porter tous les tags actifs
     const matchTags = activeTags.length === 0 ||
-      activeTags.every(t => (r.tags ?? []).includes(t))
+      activeTags.every(t => (r.taxonomy ?? []).includes(t))
     return matchSearch && matchTags
   })
 

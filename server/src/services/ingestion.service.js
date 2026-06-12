@@ -91,7 +91,8 @@ export async function runIngestionAgent(sessionId, brief) {
         const shared = {
           thumbnailUrl, thumbnailSourceUrl, thumbnailStorageKey,
           channelAvatarUrl: avatarMap[video.channelId] ?? '',
-          tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
+          tags: video.tags ?? [],
+          taxonomy: meta.tags ?? [],
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
           videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
@@ -208,7 +209,8 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
         const shared = {
           thumbnailUrl, thumbnailSourceUrl, thumbnailStorageKey,
           channelAvatarUrl: avatarMap[video.channelId] ?? '',
-          tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
+          tags: video.tags ?? [],
+          taxonomy: meta.tags ?? [],
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
           videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
@@ -273,7 +275,8 @@ export async function fetchAndSaveLinks(sessionId, urls) {
         const shared = {
           thumbnailUrl, thumbnailSourceUrl, thumbnailStorageKey,
           channelAvatarUrl: avatarMap[video.channelId] ?? '',
-          tags: meta.tags?.length ? meta.tags : (video.tags ?? []),
+          tags: video.tags ?? [],
+          taxonomy: meta.tags ?? [],
           mood: meta.mood ?? null, typeContenu: meta.typeContenu ?? null, context: meta.context ?? '',
           ingestionSessionId: sessionId,
           videoPublishedAt: video.publishedAt ? new Date(video.publishedAt) : null,

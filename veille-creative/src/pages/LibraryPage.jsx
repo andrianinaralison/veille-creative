@@ -12,11 +12,11 @@ const FILTER_GROUPS = [
     id: 'categorie',
     label: 'Catégorie',
     options: [
-      { id: 'mariage',      label: 'Mariage',         match: r => r.mood === 'romantique' || r.tags.includes('mariage') },
-      { id: 'corporate',    label: 'Corporate & B2B',  match: r => r.tags.some(t => ['corporate','B2B'].includes(t)) },
-      { id: 'evenementiel', label: 'Événementiel',     match: r => r.tags.includes('événementiel') },
-      { id: 'gala',         label: 'Gala & Awards',    match: r => r.tags.some(t => ['gala','awards'].includes(t)) },
-      { id: 'startup',      label: 'Startup',          match: r => r.tags.includes('startup') },
+      { id: 'mariage',      label: 'Mariage',         match: r => r.mood === 'romantique' || (r.taxonomy ?? []).includes('mariage') },
+      { id: 'corporate',    label: 'Corporate & B2B',  match: r => (r.taxonomy ?? []).some(t => ['corporate','B2B'].includes(t)) },
+      { id: 'evenementiel', label: 'Événementiel',     match: r => (r.taxonomy ?? []).includes('événementiel') },
+      { id: 'gala',         label: 'Gala & Awards',    match: r => (r.taxonomy ?? []).some(t => ['gala','awards'].includes(t)) },
+      { id: 'startup',      label: 'Startup',          match: r => (r.taxonomy ?? []).includes('startup') },
     ],
   },
   {
@@ -35,50 +35,50 @@ const FILTER_GROUPS = [
     id: 'camera',
     label: 'Caméra',
     options: [
-      { id: 'sony',       label: 'Sony FX3 / A1',      match: r => r.tags.includes('Sony-FX3') },
-      { id: 'canon',      label: 'Canon C70 / C80',     match: r => r.tags.includes('Canon-C70') },
-      { id: 'lumix',      label: 'Lumix S5ii / S1',     match: r => r.tags.includes('Lumix-S5ii') },
-      { id: 'blackmagic', label: 'Blackmagic BMPCC',    match: r => r.tags.includes('Blackmagic') },
+      { id: 'sony',       label: 'Sony FX3 / A1',      match: r => (r.taxonomy ?? []).includes('Sony-FX3') },
+      { id: 'canon',      label: 'Canon C70 / C80',     match: r => (r.taxonomy ?? []).includes('Canon-C70') },
+      { id: 'lumix',      label: 'Lumix S5ii / S1',     match: r => (r.taxonomy ?? []).includes('Lumix-S5ii') },
+      { id: 'blackmagic', label: 'Blackmagic BMPCC',    match: r => (r.taxonomy ?? []).includes('Blackmagic') },
     ],
   },
   {
     id: 'colorimetrie',
     label: 'Colorimétrie',
     options: [
-      { id: 'golden-hour',  label: 'Golden hour',    match: r => r.tags.includes('golden-hour') },
-      { id: 'vlog',         label: 'V-Log',          match: r => r.tags.includes('V-Log') },
-      { id: 'lut',          label: 'LUT',            match: r => r.tags.includes('LUT') },
-      { id: 'grain',        label: 'Grain film',     match: r => r.tags.includes('grain') },
-      { id: 'vintage',      label: 'Vintage',        match: r => r.tags.includes('vintage') },
-      { id: 'anamorphique', label: 'Anamorphique',   match: r => r.tags.includes('anamorphique') },
+      { id: 'golden-hour',  label: 'Golden hour',    match: r => (r.taxonomy ?? []).includes('golden-hour') },
+      { id: 'vlog',         label: 'V-Log',          match: r => (r.taxonomy ?? []).includes('V-Log') },
+      { id: 'lut',          label: 'LUT',            match: r => (r.taxonomy ?? []).includes('LUT') },
+      { id: 'grain',        label: 'Grain film',     match: r => (r.taxonomy ?? []).includes('grain') },
+      { id: 'vintage',      label: 'Vintage',        match: r => (r.taxonomy ?? []).includes('vintage') },
+      { id: 'anamorphique', label: 'Anamorphique',   match: r => (r.taxonomy ?? []).includes('anamorphique') },
     ],
   },
   {
     id: 'technique',
     label: 'Technique de prise de vue',
     options: [
-      { id: 'slow-motion',  label: 'Slow motion',    match: r => r.tags.includes('slow-motion') },
-      { id: 'handheld',     label: 'Handheld',       match: r => r.tags.includes('handheld') },
-      { id: 'travelling',   label: 'Travelling',     match: r => r.tags.includes('travelling') },
-      { id: 'bts',          label: 'Making-of / BTS',match: r => r.tags.includes('BTS') },
+      { id: 'slow-motion',  label: 'Slow motion',    match: r => (r.taxonomy ?? []).includes('slow-motion') },
+      { id: 'handheld',     label: 'Handheld',       match: r => (r.taxonomy ?? []).includes('handheld') },
+      { id: 'travelling',   label: 'Travelling',     match: r => (r.taxonomy ?? []).includes('travelling') },
+      { id: 'bts',          label: 'Making-of / BTS',match: r => (r.taxonomy ?? []).includes('BTS') },
     ],
   },
   {
     id: 'lumiere',
     label: 'Lumière',
     options: [
-      { id: 'basse-lumiere',     label: 'Basse lumière',      match: r => r.tags.includes('basse-lumière') },
-      { id: 'exterieur',         label: 'Extérieur',          match: r => r.tags.includes('extérieur') },
-      { id: 'lumiere-naturelle', label: 'Lumière naturelle',  match: r => r.tags.some(t => ['lumière','lumière-naturelle'].includes(t)) },
+      { id: 'basse-lumiere',     label: 'Basse lumière',      match: r => (r.taxonomy ?? []).includes('basse-lumière') },
+      { id: 'exterieur',         label: 'Extérieur',          match: r => (r.taxonomy ?? []).includes('extérieur') },
+      { id: 'lumiere-naturelle', label: 'Lumière naturelle',  match: r => (r.taxonomy ?? []).some(t => ['lumière','lumière-naturelle'].includes(t)) },
     ],
   },
   {
     id: 'montage',
     label: 'Montage & Narration',
     options: [
-      { id: 'transitions', label: 'Transitions',        match: r => r.tags.some(t => ['transitions','transition'].includes(t)) },
-      { id: 'montage',     label: 'Montage rythmé',     match: r => r.tags.includes('montage') },
-      { id: 'narrative',   label: 'Structure narrative', match: r => r.tags.some(t => ['narrative','structure'].includes(t)) },
+      { id: 'transitions', label: 'Transitions',        match: r => (r.taxonomy ?? []).some(t => ['transitions','transition'].includes(t)) },
+      { id: 'montage',     label: 'Montage rythmé',     match: r => (r.taxonomy ?? []).includes('montage') },
+      { id: 'narrative',   label: 'Structure narrative', match: r => (r.taxonomy ?? []).some(t => ['narrative','structure'].includes(t)) },
     ],
   },
 ]
@@ -109,31 +109,31 @@ const buildFallbackCategories = (refs) => [
     id: 'mariage',
     label: 'Mariage & Cinéma',
     sub: 'Films de mariage cinématiques',
-    refs: refs.filter(r => r.mood === 'romantique' || (r.tags ?? []).includes('mariage')),
+    refs: refs.filter(r => r.mood === 'romantique' || (r.taxonomy ?? []).includes('mariage')),
   },
   {
     id: 'corporate',
     label: 'Corporate & Conférences',
     sub: 'Aftermovies et films d\'entreprise',
-    refs: refs.filter(r => r.mood === 'professionnel' || (r.tags ?? []).some(t => ['corporate','B2B'].includes(t))),
+    refs: refs.filter(r => r.mood === 'professionnel' || (r.taxonomy ?? []).some(t => ['corporate','B2B'].includes(t))),
   },
   {
     id: 'evenementiel',
     label: 'Événementiel & Galas',
     sub: 'Captations d\'événements',
-    refs: refs.filter(r => (r.tags ?? []).some(t => ['gala','awards','événementiel'].includes(t))),
+    refs: refs.filter(r => (r.taxonomy ?? []).some(t => ['gala','awards','événementiel'].includes(t))),
   },
   {
     id: 'colorimetrie',
     label: 'Colorimétrie & Lumière',
     sub: 'Golden hour, grain, V-Log',
-    refs: refs.filter(r => (r.tags ?? []).some(t => ['colorimétrie','golden-hour','LUT','V-Log','grain','vintage'].includes(t))),
+    refs: refs.filter(r => (r.taxonomy ?? []).some(t => ['colorimétrie','golden-hour','LUT','V-Log','grain','vintage'].includes(t))),
   },
   {
     id: 'technique',
     label: 'Technique & Workflow',
     sub: 'BTS, slow motion, anamorphique',
-    refs: refs.filter(r => (r.tags ?? []).some(t => ['BTS','handheld','slow-motion','anamorphique'].includes(t))),
+    refs: refs.filter(r => (r.taxonomy ?? []).some(t => ['BTS','handheld','slow-motion','anamorphique'].includes(t))),
   },
 ]
 
@@ -166,7 +166,7 @@ function Hero({ reference, allRefs, onSelect }) {
           <span>·</span>
           <span>{reference.platform}</span>
           <span>·</span>
-          <span>{(reference.tags || []).slice(0, 2).join(' / ')}</span>
+          <span>{(reference.taxonomy || []).slice(0, 2).join(' / ')}</span>
         </div>
         <div className="flex gap-2.5">
           <button
@@ -244,7 +244,7 @@ function ShelfCard({ reference, onClick }) {
           {reference.title}
         </div>
         <div className="flex gap-1 flex-wrap">
-          {(reference.tags || []).slice(0, 2).map(t => (
+          {(reference.taxonomy || []).slice(0, 2).map(t => (
             <span key={t} className="text-[8px] px-1.5 py-0.5 bg-white/10 text-white/60 lowercase">
               {t.replace(/-/g, ' ')}
             </span>
@@ -516,7 +516,7 @@ export default function LibraryPage() {
       const q = search.toLowerCase()
       refs = refs.filter(r =>
         r.title.toLowerCase().includes(q) ||
-        (r.tags ?? []).some(t => t.toLowerCase().includes(q)) ||
+        (r.taxonomy ?? []).some(t => t.toLowerCase().includes(q)) ||
         r.channelName?.toLowerCase().includes(q) ||
         r.context?.toLowerCase().includes(q)
       )
