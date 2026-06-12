@@ -8,6 +8,7 @@ import ProjectCreate from './pages/ProjectCreate'
 import ProjectDetail from './pages/ProjectDetail'
 import CategoryPage from './pages/CategoryPage'
 import DigestPage from './pages/DigestPage'
+import TreatmentSharePage from './pages/TreatmentSharePage'
 import SettingsPage from './pages/SettingsPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
@@ -33,6 +34,9 @@ export default function App() {
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
+        {/* ── Treatment partagé — public, le client n'a pas de compte ── */}
+        <Route path="/t/:token" element={<TreatmentSharePage />} />
+
         {/* ── Auth utilisateurs ── */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

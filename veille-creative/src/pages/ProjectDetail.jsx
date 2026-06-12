@@ -25,6 +25,8 @@ export default function ProjectDetail() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [shareToken, setShareToken] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -36,6 +38,7 @@ export default function ProjectDetail() {
         setProject(p)
         setIntention(p.intention)
         setStatus(p.status)
+        setShareToken(p.shareToken ?? null)
         setItems(p.items.map(i => ({ reference: i.reference, note: i.note })))
         setPool(refs.references ?? [])
       })
@@ -84,6 +87,23 @@ export default function ProjectDetail() {
     }
   }
 
+  const shareUrl = shareToken ? `${window.location.origin}/t/${shareToken}` : null
+
+  async function handleShare() {
+    const { shareToken: token } = await api.projects.share(id)
+    setShareToken(token)
+    const url = `${window.location.origin}/t/${token}`
+    try { await navigator.clipboard.writeText(url) } catch { /* clipboard refusé : le lien reste affiché */ }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  async function handleUnshare() {
+    if (!window.confirm('Révoquer le lien ? Le client ne pourra plus ouvrir le treatment.')) return
+    await api.projects.unshare(id)
+    setShareToken(null)
+  }
+
   async function handleDelete() {
     if (!window.confirm('Supprimer ce projet et son treatment ?')) return
     await api.projects.remove(id)
@@ -124,6 +144,33 @@ export default function ProjectDetail() {
           >
             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+          {shareToken ? (
+            <span className="flex items-center gap-2">
+              <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] tracking-widest uppercase text-ink underline hover:opacity-70">
+                Voir le lien
+              </a>
+              <button
+                onClick={handleShare}
+                className="font-mono text-[10px] tracking-widest uppercase text-ink-muted hover:text-ink"
+                title="Copier le lien client"
+              >
+                {copied ? 'Copié ✓' : 'Copier'}
+              </button>
+              <button
+                onClick={handleUnshare}
+                className="font-mono text-[10px] tracking-widest uppercase text-ink-faint hover:text-red-400"
+              >
+                Révoquer
+              </button>
+            </span>
+          ) : (
+            <button
+              onClick={handleShare}
+              className="px-4 py-1.5 text-[11px] font-mono tracking-widest uppercase border border-ink text-ink hover:bg-surface-raised transition-colors"
+            >
+              {copied ? 'Lien copié ✓' : 'Partager'}
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={saving || !isDirty}

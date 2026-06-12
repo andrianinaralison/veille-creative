@@ -41,6 +41,8 @@ export const api = {
     update: (id, data) => apiFetch(`/api/v1/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     setItems: (id, items) => apiFetch(`/api/v1/projects/${id}/items`, { method: 'PUT', body: JSON.stringify({ items }) }),
     remove: (id) => apiFetch(`/api/v1/projects/${id}`, { method: 'DELETE' }),
+    share: (id) => apiFetch(`/api/v1/projects/${id}/share`, { method: 'POST' }),
+    unshare: (id) => apiFetch(`/api/v1/projects/${id}/share`, { method: 'DELETE' }),
   },
   search: {
     query: (q) => apiFetch('/api/v1/search', {

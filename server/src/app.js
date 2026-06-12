@@ -13,6 +13,7 @@ import adminSearchRoute from './routes/admin-search.route.js';
 import adminDigestsRoute from './routes/admin-digests.route.js';
 import digestsRoute from './routes/digests.route.js';
 import projectsRoute from './routes/projects.route.js';
+import sharedRoute from './routes/shared.route.js';
 import { requireAdmin } from './middleware/require-admin.js';
 import { requireUser } from './middleware/require-user.js';
 import { prisma } from './lib/prisma.js';
@@ -39,6 +40,8 @@ export function createApp() {
   app.use('/api/v1/references', requireUser, referencesRoute);
   app.use('/api/v1/digests', requireUser, digestsRoute);
   app.use('/api/v1/projects', requireUser, projectsRoute);
+  // Treatment partagé — public : le client final n'a pas de compte (180-23)
+  app.use('/api/v1/shared', sharedRoute);
 
   // ── Login admin (public) ────────────────────────────────────────────────────
   app.use('/api/v1/admin/login', authRoute);
