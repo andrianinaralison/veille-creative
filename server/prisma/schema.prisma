@@ -74,6 +74,14 @@ model IngestionSession {
   references  Reference[]
 }
 
+model User {
+  id           String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  email        String   @unique
+  passwordHash String
+  firstName    String   @default("")
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+}
+
 model Creator {
   id              String       @id @default(dbgenerated("(gen_random_uuid())::text"))
   name            String

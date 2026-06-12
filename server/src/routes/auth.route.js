@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' })
 
   const secret = new TextEncoder().encode(process.env.JWT_SECRET)
-  const token = await new SignJWT({})
+  const token = await new SignJWT({ role: 'admin' })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(process.env.JWT_EXPIRES_IN || '7d')
     .sign(secret)
