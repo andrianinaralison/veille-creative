@@ -6,7 +6,6 @@ import LibraryPage from './pages/LibraryPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectCreate from './pages/ProjectCreate'
 import ProjectDetail from './pages/ProjectDetail'
-import MoodboardBuilder from './pages/MoodboardBuilder'
 import CategoryPage from './pages/CategoryPage'
 import DigestPage from './pages/DigestPage'
 import SettingsPage from './pages/SettingsPage'
@@ -50,8 +49,6 @@ export default function App() {
         <Route path="/digest/:id" element={withLayout(DigestPage)} />
         <Route path="/settings" element={withLayout(SettingsPage)} />
         <Route path="/surprises" element={<Navigate to="/" replace />} />
-        {/* Moodboard gets full screen — no sidebar */}
-        <Route path="/projects/:id/moodboard" element={<RequireAuth><MoodboardBuilder /></RequireAuth>} />
 
         {/* ── Routes admin ── */}
         <Route path="/admin/login" element={<AdminLogin />} />
