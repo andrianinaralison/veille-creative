@@ -1,6 +1,12 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import request from 'supertest'
-import { createApp } from '../app.js'
+
+// Pas de BDD en CI : on mocke le ping Prisma du /health
+vi.mock('../lib/prisma.js', () => ({
+  prisma: { $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]) },
+}))
+
+const { createApp } = await import('../app.js')
 
 let app
 
