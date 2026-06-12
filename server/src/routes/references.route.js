@@ -5,15 +5,17 @@ const router = Router();
 
 /**
  * GET /api/v1/references
- * Références PUBLISHED uniquement — consommé par le front public (LibraryPage).
- * Query : ?sectionId=, ?limit=, ?offset=
+ * Références PUBLISHED uniquement — consommé par le front (LibraryPage, feed Dashboard).
+ * Query : ?sectionId=, ?limit=, ?offset=, ?mood=, ?typeContenu= (180-18 filtres feed)
  */
 router.get('/', async (req, res) => {
-  const { sectionId, limit = '200', offset = '0' } = req.query;
+  const { sectionId, limit = '200', offset = '0', mood, typeContenu } = req.query;
 
   const where = {
     status: 'PUBLISHED',
     ...(sectionId ? { sectionId } : {}),
+    ...(mood ? { mood: { equals: mood, mode: 'insensitive' } } : {}),
+    ...(typeContenu ? { typeContenu: { equals: typeContenu, mode: 'insensitive' } } : {}),
   };
 
   try {

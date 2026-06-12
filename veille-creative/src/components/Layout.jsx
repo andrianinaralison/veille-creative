@@ -1,9 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { NavLink, Link, useLocation } from 'react-router-dom'
-import { Settings } from 'lucide-react'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Settings, LogOut } from 'lucide-react'
+import { useAuthStore } from '../store/useAuthStore'
 
 const navItems = [
-  { to: '/', label: 'Bibliothèque', end: true },
+  { to: '/', label: 'Veille', end: true },
+  { to: '/library', label: 'Bibliothèque' },
   { to: '/projects', label: 'Projets' },
 ]
 
@@ -11,11 +13,12 @@ const comingSoonItems = [
   { label: 'Digest' }, // v0.6
 ]
 
-const USER_NAME = 'Andri'
-
 export default function Layout({ children }) {
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const user = useAuthStore(s => s.user)
+  const logout = useAuthStore(s => s.logout)
   const mainRef = useRef(null)
 
 
@@ -72,15 +75,23 @@ export default function Layout({ children }) {
             ))}
           </nav>
 
-          {/* Right: Hey + Prénom → settings */}
+          {/* Right: Hey + Prénom + déconnexion */}
           <div className="ml-auto flex items-center gap-3">
             <Link
               to="/settings"
               className="flex items-center gap-1.5 text-[13px] text-ink-muted hover:text-ink transition-colors group"
             >
-              Hey&nbsp;<span className="font-bold text-ink">{USER_NAME}</span>
+              Hey&nbsp;<span className="font-bold text-ink">{user?.firstName || '…'}</span>
               <Settings size={13} className="opacity-0 group-hover:opacity-60 transition-opacity" />
             </Link>
+            <button
+              type="button"
+              onClick={() => { logout(); navigate('/login') }}
+              aria-label="Déconnexion"
+              className="text-ink-muted hover:text-ink transition-colors"
+            >
+              <LogOut size={13} />
+            </button>
           </div>
 
         </div>

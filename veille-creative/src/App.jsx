@@ -36,7 +36,7 @@ export default function App() {
         <Route path="/signup" element={<SignupPage />} />
 
         {/* ── Espace Léa (authentifié) ── */}
-        <Route path="/" element={withLayout(LibraryPage)} />
+        <Route path="/" element={withLayout(Dashboard)} />
         <Route path="/library" element={withLayout(LibraryPage)} />
         <Route path="/library/section/:id" element={withLayout(CategoryPage)} />
         <Route path="/projects" element={withLayout(ProjectsPage)} />
