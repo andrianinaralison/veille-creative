@@ -1641,7 +1641,7 @@ function IngestionModal({ isOpen, onClose }) {
             <h3 className="font-editorial text-xl text-ink mb-3">Quitter l'ingestion ?</h3>
             {phase === 'running' ? (
               <p className="text-[11px] text-ink-muted mb-6 leading-relaxed">
-                L'ingestion continue en arrière-plan sur le serveur. Les références seront disponibles en TRIAGE une fois terminée. Tu peux rouvrir cette modale plus tard pour les trier.
+                L'import est en cours. "Annuler et supprimer" arrête l'agent au prochain checkpoint et efface les références déjà sauvegardées. Tu peux aussi fermer sans annuler — l'import continuera en arrière-plan.
               </p>
             ) : (
               <p className="text-[11px] text-ink-muted mb-6 leading-relaxed">
@@ -1654,16 +1654,15 @@ function IngestionModal({ isOpen, onClose }) {
             <div className="flex flex-col gap-2">
               <button type="button" onClick={doClose}
                 className="px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase bg-ink text-canvas hover:opacity-80 transition-opacity">
-                Garder en brouillon
+                {phase === 'running' ? 'Laisser tourner en arrière-plan' : 'Garder en brouillon'}
               </button>
-              <button type="button" disabled={discarding || phase === 'running'} onClick={handleDiscard}
-                className="px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title={phase === 'running' ? 'Attends la fin de l\'ingestion pour supprimer' : ''}>
-                {discarding ? 'Suppression…' : 'Supprimer cet import'}
+              <button type="button" disabled={discarding} onClick={handleDiscard}
+                className="px-4 py-2.5 font-mono text-[10px] tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                {discarding ? 'Annulation…' : phase === 'running' ? 'Annuler et supprimer' : 'Supprimer cet import'}
               </button>
               <button type="button" onClick={() => setExitRequested(false)}
                 className="px-4 py-1.5 font-mono text-[9px] tracking-widests uppercase text-ink-faint hover:text-ink-muted transition-colors">
-                Annuler
+                {phase === 'running' ? "Continuer l'import" : 'Annuler'}
               </button>
             </div>
           </div>

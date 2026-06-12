@@ -231,13 +231,21 @@ router.post('/sessions/:id/conflicts/resolve-batch', async (req, res) => {
 router.post('/sessions/:id/discard', async (req, res) => {
   const { id } = req.params;
   try {
+    const session = await prisma.ingestionSession.findUnique({ where: { id }, select: { status: true } });
+    if (!session) return res.status(404).json({ error: 'Session introuvable' });
+
+    // Marque CANCELLED si encore RUNNING — l'agent vérifie ce flag et s'arrête
+    const nextStatus = session.status === 'RUNNING' ? 'CANCELLED' : 'FAILED';
+    await prisma.ingestionSession.update({
+      where: { id },
+      data: { status: nextStatus, errorMessage: 'Import annulé manuellement' },
+    });
+
+    // Supprime toutes les refs TRIAGE de cette session
     const { count } = await prisma.reference.deleteMany({
       where: { ingestionSessionId: id, status: 'TRIAGE' },
     });
-    await prisma.ingestionSession.update({
-      where: { id },
-      data: { status: 'FAILED', errorMessage: 'Import supprimé manuellement' },
-    }).catch(() => {}); // session peut déjà être FAILED/COMPLETED, on ignore
+
     res.json({ ok: true, deleted: count });
   } catch (err) {
     console.error('[ingestion] POST /sessions/:id/discard', err);
