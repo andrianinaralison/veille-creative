@@ -33,8 +33,10 @@
 
 | Fichier | Rôle |
 |---|---|
-| [`10-produit/roadmap.md`](10-produit/roadmap.md) ⭐ | Jalons v0.4 → v0.7 — **source de vérité unique** |
+| [`10-produit/roadmap.md`](10-produit/roadmap.md) ⭐ | Jalons v0.4 → v0.10 — **source de vérité unique** |
 | [`10-produit/way-of-working.md`](10-produit/way-of-working.md) | Rôles, DoR/DoD, flux PR, rituels |
+| [`10-produit/prd/refonte-front-explorer.md`](10-produit/prd/refonte-front-explorer.md) ⭐ | PRD pivot front Explorer/Bibliothèque (priorité NOW, tickets 180-64→86) |
+| `10-produit/prd/treatment.md` | PRD treatment client |
 | `10-produit/prd/ingestion-admin.md` | PRD feature ingestion admin |
 | `10-produit/prd/ingestion-espace.md` | PRD espace ingestion (global) |
 | `10-produit/discovery/ingestion-2026-06.md` | Discovery parcours d'ingestion |

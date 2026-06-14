@@ -34,7 +34,8 @@
 | **v0.5C — UX audit ingestion** | 8 tickets UX · research · accordéon tags | 🟡 Code Done, mergé main (2026-06-12) | Reste : test utilisabilité Camille (180-48) |
 | **v0.6 — Veille + Digest** | Auth Léa · feed · smart search public · digest + email | 🟠 Mergé main **mais audit parcours = 2 trous** | **180-57 (bibliothèque cassée) + 180-58 (search sans UI)** puis recette device (180-25) |
 | **v0.7 — Treatment client** | Projets CRUD · builder · export PDF · partage | 🟡 Code Done, mergé main (2026-06-12) | Reste : session JTBD (180-24) + recette (180-27) |
-| **v0.6.1 — Colmatage audit parcours** | 6 US issues de l'audit du 2026-06-12 | 🔴 À faire | 180-57/58 avant beta ; 180-59→62 avant ouverture publique |
+| **v0.6.1 — Colmatage** | Restes sécu/RGPD de l'audit du 2026-06-12 | 🟠 Réduit par le pivot | 180-57 ✅ PR#13 · maintenus 180-59/61/62 (avant ouverture publique) · 180-58/60/63 absorbés |
+| **🔄 PIVOT FRONT — Explorer / Bibliothèque** | Refonte Spotify/Netflix (remplace la priorité) | 🔴 NOW | voir vagues v0.8 → v0.10 ci-dessous |
 
 ---
 
@@ -151,17 +152,41 @@ Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export 
 
 ## ▶️ Par où commencer maintenant
 
-**Le train MVP est mergé ; on est en colmatage v0.6.1 avant beta.** Ordre recommandé :
+**Le train MVP est mergé ; le pivot front Explorer/Bibliothèque est la priorité NOW.** Ordre recommandé :
 
-1. **180-57** (bibliothèque cassée) — fix mécanique apiFetch, < 1 h, débloque tout test du parcours veille
-2. **180-58** (UI smart search Léa) — reprendre le pattern admin éprouvé de `CurationPage`
-3. **180-59** (mot de passe oublié) — réutilise Resend déjà câblé
-4. En parallèle (humain) : **180-48** test utilisabilité Camille · **180-24** session JTBD (tranche aussi 180-60 favoris)
-5. Puis recettes device **180-25/27** — jouées **depuis l'UI**, pas via l'API
+1. **180-64** (data N-N/type/awards + migration 9 sections) — fondation de tout le reste
+2. **180-67** (mécanique Save) — le geste pivot, prérequis carte/modale/bibliothèque
+3. **180-65 + 180-66** (ReferenceCard + ReferenceModal uniques) — socle UI réutilisé partout
+4. **180-70** (page Explorer) puis **180-72** (recherche) — la valeur visible
+5. **180-73 + 180-74** (Bibliothèque grille + annotations) · **180-68/69/71** en parallèle
+6. En // : **180-75/76** (refonte tags + enrichissement) — débloque v0.9
+7. Sécu/RGPD avant ouverture publique : **180-59/61/62**. Humain : **180-48**, **180-24** (périmètres à revoir post-pivot)
 
 ---
 
-## 🩹 v0.6.1 — Colmatage audit parcours (issu de l'audit du 2026-06-12)
+## 🔄 PIVOT FRONT — Explorer / Bibliothèque (décidé 2026-06-14, **priorité NOW**)
+
+> Refonte profonde façon Spotify/Netflix. **Remplace** la priorité v0.6.1. PRD : [`prd/refonte-front-explorer.md`](./prd/refonte-front-explorer.md) · Challenge équipe : [`90-journal/2026-06-14-challenge-refonte-front.md`](../90-journal/2026-06-14-challenge-refonte-front.md).
+> ⚠️ Finding data : **97% des refs publiées ont 0 tag de taxonomie** → v0.8 conçu pour ne pas en dépendre ; reco (v0.9) gated sur un track d'enrichissement.
+
+**Track 0 + v0.8 — « Explorer & Save »** (ne dépend pas des tags — démarrable tout de suite)
+- 180-64 data N-N/type/awards · 180-65 ReferenceCard · 180-66 ReferenceModal · 180-67 Save (absorbe 180-60) · 180-68 réf→projet (limite 20 supprimée)
+- 180-69 nav (suppr. Veille, `/`=Explorer) · 180-70 page Explorer · 180-71 backoffice sections · 180-72 recherche (absorbe 180-58) · 180-73 Bibliothèque grille (absorbe 180-63) · 180-74 annotations perso
+
+**Track « Refonte tags & enrichissement catalogue »** (prérequis v0.9, en // de v0.8)
+- 180-75 refonte système taxonomie · 180-76 enrichissement des 478 refs
+
+**v0.9 — « Créateurs & Reco »** (après enrichissement)
+- 180-77 FK créateur+migration · 180-78 fiches créateur · 180-79 page créateur · 180-80 algo similarité · 180-81 reco perso · 180-82 onboarding
+
+**v0.10 — « Raffinements front »**
+- 180-83 moteur sections configurable · 180-84 NL bibliothèque · 180-85 sections-par-tag · 180-86 Trendy par save
+
+**Ordre de démarrage v0.8** : 180-64 (data) → 180-67 (Save) → 180-65/66 (carte+modale) → 180-70 (Explorer) → 180-72 (recherche) → 180-73/74 (Bibliothèque+annotations) → 180-68/69/71 en parallèle.
+
+---
+
+## 🩹 v0.6.1 — Colmatage audit parcours (réduit par le pivot)
 
 > Source : [`audit-parcours-mvp-2026-06-12.md`](../30-tech/audit/audit-parcours-mvp-2026-06-12.md) — relecture code réel des 3 parcours nominaux après merge du train. Parcours back ✅ et treatment ✅ complets ; parcours veille **cassé au milieu**.
 
@@ -173,7 +198,9 @@ Sem.13-17  ████ v0.7   ⬜  JTBD · treatment CRUD · builder · export 
 | [**180-60**](https://linear.app/180degre/issue/180-60) | F3 🟡 | Favoris persistés **ou** retrait du bouton bookmark (décision liée au JTBD 180-24) | Medium | Avant ouverture publique |
 | [**180-61**](https://linear.app/180degre/issue/180-61) | F6 🟡 | Changement de mdp + suppression de compte (RGPD art. 17) | Medium | Avant ouverture publique |
 | [**180-62**](https://linear.app/180degre/issue/180-62) | F4 🟡 | Désinscription one-click email (List-Unsubscribe — délivrabilité Gmail/Yahoo) | Medium | Avant ouverture publique |
-| [**180-63**](https://linear.app/180degre/issue/180-63) | F7 ⚪ | Pagination serveur bibliothèque (limit=2000 client-side) | Low | Backlog post-MVP |
+| [**180-63**](https://linear.app/180degre/issue/180-63) | F7 ⚪ | ~~Pagination serveur bibliothèque~~ — **absorbé par 180-73** | — | Annulé (pivot) |
+
+> **Re-challenge du 2026-06-14 (suite au pivot)** : 180-58 → absorbé par 180-72 · 180-60 → absorbé par 180-67 · 180-63 → absorbé par 180-73 (les 3 **annulés**). **Maintenus** : 180-59 (mdp oublié), 180-61 (RGPD compte), 180-62 (unsubscribe) — requalifiés *prérequis avant ouverture publique payante*. 180-57 livré (PR #13).
 
 **Leçon retenue** : le smoke « 9/9 » testait l'API avec token, pas les pages qui l'appellent — un parcours n'est validé que joué depuis l'UI (c'est l'objet des recettes 180-25/27).
 
@@ -206,6 +233,7 @@ Post-merge : fix annulation d'import livré (**180-56**, commit `bfbe916`) + **a
 
 ## ✅ DONE (archive datée)
 
+- **2026-06-14** — Décision **pivot front Explorer/Bibliothèque** (façon Spotify/Netflix) : challenge équipe produit (7 tensions), finding data (97% refs sans tag), découpage Track 0/v0.8/v0.9/v0.10 + track tags. 23 tickets créés (180-64→86), 4 projets Linear, backlog v0.6.1 re-challengé. PRD + journal écrits.
 - **2026-06-12** — Train de PRs #2→#11 mergé dans `main` · fix annulation d'import (180-56) · audit fonctionnel & technique des 3 parcours nominaux → 7 tickets 180-57→180-63 + [`audit-parcours-mvp-2026-06-12.md`](../30-tech/audit/audit-parcours-mvp-2026-06-12.md).
 - **2026-06-07** — Audit UX live `@tobifilmsofficial` + thread équipe produit (9 agents) + v0.5C lancée : 10 tickets 180-40→180-49 créés dans Linear.
 - **2026-06-05** — v0.5B close : P1 lot+compteur (180-29), P2 règles (180-30), P3 smart search (180-31), dette totalFiltered (180-32), bugs polling 429 (180-33) + 0 refs (180-34), UX cas non nominaux (180-35→180-39 — tous Done).

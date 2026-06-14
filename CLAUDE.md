@@ -123,19 +123,21 @@ Description PR avec :
 
 Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save`. Détail du flux dans `docs/10-produit/way-of-working.md`.
 
-## Priorité courante — v0.4 « Structure propre »
+## Priorité courante — 🔄 PIVOT FRONT « Explorer / Bibliothèque »
 
-> ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/10-produit/roadmap.md`** — source de vérité unique.
+> ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/10-produit/roadmap.md`** — source de vérité unique. PRD du pivot : **`docs/10-produit/prd/refonte-front-explorer.md`**.
 
-✅ v0.4, v0.5, v0.5C/v0.6/v0.7 livrés et **train de PRs #2→#11 mergé dans `main`** (2026-06-12). L'audit des parcours nominaux du même jour a ouvert **v0.6.1 — colmatage** (tickets 180-57→63, dont 2 bloquants : bibliothèque cassée + smart search sans UI) — voir `docs/30-tech/audit/audit-parcours-mvp-2026-06-12.md` et la roadmap. Restent côté humain : test utilisabilité (180-48), session JTBD treatment (180-24), recettes device (180-25/27), checklist bêta (180-26), domaine Resend prod.
+✅ MVP v0.4→v0.7 livré et mergé dans `main` (2026-06-12). **Depuis le 2026-06-14, la priorité est le pivot front façon Spotify/Netflix** (remplace le colmatage v0.6.1) : page **Explorer** (`/`, rangées de sections + recherche), **Save** comme geste pivot, **Bibliothèque** = refs sauvegardées annotables, **pages créateur** + **reco par similarité**. Découpé en Track 0/**v0.8**/**v0.9**/v0.10 + un track « refonte tags & enrichissement » (tickets 180-64→86).
 
-Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
+⚠️ **Finding data structurant (2026-06-14)** : **97% des refs publiées ont 0 tag de taxonomie**. v0.8 est conçu pour ne pas en dépendre ; toute la reco (v0.9) est gated sur l'enrichissement du catalogue (180-75/76).
+
+Restent en // (sécu/RGPD, avant ouverture publique) : 180-59 (mdp oublié), 180-61 (RGPD), 180-62 (unsubscribe). Humain : 180-48, 180-24 (périmètres à revoir post-pivot), domaine Resend prod.
 
 ## Backlog (résumé — détail dans `docs/10-produit/roadmap.md`)
 
-- 🔧 v0.5 — fiabiliser la boucle back (taxonomie unique, structured output, découpe `ingestion.service`, validation, tests)
-- 🎬 v0.6 — Auth utilisateurs, smart search réel, feed veille, **Digest** (modèle éditorial + email Resend) — *réintégré au scope*
-- 🎨 v0.7 — Projets/treatments CRUD, builder de treatment, export PDF + partage
+- 🔄 **Pivot front (NOW)** — v0.8 Explorer&Save → refonte tags → v0.9 Créateurs&Reco → v0.10 raffinements
+- ✅ v0.5/v0.6/v0.7 — boucle back, veille+digest, treatments (livrés, mergés)
+- 🔒 v0.6.1 résiduel — mdp oublié, RGPD compte, unsubscribe (prérequis ouverture publique)
 - Post-MVP — scan multi-sources (Vimeo → web → Instagram)
 - ~~Découvertes / Surprises~~ — **abandonné**
 
