@@ -45,7 +45,6 @@ export default function App() {
         <Route path="/" element={withLayout(ExplorerPage)} />
         <Route path="/explorer/section/:id" element={withLayout(CategoryPage)} />
         <Route path="/library" element={withLayout(LibraryPage)} />
-        <Route path="/library/section/:id" element={withLayout(CategoryPage)} />
         <Route path="/projects" element={withLayout(ProjectsPage)} />
         <Route path="/projects/new" element={withLayout(ProjectCreate)} />
         <Route path="/projects/:id" element={withLayout(ProjectDetail)} />
