@@ -463,6 +463,7 @@ export default function LibraryPage() {
       api.references.sections(),
       api.references.list({ limit: 2000 }),
     ]).then(([sectionsData, refsData]) => {
+      useSavedStore.getState().mergeFlags(refsData.references ?? [])
       setSections(sectionsData.sections ?? [])
       setAllRefs(refsData.references ?? [])
     }).catch(() => {

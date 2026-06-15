@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import ReferenceCard from '../components/ReferenceCard'
 import ReferenceModal from '../components/ReferenceModal'
 import { api } from '../lib/api'
+import { useSavedStore } from '../store/useSavedStore'
 
 // Hauteur navbar Layout = 56px (top-14), barre catégorie = 48px (h-12)
 // Le contenu doit donc partir à 104px du haut (pt-[104px])
@@ -31,7 +32,9 @@ export default function CategoryPage() {
         if (section) {
           setLabel(section.title)
           setSub(section.description)
-          setRefs((section.references ?? []).filter(r => r.status === 'PUBLISHED'))
+          const published = (section.references ?? []).filter(r => r.status === 'PUBLISHED')
+          useSavedStore.getState().mergeFlags(published)
+          setRefs(published)
         }
       })
       .catch(() => setError('Impossible de charger cette section. Vérifie ta connexion et réessaie.'))
