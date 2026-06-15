@@ -116,15 +116,40 @@ function TagEditor({ tags, onChange }) {
   )
 }
 
-// ─── SectionSelector ──────────────────────────────────────────────────────────
+// ─── SectionMultiSelect ───────────────────────────────────────────────────────
+// 180-64 : N-N — une réf peut appartenir à plusieurs sections
 
-function SectionSelector({ sectionId, sections, onChange }) {
+function SectionMultiSelect({ sectionIds, sections, onChange }) {
+  const selected = new Set(sectionIds)
+
+  function toggle(id) {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onChange([...next])
+  }
+
+  const label = sectionIds.length === 0
+    ? '— Aucune —'
+    : `${sectionIds.length} section${sectionIds.length > 1 ? 's' : ''}`
+
   return (
-    <select value={sectionId ?? ''} onChange={e => onChange(e.target.value || null)}
-      className="w-full bg-canvas border border-surface-border text-ink text-[10px] font-mono tracking-wide px-2 py-1 outline-none focus:border-ink appearance-none cursor-pointer">
-      <option value="">— Aucune section —</option>
-      {sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-    </select>
+    <details className="relative">
+      <summary className="list-none cursor-pointer w-full bg-canvas border border-surface-border text-ink text-[10px] font-mono tracking-wide px-2 py-1 outline-none focus:border-ink">
+        {label}
+      </summary>
+      <div className="absolute z-10 mt-1 w-48 max-h-56 overflow-y-auto bg-surface border border-surface-border shadow-lg">
+        {sections.length === 0 && (
+          <p className="text-[10px] text-ink-faint px-2 py-1.5">Aucune section</p>
+        )}
+        {sections.map(s => (
+          <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-surface-raised cursor-pointer text-[11px] text-ink">
+            <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} className="accent-ink" />
+            <span className="truncate">{s.title}</span>
+          </label>
+        ))}
+      </div>
+    </details>
   )
 }
 
@@ -403,7 +428,7 @@ function TriageView({ session, onNewImport, onTriageDone }) {
 function RefRow({ ref, sections, onSaved }) {
   const { markDirty } = useAdminStore()
   const [taxonomy, setTaxonomy]       = useState(ref.taxonomy ?? [])
-  const [sectionId, setSectionId]     = useState(ref.sectionId ?? null)
+  const [sectionIds, setSectionIds]   = useState(ref.sectionIds ?? [])
   const [status, setStatus]           = useState(ref.status ?? 'DRAFT')
   const [saving, setSaving]           = useState(false)
   const [saved, setSaved]             = useState(false)
@@ -412,9 +437,11 @@ function RefRow({ ref, sections, onSaved }) {
   const confirmTimeoutRef             = useRef(null)
 
   const thumb = ref.thumbnailUrl?.startsWith('http') ? ref.thumbnailUrl : ytThumb(ref.url)
+  const sectionsDirty =
+    JSON.stringify([...sectionIds].sort()) !== JSON.stringify([...(ref.sectionIds ?? [])].sort())
   const isDirtyLocal =
     JSON.stringify(taxonomy) !== JSON.stringify(ref.taxonomy ?? []) ||
-    sectionId !== (ref.sectionId ?? null) ||
+    sectionsDirty ||
     status !== (ref.status ?? 'DRAFT')
 
   async function handleSave() {
@@ -431,12 +458,12 @@ function RefRow({ ref, sections, onSaved }) {
     try {
       const patch = { taxonomy }
       if (status !== ref.status) patch.status = status
-      if (sectionId !== (ref.sectionId ?? null)) patch.sectionId = sectionId ?? null
+      if (sectionsDirty) patch.sectionIds = sectionIds
       await apiFetch(`${ADMIN_API}/references/${ref.id}`, { method: 'PATCH', body: JSON.stringify(patch) })
       markDirty()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-      onSaved?.({ ...ref, taxonomy, sectionId, status })
+      onSaved?.({ ...ref, taxonomy, sectionIds, status })
     } catch (err) {
       console.error('[RefRow] save error', err)
     } finally {
@@ -484,7 +511,7 @@ function RefRow({ ref, sections, onSaved }) {
         </div>
       </td>
       <td className="p-2 w-52"><TagEditor tags={taxonomy} onChange={setTaxonomy} /></td>
-      <td className="p-2 w-40"><SectionSelector sectionId={sectionId} sections={sections} onChange={setSectionId} /></td>
+      <td className="p-2 w-40"><SectionMultiSelect sectionIds={sectionIds} sections={sections} onChange={setSectionIds} /></td>
       <td className="p-2 w-32"><StatusDropdown status={status} onChange={setStatus} /></td>
       <td className="p-2 w-24">
         <div className="flex items-center gap-1.5">

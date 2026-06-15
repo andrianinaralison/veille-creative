@@ -63,8 +63,9 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
   const [saving, setSaving] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
 
-  const sectionRefs = refs.filter(r => r.sectionId === section.id)
-  const availableRefs = refs.filter(r => r.sectionId === null || r.sectionId === undefined)
+  // N-N (180-64) : une réf peut appartenir à plusieurs sections
+  const sectionRefs = refs.filter(r => (r.sectionIds ?? []).includes(section.id))
+  const availableRefs = refs.filter(r => !(r.sectionIds ?? []).includes(section.id))
 
   async function handleSave() {
     setSaving(true)
@@ -98,10 +99,10 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
   async function handleRemoveRef(refId) {
     await apiFetch(`${API_SECTIONS}/unassign`, {
       method: 'POST',
-      body: JSON.stringify({ refIds: [refId] }),
+      body: JSON.stringify({ refIds: [refId], sectionId: section.id }),
     })
     markDirty()
-    onUnassign(refId)
+    onUnassign(section.id, refId)
   }
 
   async function handleAddRef(refId) {
@@ -203,11 +204,11 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
           {showPicker ? (
             <div className="flex flex-col gap-2">
               <p className="font-mono text-[9px] tracking-widest uppercase text-ink-muted">
-                Références sans section ({availableRefs.length})
+                Références hors de cette section ({availableRefs.length})
               </p>
               <div className="max-h-48 overflow-y-auto flex flex-col gap-px border border-surface-border">
                 {availableRefs.length === 0 && (
-                  <p className="text-[11px] text-ink-faint px-3 py-2">Toutes les refs sont assignées</p>
+                  <p className="text-[11px] text-ink-faint px-3 py-2">Toutes les refs sont déjà dans cette section</p>
                 )}
                 {availableRefs.map(ref => (
                   <button
@@ -446,20 +447,27 @@ export default function SectionsAdminPage() {
     setSections(prev => prev.filter(s => s.id !== id))
   }
 
+  // N-N (180-64) : on ajoute / retire l'id de section dans r.sectionIds
   function handleAssign(sectionId, refId) {
-    setRefs(prev => prev.map(r => r.id === refId ? { ...r, sectionId } : r))
+    setRefs(prev => prev.map(r =>
+      r.id === refId ? { ...r, sectionIds: [...new Set([...(r.sectionIds ?? []), sectionId])] } : r
+    ))
   }
 
-  function handleUnassign(refId) {
-    setRefs(prev => prev.map(r => r.id === refId ? { ...r, sectionId: null } : r))
+  function handleUnassign(sectionId, refId) {
+    setRefs(prev => prev.map(r =>
+      r.id === refId ? { ...r, sectionIds: (r.sectionIds ?? []).filter(id => id !== sectionId) } : r
+    ))
   }
 
   function handleBulkAssign(sectionId, refIds) {
     const idSet = new Set(refIds)
-    setRefs(prev => prev.map(r => idSet.has(r.id) ? { ...r, sectionId } : r))
+    setRefs(prev => prev.map(r =>
+      idSet.has(r.id) ? { ...r, sectionIds: [...new Set([...(r.sectionIds ?? []), sectionId])] } : r
+    ))
   }
 
-  const unassigned = refs.filter(r => !r.sectionId)
+  const unassigned = refs.filter(r => !(r.sectionIds ?? []).length)
 
   return (
     <div className="px-8 py-8">

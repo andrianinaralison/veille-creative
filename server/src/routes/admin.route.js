@@ -24,11 +24,21 @@ router.get('/references', validate({ query: refsQuerySchema }), asyncHandler(asy
   const skip = page ? (page - 1) * limit : offset;
 
   const [rows, total] = await Promise.all([
-    prisma.reference.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit, skip }),
+    prisma.reference.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip,
+      include: { sections: { select: { sectionId: true } } },
+    }),
     prisma.reference.count({ where }),
   ]);
 
-  const references = includeTags ? rows : rows.map(({ tags, ...rest }) => rest);
+  const references = rows.map(({ tags, sections, ...rest }) => ({
+    ...(includeTags ? { tags } : {}),
+    ...rest,
+    sectionIds: sections.map(s => s.sectionId),
+  }));
 
   res.json({
     references,
@@ -140,12 +150,17 @@ router.get('/triage/count', async (req, res) => {
 
 /**
  * PATCH /api/v1/admin/references/:id
- * Édite les champs éditoriaux + status + sectionId en une seule transaction atomique.
- * Body (tous optionnels) : { title, taxonomy, mood, context, typeContenu, status, sectionId }
+ * Édite les champs éditoriaux + status + awards + appartenances aux sections (N-N).
+ * Body (tous optionnels) : { title, taxonomy, mood, context, typeContenu, awards, status, sectionIds }
+ *   - sectionIds : remplace l'ensemble des appartenances de la réf (N-N, 180-64)
  */
 router.patch('/references/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, taxonomy, mood, context, typeContenu, status, sectionId } = req.body;
+  const { title, taxonomy, mood, context, typeContenu, awards, status, sectionIds } = req.body;
+
+  if (sectionIds !== undefined && !Array.isArray(sectionIds)) {
+    return res.status(400).json({ error: 'sectionIds doit être un tableau' });
+  }
 
   const data = {};
   if (title !== undefined)       data.title = title;
@@ -153,7 +168,7 @@ router.patch('/references/:id', asyncHandler(async (req, res) => {
   if (mood !== undefined)        data.mood = mood;
   if (context !== undefined)     data.context = context;
   if (typeContenu !== undefined) data.typeContenu = typeContenu;
-  if (sectionId !== undefined)   data.sectionId = sectionId; // null = désassigner
+  if (awards !== undefined)      data.awards = awards;
   if (status !== undefined) {
     const parsed = refStatusSchema.safeParse(status);
     if (!parsed.success) {
@@ -163,11 +178,31 @@ router.patch('/references/:id', asyncHandler(async (req, res) => {
     if (parsed.data === 'PUBLISHED') data.publishedAt = new Date();
   }
 
-  if (Object.keys(data).length === 0) {
+  if (Object.keys(data).length === 0 && sectionIds === undefined) {
     return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
   }
 
-  const updated = await prisma.reference.update({ where: { id }, data });
+  // Mise à jour atomique : champs scalaires + réécriture des appartenances N-N
+  const updated = await prisma.$transaction(async (tx) => {
+    if (sectionIds !== undefined) {
+      await tx.referenceSection.deleteMany({ where: { referenceId: id } });
+      if (sectionIds.length > 0) {
+        await tx.referenceSection.createMany({
+          data: sectionIds.map(sectionId => ({ referenceId: id, sectionId })),
+          skipDuplicates: true,
+        });
+      }
+    }
+    const ref = Object.keys(data).length > 0
+      ? await tx.reference.update({ where: { id }, data })
+      : await tx.reference.findUnique({ where: { id } });
+    const sections = await tx.referenceSection.findMany({
+      where: { referenceId: id },
+      select: { sectionId: true },
+    });
+    return { ...ref, sectionIds: sections.map(s => s.sectionId) };
+  });
+
   res.json(updated);
 }));
 

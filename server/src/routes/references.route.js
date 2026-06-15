@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 
   const where = {
     status: 'PUBLISHED',
-    ...(sectionId ? { sectionId } : {}),
+    ...(sectionId ? { sections: { some: { sectionId } } } : {}),
     ...(mood ? { mood: { equals: mood, mode: 'insensitive' } } : {}),
     ...(typeContenu ? { typeContenu: { equals: typeContenu, mode: 'insensitive' } } : {}),
   };
@@ -25,11 +25,15 @@ router.get('/', async (req, res) => {
         orderBy: { publishedAt: 'desc' },
         take: parseInt(limit, 10),
         skip: parseInt(offset, 10),
+        include: { sections: { select: { sectionId: true } } },
       }),
       prisma.reference.count({ where }),
     ]);
     // 180-49 : les tags YouTube bruts ne sortent jamais vers le front public
-    const references = rows.map(({ tags, ...rest }) => rest);
+    const references = rows.map(({ tags, sections, ...rest }) => ({
+      ...rest,
+      sectionIds: sections.map(s => s.sectionId),
+    }));
     res.json({ references, total });
   } catch (err) {
     console.error('[references] GET /', err);
@@ -48,14 +52,15 @@ router.get('/sections', async (req, res) => {
       orderBy: { position: 'asc' },
       include: {
         references: {
-          where: { status: 'PUBLISHED' },
-          orderBy: { publishedAt: 'desc' },
+          where: { reference: { status: 'PUBLISHED' } },
+          orderBy: [{ position: 'asc' }, { reference: { publishedAt: 'desc' } }],
+          include: { reference: true },
         },
       },
     });
-    const sections = rows.map(s => ({
-      ...s,
-      references: s.references.map(({ tags, ...rest }) => rest),
+    const sections = rows.map(({ references, ...section }) => ({
+      ...section,
+      references: references.map(({ reference: { tags, ...rest } }) => rest),
     }));
     res.json({ sections });
   } catch (err) {

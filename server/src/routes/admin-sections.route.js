@@ -22,8 +22,11 @@ router.get('/', async (_req, res) => {
 
 /** POST /api/v1/admin/sections — créer une section */
 router.post('/', async (req, res) => {
-  const { title, description = '', position = 0 } = req.body;
+  const { title, description = '', position = 0, type } = req.body;
   if (!title?.trim()) return res.status(400).json({ error: 'title requis' });
+  if (type !== undefined && !['AUTO', 'MANUAL'].includes(type)) {
+    return res.status(400).json({ error: 'type doit être AUTO ou MANUAL' });
+  }
 
   const slug = title.trim().toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -31,7 +34,7 @@ router.post('/', async (req, res) => {
 
   try {
     const section = await prisma.section.create({
-      data: { title: title.trim(), slug, description, position },
+      data: { title: title.trim(), slug, description, position, ...(type ? { type } : {}) },
     });
     res.status(201).json(section);
   } catch (err) {
@@ -44,7 +47,10 @@ router.post('/', async (req, res) => {
 /** PATCH /api/v1/admin/sections/:id — modifier titre / description / position / active */
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { title, description, position, active } = req.body;
+  const { title, description, position, active, type } = req.body;
+  if (type !== undefined && !['AUTO', 'MANUAL'].includes(type)) {
+    return res.status(400).json({ error: 'type doit être AUTO ou MANUAL' });
+  }
   const data = {};
   if (title !== undefined) {
     data.title = title;
@@ -55,6 +61,7 @@ router.patch('/:id', async (req, res) => {
   if (description !== undefined) data.description = description;
   if (position !== undefined) data.position = position;
   if (active !== undefined) data.active = active;
+  if (type !== undefined) data.type = type;
 
   try {
     const updated = await prisma.section.update({ where: { id }, data });
@@ -66,7 +73,7 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-/** DELETE /api/v1/admin/sections/:id — supprimer (les refs gardent sectionId=null) */
+/** DELETE /api/v1/admin/sections/:id — supprimer (les liens N-N tombent en cascade, les refs sont conservées) */
 router.delete('/:id', async (req, res) => {
   try {
     await prisma.section.delete({ where: { id: req.params.id } });
@@ -88,9 +95,9 @@ router.post('/:id/assign', async (req, res) => {
   if (!Array.isArray(refIds)) return res.status(400).json({ error: 'refIds requis' });
 
   try {
-    await prisma.reference.updateMany({
-      where: { id: { in: refIds } },
-      data: { sectionId: id },
+    await prisma.referenceSection.createMany({
+      data: refIds.map(referenceId => ({ referenceId, sectionId: id })),
+      skipDuplicates: true,
     });
     res.json({ ok: true, affected: refIds.length });
   } catch (err) {
@@ -101,20 +108,21 @@ router.post('/:id/assign', async (req, res) => {
 
 /**
  * POST /api/v1/admin/sections/unassign
- * Retire des références de leur section (sectionId → null).
- * Body : { refIds: string[] }
+ * Retire des références d'une section donnée (supprime le lien N-N).
+ * Body : { refIds: string[], sectionId: string }
  */
 router.post('/unassign', async (req, res) => {
-  const { refIds } = req.body;
+  const { refIds, sectionId } = req.body;
   if (!Array.isArray(refIds)) return res.status(400).json({ error: 'refIds requis' });
+  if (!sectionId) return res.status(400).json({ error: 'sectionId requis' });
 
   try {
-    await prisma.reference.updateMany({
-      where: { id: { in: refIds } },
-      data: { sectionId: null },
+    await prisma.referenceSection.deleteMany({
+      where: { sectionId, referenceId: { in: refIds } },
     });
     res.json({ ok: true });
   } catch (err) {
+    console.error('[admin/sections] POST /unassign', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
