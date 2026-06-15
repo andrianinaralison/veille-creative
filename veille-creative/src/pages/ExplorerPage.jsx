@@ -1,10 +1,91 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Bookmark, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Bookmark, Play, Search, SlidersHorizontal, X } from 'lucide-react'
 import ReferenceCard from '../components/ReferenceCard'
 import ReferenceModal from '../components/ReferenceModal'
 import { api } from '../lib/api'
 import { useSavedStore } from '../store/useSavedStore'
+
+// ─── Filter config (facettes texte — NL reporté v0.10) ──────────────────────
+
+const FILTER_GROUPS = [
+  {
+    id: 'categorie',
+    label: 'Catégorie',
+    options: [
+      { id: 'mariage',      label: 'Mariage',         match: r => r.mood === 'romantique' || (r.taxonomy ?? []).includes('mariage') },
+      { id: 'corporate',    label: 'Corporate & B2B',  match: r => (r.taxonomy ?? []).some(t => ['corporate','B2B'].includes(t)) },
+      { id: 'evenementiel', label: 'Événementiel',     match: r => (r.taxonomy ?? []).includes('événementiel') },
+      { id: 'gala',         label: 'Gala & Awards',    match: r => (r.taxonomy ?? []).some(t => ['gala','awards'].includes(t)) },
+      { id: 'startup',      label: 'Startup',          match: r => (r.taxonomy ?? []).includes('startup') },
+    ],
+  },
+  {
+    id: 'ambiance',
+    label: 'Ambiance',
+    options: [
+      { id: 'romantique',    label: 'Romantique',    match: r => r.mood === 'romantique' },
+      { id: 'professionnel', label: 'Professionnel', match: r => r.mood === 'professionnel' },
+      { id: 'vivant',        label: 'Vivant',        match: r => r.mood === 'vivant' },
+      { id: 'elegant',       label: 'Élégant',       match: r => r.mood === 'élégant' },
+      { id: 'serieux',       label: 'Sérieux',       match: r => r.mood === 'sérieux' },
+      { id: 'epique',        label: 'Épique',        match: r => r.mood === 'épique' },
+    ],
+  },
+  {
+    id: 'camera',
+    label: 'Caméra',
+    options: [
+      { id: 'sony',       label: 'Sony FX3 / A1',      match: r => (r.taxonomy ?? []).includes('Sony-FX3') },
+      { id: 'canon',      label: 'Canon C70 / C80',     match: r => (r.taxonomy ?? []).includes('Canon-C70') },
+      { id: 'lumix',      label: 'Lumix S5ii / S1',     match: r => (r.taxonomy ?? []).includes('Lumix-S5ii') },
+      { id: 'blackmagic', label: 'Blackmagic BMPCC',    match: r => (r.taxonomy ?? []).includes('Blackmagic') },
+    ],
+  },
+  {
+    id: 'colorimetrie',
+    label: 'Colorimétrie',
+    options: [
+      { id: 'golden-hour',  label: 'Golden hour',    match: r => (r.taxonomy ?? []).includes('golden-hour') },
+      { id: 'vlog',         label: 'V-Log',          match: r => (r.taxonomy ?? []).includes('V-Log') },
+      { id: 'lut',          label: 'LUT',            match: r => (r.taxonomy ?? []).includes('LUT') },
+      { id: 'grain',        label: 'Grain film',     match: r => (r.taxonomy ?? []).includes('grain') },
+      { id: 'vintage',      label: 'Vintage',        match: r => (r.taxonomy ?? []).includes('vintage') },
+      { id: 'anamorphique', label: 'Anamorphique',   match: r => (r.taxonomy ?? []).includes('anamorphique') },
+    ],
+  },
+  {
+    id: 'technique',
+    label: 'Technique de prise de vue',
+    options: [
+      { id: 'slow-motion',  label: 'Slow motion',    match: r => (r.taxonomy ?? []).includes('slow-motion') },
+      { id: 'handheld',     label: 'Handheld',       match: r => (r.taxonomy ?? []).includes('handheld') },
+      { id: 'travelling',   label: 'Travelling',     match: r => (r.taxonomy ?? []).includes('travelling') },
+      { id: 'bts',          label: 'Making-of / BTS',match: r => (r.taxonomy ?? []).includes('BTS') },
+    ],
+  },
+  {
+    id: 'lumiere',
+    label: 'Lumière',
+    options: [
+      { id: 'basse-lumiere',     label: 'Basse lumière',      match: r => (r.taxonomy ?? []).includes('basse-lumière') },
+      { id: 'exterieur',         label: 'Extérieur',          match: r => (r.taxonomy ?? []).includes('extérieur') },
+      { id: 'lumiere-naturelle', label: 'Lumière naturelle',  match: r => (r.taxonomy ?? []).some(t => ['lumière','lumière-naturelle'].includes(t)) },
+    ],
+  },
+]
+
+const QUICK_PILLS = [
+  { label: 'Tout',         clear: true },
+  { label: 'Mariage',      groupId: 'categorie',   optId: 'mariage' },
+  { label: 'Corporate',    groupId: 'categorie',   optId: 'corporate' },
+  { label: 'Événementiel', groupId: 'categorie',   optId: 'evenementiel' },
+  { label: 'Anamorphique', groupId: 'colorimetrie', optId: 'anamorphique' },
+  { label: 'Golden hour',  groupId: 'colorimetrie', optId: 'golden-hour' },
+  { label: 'Vintage',      groupId: 'colorimetrie', optId: 'vintage' },
+  { label: 'Lumix S5ii',   groupId: 'camera',      optId: 'lumix' },
+  { label: 'Sony FX3',     groupId: 'camera',      optId: 'sony' },
+]
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
@@ -142,6 +223,97 @@ function CinemaRow({ category, onSelect }) {
   )
 }
 
+// ─── Filter Sidebar ───────────────────────────────────────────────────────────
+
+function FilterSidebar({ open, onClose, activeFilters, onToggle, onClearAll }) {
+  const [openGroups, setOpenGroups] = useState({ categorie: true })
+  const toggleGroup = (id) => setOpenGroups(prev => ({ ...prev, [id]: !prev[id] }))
+  const totalActive = Object.values(activeFilters).reduce((acc, set) => acc + set.size, 0)
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] animate-fade-in" onClick={onClose} />
+      )}
+
+      <div
+        className={`fixed right-0 top-0 h-full w-[340px] z-50 bg-surface border-l border-surface-border flex flex-col transition-transform duration-300 ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b border-surface-border flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal size={14} className="text-ink-muted" />
+            <span className="text-sm font-semibold text-ink">Filtres</span>
+            {totalActive > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-ink text-canvas font-semibold">{totalActive}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {totalActive > 0 && (
+              <button onClick={onClearAll} className="text-[11px] text-ink-muted hover:text-ink transition-colors">
+                Effacer tout
+              </button>
+            )}
+            <button onClick={onClose} className="text-ink-muted hover:text-ink transition-colors">
+              <X size={15} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {FILTER_GROUPS.map(group => {
+            const groupSelected = activeFilters[group.id] ?? new Set()
+            const isOpen = openGroups[group.id]
+            return (
+              <div key={group.id} className="border-b border-surface-border">
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-surface-raised transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-ink">{group.label}</span>
+                    {groupSelected.size > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-ink/15 text-ink font-medium">{groupSelected.size}</span>
+                    )}
+                  </div>
+                  <ChevronDown size={13} className={`text-ink-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="px-6 pb-4 flex flex-wrap gap-2">
+                    {group.options.map(opt => {
+                      const isActive = groupSelected.has(opt.id)
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => onToggle(group.id, opt.id)}
+                          className={`text-[11px] px-3 py-1.5 border transition-all ${
+                            isActive
+                              ? 'border-ink/30 bg-ink/10 text-ink'
+                              : 'border-surface-border text-ink-muted hover:border-ink/25 hover:text-ink'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="px-6 py-4 border-t border-surface-border flex-shrink-0">
+          <button onClick={onClose} className="w-full py-2.5 bg-ink text-canvas text-sm font-medium hover:opacity-90 transition-opacity">
+            Voir les résultats
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ExplorerPage() {
@@ -150,6 +322,9 @@ export default function ExplorerPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedRef, setSelectedRef] = useState(null)
+  const [search, setSearch] = useState('')
+  const [activeFilters, setActiveFilters] = useState({})
+  const [filterOpen, setFilterOpen] = useState(false)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -169,7 +344,6 @@ export default function ExplorerPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Écoute les publications admin (BroadcastChannel)
   useEffect(() => {
     const ch = new BroadcastChannel('cms-publish')
     ch.onmessage = () => fetchData()
@@ -178,9 +352,63 @@ export default function ExplorerPage() {
 
   const heroRef = allRefs[0] ?? null
 
-  // Rangées : 1 rangée auto « Dernières publications » + sections MANUAL de l'API.
-  // Les sections AUTO calculées (Trendy-vues, Nouveaux créateurs) arrivent avec
-  // l'enrichissement catalogue / le moteur de sections (v0.10).
+  // ── Filtres ──────────────────────────────────────────────────────────────
+  const toggleFilter = (groupId, optId) => {
+    setActiveFilters(prev => {
+      const current = new Set(prev[groupId] ?? [])
+      if (current.has(optId)) current.delete(optId)
+      else current.add(optId)
+      return { ...prev, [groupId]: current }
+    })
+  }
+  const removeFilter = (groupId, optId) => {
+    setActiveFilters(prev => {
+      const current = new Set(prev[groupId] ?? [])
+      current.delete(optId)
+      return { ...prev, [groupId]: current }
+    })
+  }
+  const clearAllFilters = () => setActiveFilters({})
+
+  const activeChips = useMemo(() => {
+    const chips = []
+    FILTER_GROUPS.forEach(group => {
+      const selected = activeFilters[group.id]
+      if (!selected || selected.size === 0) return
+      group.options.forEach(opt => {
+        if (selected.has(opt.id)) chips.push({ groupId: group.id, optId: opt.id, label: opt.label })
+      })
+    })
+    return chips
+  }, [activeFilters])
+
+  const isFiltering = !!search || activeChips.length > 0
+
+  const filtered = useMemo(() => {
+    let refs = allRefs
+    if (search) {
+      const q = search.toLowerCase()
+      refs = refs.filter(r =>
+        r.title.toLowerCase().includes(q) ||
+        (r.taxonomy ?? []).some(t => t.toLowerCase().includes(q)) ||
+        r.channelName?.toLowerCase().includes(q) ||
+        r.context?.toLowerCase().includes(q)
+      )
+    }
+    FILTER_GROUPS.forEach(group => {
+      const selected = activeFilters[group.id]
+      if (!selected || selected.size === 0) return
+      refs = refs.filter(r =>
+        [...selected].some(optId => {
+          const opt = group.options.find(o => o.id === optId)
+          return opt ? opt.match(r) : false
+        })
+      )
+    })
+    return refs
+  }, [search, activeFilters, allRefs])
+
+  // ── Rangées (mode découverte) ──────────────────────────────────────────────
   const rows = useMemo(() => {
     const recent = {
       id: 'recent',
@@ -190,7 +418,6 @@ export default function ExplorerPage() {
         .sort((a, b) => new Date(b.publishedAt ?? b.createdAt) - new Date(a.publishedAt ?? a.createdAt))
         .slice(0, 18),
     }
-
     const apiRows = sections
       .filter(s => s.active !== false)
       .map(s => ({
@@ -200,9 +427,17 @@ export default function ExplorerPage() {
         refs: (s.references ?? []).filter(r => r.status === 'PUBLISHED'),
       }))
       .filter(c => c.refs.length > 0)
-
     return [recent, ...apiRows]
   }, [sections, allRefs])
+
+  const isPillActive = (pill) => {
+    if (pill.clear) return !isFiltering
+    return activeFilters[pill.groupId]?.has(pill.optId) ?? false
+  }
+  const handlePill = (pill) => {
+    if (pill.clear) { clearAllFilters(); setSearch('') }
+    else toggleFilter(pill.groupId, pill.optId)
+  }
 
   if (loading) {
     return (
@@ -229,13 +464,123 @@ export default function ExplorerPage() {
 
   return (
     <div className="bg-canvas min-h-screen animate-fade-in">
-      {heroRef && <Hero reference={heroRef} allRefs={allRefs} onSelect={setSelectedRef} />}
+      {!isFiltering && heroRef && <Hero reference={heroRef} allRefs={allRefs} onSelect={setSelectedRef} />}
 
-      <div className="pt-10 pb-16">
-        {rows.map(row => (
-          <CinemaRow key={row.id} category={row} onSelect={setSelectedRef} />
-        ))}
+      {/* ── Barre recherche + filtres ── */}
+      <div className="px-8 border-b border-surface-border">
+        <div className="flex items-center gap-2 py-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {QUICK_PILLS.map(pill => (
+            <button
+              key={pill.label}
+              onClick={() => handlePill(pill)}
+              className={`flex-shrink-0 text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
+                isPillActive(pill)
+                  ? 'border-ink/30 bg-ink/10 text-ink'
+                  : 'border-surface-border text-ink-muted hover:border-ink/20 hover:text-ink'
+              }`}
+            >
+              {pill.label}
+            </button>
+          ))}
+
+          <span className="flex-1 min-w-4" />
+
+          <div className="relative flex-shrink-0 w-72">
+            <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Titre, technique, intention..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-8 py-1.5 bg-surface border border-surface-border text-[12px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink/20 transition-colors rounded-sm"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => setFilterOpen(true)}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border text-[12px] font-medium transition-all ${
+              activeChips.length > 0
+                ? 'border-ink/30 bg-ink/10 text-ink'
+                : 'border-surface-border text-ink-muted hover:border-ink/20 hover:text-ink'
+            }`}
+          >
+            <SlidersHorizontal size={12} />
+            Affiner
+            {activeChips.length > 0 && (
+              <span className="text-[9px] px-1 py-0.5 bg-ink text-canvas font-semibold">{activeChips.length}</span>
+            )}
+          </button>
+        </div>
+
+        {activeChips.length > 0 && (
+          <div className="flex items-center gap-2 pb-3 flex-wrap">
+            {activeChips.map(chip => (
+              <button
+                key={`${chip.groupId}-${chip.optId}`}
+                onClick={() => removeFilter(chip.groupId, chip.optId)}
+                className="flex items-center gap-1.5 text-[11px] px-3 py-1 border border-ink/25 text-ink hover:bg-ink/15 transition-colors whitespace-nowrap rounded-full"
+                style={{ background: 'rgba(240,235,228,0.08)' }}
+              >
+                {chip.label}
+                <X size={9} />
+              </button>
+            ))}
+            <button
+              onClick={clearAllFilters}
+              className="text-[11px] px-3 py-1 border border-surface-border text-ink-muted hover:text-ink hover:border-ink/20 transition-colors rounded-full"
+            >
+              Tout effacer
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* ── Contenu : résultats (mode filtre) ou rangées (découverte) ── */}
+      {isFiltering ? (
+        filtered.length === 0 ? (
+          <div className="text-center py-24 text-ink-muted">
+            <Search size={32} className="mx-auto mb-4 opacity-20" />
+            <p className="text-sm mb-1">Aucune référence ne correspond</p>
+            <button
+              onClick={() => { setSearch(''); clearAllFilters() }}
+              className="mt-3 text-xs text-ink hover:text-ink-muted transition-colors"
+            >
+              Réinitialiser
+            </button>
+          </div>
+        ) : (
+          <div className="px-8 py-10">
+            <p className="font-mono text-[10px] text-ink-muted uppercase tracking-widest mb-7">
+              {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
+              {search ? ` pour « ${search} »` : ''}
+            </p>
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(164px, 1fr))' }}>
+              {filtered.map(ref => (
+                <ReferenceCard key={ref.id} reference={ref} variant="shelf" onClick={() => setSelectedRef(ref)} />
+              ))}
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="pt-10 pb-16">
+          {rows.map(row => (
+            <CinemaRow key={row.id} category={row} onSelect={setSelectedRef} />
+          ))}
+        </div>
+      )}
+
+      <FilterSidebar
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        activeFilters={activeFilters}
+        onToggle={toggleFilter}
+        onClearAll={clearAllFilters}
+      />
 
       {selectedRef && (
         <ReferenceModal reference={selectedRef} onClose={() => setSelectedRef(null)} />
