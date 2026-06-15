@@ -131,9 +131,18 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 ⚠️ **Finding data structurant (2026-06-14)** : **97% des refs publiées ont 0 tag de taxonomie**. v0.8 est conçu pour ne pas en dépendre ; toute la reco (v0.9) est gated sur l'enrichissement du catalogue (180-75/76).
 
-🟢 **Avancement v0.8 (2026-06-15)** : **180-64 DONE & mergé** (PR #14, rebase sur `chore/pivot-front-explorer`, commit `05ea799`) — fondation data N-N : table `ReferenceSection` (remplace `Reference.sectionId`), `Section.type` AUTO/MANUAL, `Reference.awards[]` ; migration `20260615_nn_reference_section` appliquée sur Supabase (backfill 378→378, 9 sections MANUAL). API & front admin passés en `sectionIds[]` multi-section. **Prochain : 180-67 (Save)**.
-> ⚠️ Migrations du pivot : appliquer en **SQL idempotent + apply_migration MCP + insert manuel dans `_prisma_migrations`** (PAS `prisma migrate deploy` — table incohérente, entrées `finished_at: null`).
-> ✅ **Divergence résolue (2026-06-15)** : 180-56/audit (PR #12) et 180-57 (PR #15) mergés sur `main`, puis `main` re-mergé dans `chore/pivot-front-explorer`. Le pivot est désormais **0 derrière / N devant** `origin/main` et le contient entièrement. **Modèle arrêté** : `chore/pivot-front-explorer` = branche d'intégration v0.8 ; les tickets (180-67…) y sont PR ; **une** PR globale pivot→`main` quand v0.8 est déployable (main auto-déploie en prod, donc on n'y pousse pas le Explorer à moitié construit).
+🟢 **Avancement v0.8 (2026-06-15)** :
+> - **180-64 DONE & mergé** (PR #14, commit `05ea799`) — fondation data N-N : `ReferenceSection`, `Section.type` AUTO/MANUAL, `Reference.awards[]` ; migration `20260615_nn_reference_section` (backfill 378→378, 9 sections MANUAL).
+> - **180-67 DONE & mergé** (PR #16, squash `4b56480`, **clôt 180-60**) — mécanique **Save** persistante & iso. Table `SavedReference` (PK userId+referenceId, `savedAt`, + `userTags[]`/`note` **déjà créés** pour 180-74) ; migration `20260615_saved_reference`. Backend : `PUT/DELETE /references/:id/save` (idempotents), flag `saved` sur `/references` & `/sections`, `GET /library` **paginé** + `GET /library/ids` (léger, hydrate). Front : `useSavedStore` (Zustand, source de vérité unique, toggle optimiste sérialisé anti-race) + hook `useSaved(id)`, `mergeFlags` seed depuis les listes ; câblé dans ReferenceCard/Modal/LibraryPage. Tests 53/53 + e2e Supabase. CI verte sur l'intégration.
+
+> ⚠️ Migrations du pivot : appliquer en **SQL idempotent + apply_migration MCP + insert manuel dans `_prisma_migrations`** (PAS `prisma migrate deploy`). Project Supabase : `fytnuqnxadnsedyxxlzq`.
+> ✅ **Divergence résolue (2026-06-15)** : `chore/pivot-front-explorer` = **branche d'intégration v0.8**, contient `main` entièrement. Les tickets y sont mergés ; **une** PR globale pivot→`main` quand v0.8 est déployable (main auto-déploie en prod).
+
+### ▶️ DÉMARRAGE PROCHAINE SESSION — build coquille UI v0.8 (workflow validé 2026-06-15)
+**Ordre roadmap maintenu, build/test découplé du merge** (« temps 1 / temps 2 ») :
+- **Temps 1 — build & test continu** : brancher **`feat/v0.8-explorer-ui`** depuis `chore/pivot-front-explorer` ; **1 commit atomique par ticket** ; **back (`cd server && node src/index.js`, :3001) + front Vite (:5173, HMR) qui tournent en permanence** pour voir chaque incrément live. Ordre : **180-65/66** (ReferenceCard/Modal uniques) → **180-69** (nav, `/`=Explorer, suppr. Veille) → **180-70** (page Explorer) → **180-73** (Bibliothèque = vivier, sur `/library` déjà prêt) → **180-72** (recherche) → **180-74** (annotations, colonnes déjà en base). Andri teste **tout le parcours en une passe à la fin du temps 1**.
+- **Temps 2 — formaliser** : `/code-review` sur le lot → fix → **une PR** `feat/v0.8-explorer-ui` → intégration → CI → merge → Linear chaque ticket Done.
+- Front : pas de `.env` → `VITE_API_URL` défaut `http://localhost:3001` (= back local). ReferenceCard/Modal **existent déjà** (à consolider, pas créer). `/library` paginé (limit max 200) + `/library/ids` dispo.
 
 Restent en // (sécu/RGPD, avant ouverture publique) : 180-59 (mdp oublié), 180-61 (RGPD), 180-62 (unsubscribe). Humain : 180-48, 180-24 (périmètres à revoir post-pivot), domaine Resend prod.
 
