@@ -1,7 +1,23 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { asyncHandler } from '../middleware/validate.js';
 
 const router = Router();
+
+// Routes montées sous requireUser (app.js) → req.userId toujours présent.
+
+/**
+ * Set des referenceId sauvegardés par l'utilisateur parmi `ids`.
+ * Une seule requête, scopée user → sert à enrichir les listes du flag `saved`.
+ */
+async function savedSet(userId, ids) {
+  if (ids.length === 0) return new Set();
+  const rows = await prisma.savedReference.findMany({
+    where: { userId, referenceId: { in: ids } },
+    select: { referenceId: true },
+  });
+  return new Set(rows.map(r => r.referenceId));
+}
 
 /**
  * GET /api/v1/references
@@ -29,10 +45,13 @@ router.get('/', async (req, res) => {
       }),
       prisma.reference.count({ where }),
     ]);
+    // 180-67 : flag `saved` iso pour l'utilisateur connecté
+    const saved = await savedSet(req.userId, rows.map(r => r.id));
     // 180-49 : les tags YouTube bruts ne sortent jamais vers le front public
     const references = rows.map(({ tags, sections, ...rest }) => ({
       ...rest,
       sectionIds: sections.map(s => s.sectionId),
+      saved: saved.has(rest.id),
     }));
     res.json({ references, total });
   } catch (err) {
@@ -58,9 +77,14 @@ router.get('/sections', async (req, res) => {
         },
       },
     });
+    const allIds = rows.flatMap(s => s.references.map(r => r.reference.id));
+    const saved = await savedSet(req.userId, allIds);
     const sections = rows.map(({ references, ...section }) => ({
       ...section,
-      references: references.map(({ reference: { tags, ...rest } }) => rest),
+      references: references.map(({ reference: { tags, ...rest } }) => ({
+        ...rest,
+        saved: saved.has(rest.id),
+      })),
     }));
     res.json({ sections });
   } catch (err) {
@@ -68,5 +92,34 @@ router.get('/sections', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+/**
+ * PUT /api/v1/references/:id/save — sauvegarde (idempotent via upsert)
+ * 404 si la référence n'existe pas ou n'est pas PUBLISHED.
+ */
+router.put('/:id/save', asyncHandler(async (req, res) => {
+  const ref = await prisma.reference.findFirst({
+    where: { id: req.params.id, status: 'PUBLISHED' },
+    select: { id: true },
+  });
+  if (!ref) return res.status(404).json({ error: 'Référence introuvable' });
+
+  await prisma.savedReference.upsert({
+    where: { userId_referenceId: { userId: req.userId, referenceId: ref.id } },
+    create: { userId: req.userId, referenceId: ref.id },
+    update: {},
+  });
+  res.json({ saved: true });
+}));
+
+/**
+ * DELETE /api/v1/references/:id/save — retire la sauvegarde (idempotent)
+ */
+router.delete('/:id/save', asyncHandler(async (req, res) => {
+  await prisma.savedReference.deleteMany({
+    where: { userId: req.userId, referenceId: req.params.id },
+  });
+  res.json({ saved: false });
+}));
 
 export default router;

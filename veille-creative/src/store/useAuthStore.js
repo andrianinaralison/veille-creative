@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api } from '../lib/api'
 import { getUserToken, setUserToken, clearUserToken } from '../lib/user-auth'
+import { useSavedStore } from './useSavedStore'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -12,6 +13,7 @@ export const useAuthStore = create((set) => ({
     try {
       const { user } = await api.auth.me()
       set({ user, status: 'authenticated' })
+      useSavedStore.getState().hydrate()
     } catch {
       clearUserToken()
       set({ user: null, status: 'anonymous' })
@@ -22,12 +24,14 @@ export const useAuthStore = create((set) => ({
     const { token, user } = await api.auth.login(credentials)
     setUserToken(token)
     set({ user, status: 'authenticated' })
+    useSavedStore.getState().hydrate()
   },
 
   async signup(data) {
     const { token, user } = await api.auth.signup(data)
     setUserToken(token)
     set({ user, status: 'authenticated' })
+    useSavedStore.getState().hydrate()
   },
 
   setUser(user) {
@@ -37,5 +41,6 @@ export const useAuthStore = create((set) => ({
   logout() {
     clearUserToken()
     set({ user: null, status: 'anonymous' })
+    useSavedStore.getState().reset()
   },
 }))

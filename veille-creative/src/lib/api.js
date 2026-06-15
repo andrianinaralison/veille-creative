@@ -33,6 +33,11 @@ export const api = {
       return apiFetch(`/api/v1/references${q ? '?' + q : ''}`)
     },
     sections: () => apiFetch('/api/v1/references/sections'),
+    save: (id) => apiFetch(`/api/v1/references/${id}/save`, { method: 'PUT' }),
+    unsave: (id) => apiFetch(`/api/v1/references/${id}/save`, { method: 'DELETE' }),
+  },
+  library: {
+    list: () => apiFetch('/api/v1/library'),
   },
   projects: {
     list: () => apiFetch('/api/v1/projects'),

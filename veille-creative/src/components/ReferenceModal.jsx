@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, Bookmark, BookmarkCheck, ExternalLink, Play } from 'lucide-react'
+import { useSavedStore } from '../store/useSavedStore'
 
 function getEmbedUrl(url) {
   if (!url) return null
@@ -41,7 +42,8 @@ function deriveSpecs(reference) {
 }
 
 export default function ReferenceModal({ reference, onClose }) {
-  const [saved, setSaved] = useState(reference.saved ?? !!reference.savedAt)
+  const saved = useSavedStore(s => s.ids.has(reference.id))
+  const toggleSave = useSavedStore(s => s.toggle)
   const [isPlaying, setIsPlaying] = useState(false)
   const embedUrl = getEmbedUrl(reference.url)
   const specs = deriveSpecs(reference)
@@ -213,7 +215,7 @@ export default function ReferenceModal({ reference, onClose }) {
             {/* Footer actions */}
             <div className="px-8 py-7 flex items-center gap-3 border-t border-surface-border" style={{ background: '#000000' }}>
               <button
-                onClick={() => setSaved(!saved)}
+                onClick={() => toggleSave(reference.id).catch(() => {})}
                 className={`flex flex-1 items-center justify-center gap-2.5 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all ${
                   saved
                     ? 'bg-surface-raised text-ink border border-ink/20'

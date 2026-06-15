@@ -50,6 +50,7 @@ model Reference {
   ingestionSession    IngestionSession?  @relation(fields: [ingestionSessionId], references: [id], onUpdate: NoAction)
   digestItems         DigestItem[]
   projectItems        ProjectItem[]
+  savedBy             SavedReference[]
 
   @@index([status])
   @@index([platform])
@@ -116,13 +117,30 @@ model DigestItem {
 }
 
 model User {
-  id           String    @id @default(dbgenerated("(gen_random_uuid())::text"))
-  email        String    @unique
+  id           String           @id @default(dbgenerated("(gen_random_uuid())::text"))
+  email        String           @unique
   passwordHash String
-  firstName    String    @default("")
-  digestOptIn  Boolean   @default(true)
-  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  firstName    String           @default("")
+  digestOptIn  Boolean          @default(true)
+  createdAt    DateTime         @default(now()) @db.Timestamptz(6)
   projects     Project[]
+  saved        SavedReference[]
+}
+
+// Vivier personnel : références sauvegardées par un utilisateur (geste pivot 180-67).
+// Scopée user au niveau applicatif (where { userId }), comme Project.
+// userTags[]/note : annotations privées — colonnes créées ici, câblées en 180-74.
+model SavedReference {
+  userId      String
+  referenceId String
+  savedAt     DateTime  @default(now()) @db.Timestamptz(6)
+  userTags    String[]  @default([])
+  note        String    @default("")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reference   Reference @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, referenceId])
+  @@index([userId, savedAt(sort: Desc)])
 }
 
 model Project {
