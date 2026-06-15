@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Bookmark, BookmarkCheck, ExternalLink, Play, Award, FolderPlus, Check, Sparkles } from 'lucide-react'
+import { X, Bookmark, BookmarkCheck, ExternalLink, Play, Award, FolderPlus, Check, Sparkles, Tag } from 'lucide-react'
 import { useSaved } from '../store/useSavedStore'
 import { api } from '../lib/api'
+import { CAMERA_TAGS } from '../lib/referenceTags'
 
 function getEmbedUrl(url) {
   if (!url) return null
@@ -18,9 +19,7 @@ function getEmbedUrl(url) {
 function deriveSpecs(reference) {
   const tags = reference.taxonomy || []
 
-  const camera = tags.find(t =>
-    ['Sony-FX3','Sony-A1','Canon-C70','Canon-C80','Lumix-S5ii','Lumix-S1','Blackmagic-BMPCC'].includes(t)
-  ) || '—'
+  const camera = tags.find(t => CAMERA_TAGS.includes(t)) || '—'
 
   const technique = tags.find(t =>
     ['slow-motion','handheld','travelling','drone','anamorphique','BTS'].includes(t)
@@ -111,7 +110,92 @@ function AddToProjectMenu({ referenceId, onClose }) {
   )
 }
 
-export default function ReferenceModal({ reference, onClose }) {
+// ── Annotations privées (180-74) — tags libres + note, réutilisables en treatment ──
+function AnnotationPanel({ referenceId, initialTags, initialNote, onSaved }) {
+  const [tags, setTags] = useState(initialTags ?? [])
+  const [note, setNote] = useState(initialNote ?? '')
+  const [draft, setDraft] = useState('')
+  const [status, setStatus] = useState('idle') // idle | saving | saved | error
+
+  const addTag = () => {
+    const t = draft.trim()
+    if (t && !tags.includes(t)) setTags([...tags, t])
+    setDraft('')
+  }
+  const removeTag = (t) => setTags(tags.filter(x => x !== t))
+
+  const persist = async () => {
+    // Intègre un tag tapé mais non encore validé (Entrée/blur) — sinon le clic sur
+    // « Enregistrer » lirait `tags` avant la mise à jour du blur et le perdrait.
+    const pending = draft.trim()
+    const finalTags = pending && !tags.includes(pending) ? [...tags, pending] : tags
+    setTags(finalTags)
+    setDraft('')
+    setStatus('saving')
+    try {
+      const res = await api.library.annotate(referenceId, { userTags: finalTags, note })
+      setTags(res.userTags ?? tags)
+      setNote(res.note ?? note)
+      setStatus('saved')
+      onSaved?.(res)
+      setTimeout(() => setStatus('idle'), 1500)
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div className="border-t border-surface-border px-6 py-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2">
+        <Tag size={13} className="text-ink" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-ink">Mes annotations</span>
+        <span className="text-[10px] text-ink-faint">privées</span>
+      </div>
+
+      {/* Tags */}
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map(t => (
+          <span key={t} className="flex items-center gap-1 text-[10px] px-2 py-1 bg-surface-raised border border-surface-border text-ink">
+            {t}
+            <button onClick={() => removeTag(t)} className="text-ink-muted hover:text-ink"><X size={9} /></button>
+          </span>
+        ))}
+        <input
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+          onBlur={addTag}
+          placeholder="+ tag"
+          className="text-[10px] px-2 py-1 bg-transparent border border-dashed border-surface-border text-ink placeholder:text-ink-faint focus:outline-none focus:border-ink/40 w-20"
+        />
+      </div>
+
+      {/* Note */}
+      <textarea
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        placeholder="Une note pour toi (intention, usage, client...)"
+        rows={3}
+        maxLength={2000}
+        className="w-full text-[12px] bg-surface border border-surface-border text-ink placeholder:text-ink-faint px-3 py-2 resize-none focus:outline-none focus:border-ink/30 leading-relaxed"
+      />
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={persist}
+          disabled={status === 'saving'}
+          className="px-4 py-2 bg-ink text-canvas text-[10px] font-semibold uppercase tracking-[0.12em] hover:bg-ink/90 transition-colors disabled:opacity-50"
+        >
+          {status === 'saving' ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+        {status === 'saved' && <span className="flex items-center gap-1 text-[10px] text-ink"><Check size={11} /> Enregistré</span>}
+        {status === 'error' && <span className="text-[10px] text-red-400">Erreur — réessaie</span>}
+      </div>
+    </div>
+  )
+}
+
+export default function ReferenceModal({ reference, onClose, onAnnotated }) {
   const [saved, toggleSave] = useSaved(reference.id)
   const [isPlaying, setIsPlaying] = useState(false)
   const [projectMenu, setProjectMenu] = useState(false)
@@ -140,7 +224,7 @@ export default function ReferenceModal({ reference, onClose }) {
 
   // Extract display tags (non-camera, non-technical identifiers)
   const displayTags = (reference.taxonomy || [])
-    .filter(t => !['Sony-FX3','Sony-A1','Canon-C70','Canon-C80','Lumix-S5ii','Lumix-S1','Blackmagic-BMPCC'].includes(t))
+    .filter(t => !CAMERA_TAGS.includes(t))
     .slice(0, 4)
 
   return (
@@ -218,6 +302,16 @@ export default function ReferenceModal({ reference, onClose }) {
                 </>
               )}
             </div>
+
+            {/* Annotations privées — uniquement pour une réf sauvegardée (vivier) */}
+            {saved && (
+              <AnnotationPanel
+                referenceId={reference.id}
+                initialTags={reference.userTags}
+                initialNote={reference.note}
+                onSaved={(res) => onAnnotated?.(reference.id, res)}
+              />
+            )}
 
             {/* Similaires — emplacement (reco par similarité, v0.9, gated enrichissement) */}
             <div className="border-t border-surface-border px-6 py-4 flex items-center gap-2.5">

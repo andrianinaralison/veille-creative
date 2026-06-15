@@ -189,7 +189,14 @@ export default function LibraryPage() {
       )}
 
       {selectedRef && (
-        <ReferenceModal reference={selectedRef} onClose={() => setSelectedRef(null)} />
+        <ReferenceModal
+          reference={selectedRef}
+          onClose={() => setSelectedRef(null)}
+          onAnnotated={(id, res) => {
+            setRefs(prev => prev.map(r => r.id === id ? { ...r, userTags: res.userTags, note: res.note } : r))
+            setSelectedRef(prev => prev && prev.id === id ? { ...prev, userTags: res.userTags, note: res.note } : prev)
+          }}
+        />
       )}
     </div>
   )

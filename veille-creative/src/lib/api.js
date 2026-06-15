@@ -42,6 +42,7 @@ export const api = {
       return apiFetch(`/api/v1/library${q ? '?' + q : ''}`)
     },
     ids: () => apiFetch('/api/v1/library/ids'),
+    annotate: (id, data) => apiFetch(`/api/v1/library/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   },
   projects: {
     list: () => apiFetch('/api/v1/projects'),
