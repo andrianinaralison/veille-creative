@@ -33,6 +33,15 @@ export const api = {
       return apiFetch(`/api/v1/references${q ? '?' + q : ''}`)
     },
     sections: () => apiFetch('/api/v1/references/sections'),
+    save: (id) => apiFetch(`/api/v1/references/${id}/save`, { method: 'PUT' }),
+    unsave: (id) => apiFetch(`/api/v1/references/${id}/save`, { method: 'DELETE' }),
+  },
+  library: {
+    list: (params = {}) => {
+      const q = new URLSearchParams(params).toString()
+      return apiFetch(`/api/v1/library${q ? '?' + q : ''}`)
+    },
+    ids: () => apiFetch('/api/v1/library/ids'),
   },
   projects: {
     list: () => apiFetch('/api/v1/projects'),

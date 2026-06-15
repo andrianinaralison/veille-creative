@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { TAXONOMY_AXES } from '../config/taxonomy'
 import ReferenceCard from '../components/ReferenceCard'
 import ReferenceModal from '../components/ReferenceModal'
+import { useSavedStore } from '../store/useSavedStore'
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
@@ -64,7 +65,10 @@ export default function Dashboard() {
     if (mood) params.mood = mood
     if (typeContenu) params.typeContenu = typeContenu
     api.references.list(params)
-      .then(d => { setReferences(d.references ?? []); setTotal(d.total ?? 0) })
+      .then(d => {
+        useSavedStore.getState().mergeFlags(d.references ?? [])
+        setReferences(d.references ?? []); setTotal(d.total ?? 0)
+      })
       .catch(() => setError('Impossible de charger ta veille. Réessaie dans un instant.'))
       .finally(() => setLoading(false))
   }, [mood, typeContenu])

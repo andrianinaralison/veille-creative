@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Bookmark, BookmarkCheck } from 'lucide-react'
+import { useSaved } from '../store/useSavedStore'
 
 const platformDot = {
   'Vimeo': '#1ab7ea',
@@ -12,15 +13,17 @@ const platformDot = {
 }
 
 export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
-  const [saved, setSaved] = useState(reference.saved ?? !!reference.savedAt)
+  const [saved, toggleSave] = useSaved(reference.id)
   const [flash, setFlash] = useState(false)
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.stopPropagation()
     const next = !saved
-    setSaved(next)
     if (next) { setFlash(true); setTimeout(() => setFlash(false), 800) }
-    onSave?.({ ...reference, saved: next })
+    try {
+      await toggleSave()
+      onSave?.({ ...reference, saved: next })
+    } catch { /* rollback géré par le store */ }
   }
 
   return (
