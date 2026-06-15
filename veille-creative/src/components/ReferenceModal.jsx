@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Bookmark, BookmarkCheck, ExternalLink, Play } from 'lucide-react'
+import { X, Bookmark, BookmarkCheck, ExternalLink, Play, Award, FolderPlus, Check, Sparkles } from 'lucide-react'
 import { useSaved } from '../store/useSavedStore'
+import { api } from '../lib/api'
 
 function getEmbedUrl(url) {
   if (!url) return null
@@ -41,11 +42,82 @@ function deriveSpecs(reference) {
   ]
 }
 
+// ── Menu « Ajouter à un projet » (180-68) ───────────────────────────────────
+// Charge les projets à l'ouverture, ajoute la réf au projet choisi en préservant
+// les items existants (setItems remplace la sélection → on ré-émet le tableau complet).
+function AddToProjectMenu({ referenceId, onClose }) {
+  const [projects, setProjects] = useState(null)
+  const [busyId, setBusyId] = useState(null)
+  const [result, setResult] = useState(null) // { id, status: 'added' | 'exists' | 'error' }
+
+  useEffect(() => {
+    api.projects.list()
+      .then(d => setProjects(d.projects ?? []))
+      .catch(() => setProjects([]))
+  }, [])
+
+  const addTo = async (projectId) => {
+    setBusyId(projectId)
+    try {
+      const project = await api.projects.get(projectId)
+      const items = (project.items ?? []).map(i => ({ referenceId: i.referenceId, note: i.note ?? '' }))
+      if (items.some(i => i.referenceId === referenceId)) {
+        setResult({ id: projectId, status: 'exists' }); setBusyId(null); return
+      }
+      items.push({ referenceId, note: '' })
+      await api.projects.setItems(projectId, items)
+      setResult({ id: projectId, status: 'added' })
+    } catch {
+      setResult({ id: projectId, status: 'error' })
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <div
+      className="absolute bottom-full left-0 right-0 mb-2 z-30 bg-surface border border-surface-border shadow-[0_8px_40px_rgba(0,0,0,0.7)] max-h-72 overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border sticky top-0 bg-surface">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-ink-muted">Ajouter à un projet</span>
+        <button onClick={onClose} className="text-ink-muted hover:text-ink"><X size={13} /></button>
+      </div>
+
+      {projects === null && (
+        <p className="px-4 py-5 font-mono text-[10px] tracking-widest uppercase text-ink-faint">Chargement…</p>
+      )}
+      {projects?.length === 0 && (
+        <p className="px-4 py-5 text-[12px] text-ink-muted">Aucun projet. Crée-en un depuis l'onglet Projets.</p>
+      )}
+      {projects?.map(p => {
+        const r = result?.id === p.id ? result.status : null
+        return (
+          <button
+            key={p.id}
+            onClick={() => addTo(p.id)}
+            disabled={busyId === p.id}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left border-b border-surface-border/60 hover:bg-surface-raised transition-colors disabled:opacity-50"
+          >
+            <span className="text-[13px] text-ink truncate">{p.title}</span>
+            {r === 'added'  && <span className="flex items-center gap-1 text-[10px] text-ink"><Check size={11} /> Ajouté</span>}
+            {r === 'exists' && <span className="text-[10px] text-ink-muted">Déjà dans le projet</span>}
+            {r === 'error'  && <span className="text-[10px] text-red-400">Erreur</span>}
+            {!r && <span className="text-[10px] text-ink-faint">{p._count?.items ?? 0} réf.</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function ReferenceModal({ reference, onClose }) {
   const [saved, toggleSave] = useSaved(reference.id)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [projectMenu, setProjectMenu] = useState(false)
   const embedUrl = getEmbedUrl(reference.url)
   const specs = deriveSpecs(reference)
+  const awards = reference.awards ?? []
 
   // Stable ref to always call the latest onClose without re-running the effect
   const onCloseRef = useRef(onClose)
@@ -96,46 +168,65 @@ export default function ReferenceModal({ reference, onClose }) {
         <div className="grid grid-cols-[1fr_340px]" style={{ minHeight: 520 }}>
 
           {/* ── LEFT: Video / Thumbnail ──────────────────────────── */}
-          <div className="relative bg-black overflow-hidden">
-            {isPlaying && embedUrl ? (
-              <iframe
-                src={embedUrl}
-                className="w-full h-full"
-                style={{ aspectRatio: '16/10', minHeight: 360 }}
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <>
-                {/* Thumbnail */}
-                <img
-                  src={reference.thumbnailUrl}
-                  alt={reference.title}
-                  className="w-full h-full object-cover opacity-80"
-                  style={{ aspectRatio: '16/10' }}
+          <div className="relative bg-black overflow-hidden flex flex-col">
+            <div className="relative flex-1">
+              {isPlaying && embedUrl ? (
+                <iframe
+                  src={embedUrl}
+                  className="w-full h-full"
+                  style={{ aspectRatio: '16/10', minHeight: 360 }}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
                 />
+              ) : (
+                <>
+                  {/* Thumbnail */}
+                  <img
+                    src={reference.thumbnailUrl}
+                    alt={reference.title}
+                    className="w-full h-full object-cover opacity-80"
+                    style={{ aspectRatio: '16/10' }}
+                  />
 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                {/* Play button */}
-                <button
-                  className="absolute inset-0 flex items-center justify-center"
-                  onClick={() => embedUrl ? setIsPlaying(true) : window.open(reference.url, '_blank')}
-                >
-                  <div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors">
-                    <Play size={28} fill="white" className="text-white ml-1" />
+                  {/* Awards banner (style Netflix) */}
+                  {awards.length > 0 && (
+                    <div className="absolute top-5 left-6 flex items-center gap-2 bg-ink/95 text-canvas px-3 py-1.5">
+                      <Award size={13} />
+                      <span className="text-[11px] font-semibold tracking-[0.04em]">{awards.join(' · ')}</span>
+                    </div>
+                  )}
+
+                  {/* Play button */}
+                  <button
+                    className="absolute inset-0 flex items-center justify-center"
+                    onClick={() => embedUrl ? setIsPlaying(true) : window.open(reference.url, '_blank')}
+                  >
+                    <div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors">
+                      <Play size={28} fill="white" className="text-white ml-1" />
+                    </div>
+                  </button>
+
+                  {/* Tech label bottom-left */}
+                  <div className="absolute bottom-5 left-6">
+                    <span className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-mono">
+                      {reference.platform} · {reference.typeContenu || 'video'}
+                    </span>
                   </div>
-                </button>
+                </>
+              )}
+            </div>
 
-                {/* Tech label top-left */}
-                <div className="absolute top-5 left-6">
-                  <span className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-mono">
-                    {reference.platform} · {reference.type || 'video'}
-                  </span>
-                </div>
-              </>
-            )}
+            {/* Similaires — emplacement (reco par similarité, v0.9, gated enrichissement) */}
+            <div className="border-t border-surface-border px-6 py-4 flex items-center gap-2.5">
+              <Sparkles size={13} className="text-ink-muted flex-shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-ink-muted">Dans la même veine</span>
+                <span className="text-[11px] text-ink-faint">Recommandations par similarité — bientôt (v0.9)</span>
+              </div>
+            </div>
           </div>
 
           {/* ── RIGHT: Structured Sidebar ───────────────────────── */}
@@ -143,14 +234,26 @@ export default function ReferenceModal({ reference, onClose }) {
 
             {/* Identification */}
             <div className="px-8 py-8 border-b border-surface-border flex flex-col gap-4">
-              {/* Type badge + platform */}
+              {/* Type badge + creator link */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-semibold bg-ink text-canvas px-2 py-0.5 tracking-[-0.02em]">
                   {reference.mood?.toUpperCase() || 'REF'}
                 </span>
-                <span className="text-[10px] text-ink-muted uppercase tracking-[0.15em] font-medium">
-                  {reference.author || reference.platform}
-                </span>
+                {reference.channelUrl ? (
+                  <a
+                    href={reference.channelUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink uppercase tracking-[0.15em] font-medium transition-colors"
+                  >
+                    {reference.channelName || reference.platform}
+                    <ExternalLink size={9} />
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-ink-muted uppercase tracking-[0.15em] font-medium">
+                    {reference.channelName || reference.platform}
+                  </span>
+                )}
               </div>
 
               {/* Title */}
@@ -212,7 +315,10 @@ export default function ReferenceModal({ reference, onClose }) {
             </div>
 
             {/* Footer actions */}
-            <div className="px-8 py-7 flex items-center gap-3 border-t border-surface-border" style={{ background: '#000000' }}>
+            <div className="relative px-8 py-7 flex items-center gap-3 border-t border-surface-border" style={{ background: '#000000' }}>
+              {projectMenu && (
+                <AddToProjectMenu referenceId={reference.id} onClose={() => setProjectMenu(false)} />
+              )}
               <button
                 onClick={() => toggleSave().catch(() => {})}
                 className={`flex flex-1 items-center justify-center gap-2.5 py-4 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all ${
@@ -224,10 +330,20 @@ export default function ReferenceModal({ reference, onClose }) {
                 {saved ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
                 {saved ? 'Sauvegardé' : 'Sauvegarder'}
               </button>
+              <button
+                onClick={() => setProjectMenu(v => !v)}
+                title="Ajouter à un projet"
+                className={`w-12 h-12 flex items-center justify-center border transition-all ${
+                  projectMenu ? 'border-ink text-ink' : 'border-surface-border text-ink-muted hover:text-ink hover:border-ink-muted'
+                }`}
+              >
+                <FolderPlus size={15} />
+              </button>
               <a
                 href={reference.url}
                 target="_blank"
                 rel="noreferrer"
+                title="Ouvrir la source"
                 className="w-12 h-12 flex items-center justify-center border border-surface-border text-ink-muted hover:text-ink hover:border-ink-muted transition-all"
               >
                 <ExternalLink size={15} />

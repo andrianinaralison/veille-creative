@@ -12,7 +12,13 @@ const platformDot = {
   'LinkedIn': '#0077b5',
 }
 
-export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
+/**
+ * Carte de référence unique (180-65) — instanciée par toutes les surfaces.
+ * `variant="grid"` : paysage 16:9 (feed, résultats de recherche, Bibliothèque).
+ * `variant="shelf"` : portrait 4:5 (rangées Explorer façon Netflix).
+ * La carte porte son propre `onClick` (ouverture modale) ; le bouton save stoppe la propagation.
+ */
+export default function ReferenceCard({ reference, onClick, onSave, variant = 'grid' }) {
   const [saved, toggleSave] = useSaved(reference.id)
   const [flash, setFlash] = useState(false)
 
@@ -26,8 +32,61 @@ export default function ReferenceCard({ reference, onSave, size = 'normal' }) {
     } catch { /* rollback géré par le store */ }
   }
 
+  // ── Variante portrait (rangées Explorer) ──────────────────────────────────
+  if (variant === 'shelf') {
+    return (
+      <div
+        className="group relative flex-shrink-0 cursor-pointer overflow-hidden rounded-sm"
+        style={{ width: 164, aspectRatio: '4/5' }}
+        onClick={onClick}
+      >
+        <img
+          src={reference.thumbnailUrl}
+          alt={reference.title}
+          className="w-full h-full object-cover scale-[1.35] transition-transform duration-500 group-hover:scale-[1.42]"
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.88))' }} />
+
+        {saved && (
+          <span className="absolute top-2 left-2 w-[18px] h-[18px] bg-ink text-canvas grid place-items-center">
+            <BookmarkCheck size={9} />
+          </span>
+        )}
+
+        <button
+          onClick={handleSave}
+          className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ${
+            saved ? 'bg-ink text-canvas' : 'bg-black/50 text-white hover:bg-ink hover:text-canvas'
+          }`}
+        >
+          {saved ? <BookmarkCheck size={10} /> : <Bookmark size={10} />}
+        </button>
+
+        <div className="absolute left-2.5 right-2.5 bottom-2.5">
+          <div className="font-mono text-[8px] text-white/45 uppercase tracking-widest mb-1 truncate">
+            {reference.channelName}
+          </div>
+          <div className="text-[11px] text-white leading-tight font-medium line-clamp-2 mb-1.5">
+            {reference.title}
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {(reference.taxonomy || []).slice(0, 2).map(t => (
+              <span key={t} className="text-[8px] px-1.5 py-0.5 bg-white/10 text-white/60 lowercase">
+                {t.replace(/-/g, ' ')}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Variante paysage (feed / résultats / Bibliothèque) ────────────────────
   return (
-    <div className="group relative overflow-hidden bg-surface card-cinematic cursor-pointer aspect-video">
+    <div
+      className="group relative overflow-hidden bg-surface card-cinematic cursor-pointer aspect-video"
+      onClick={onClick}
+    >
       {/* Image */}
       <img
         src={reference.thumbnailUrl}
