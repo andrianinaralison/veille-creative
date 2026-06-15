@@ -41,17 +41,23 @@ router.post('/', async (req, res) => {
       id: true, url: true, platform: true, title: true,
       channelName: true, channelUrl: true, channelAvatarUrl: true,
       thumbnailUrl: true, taxonomy: true, mood: true, typeContenu: true,
-      context: true, publishedAt: true, sectionId: true,
+      context: true, publishedAt: true, awards: true,
+      sections: { select: { sectionId: true } },
     },
   });
+
+  const formatted = results.map(({ sections, ...rest }) => ({
+    ...rest,
+    sectionIds: sections.map(s => s.sectionId),
+  }));
 
   const isDev = process.env.NODE_ENV !== 'production';
 
   res.json({
     mode: filters.mode,
     filters_applied: { tags: filters.tags, type_contenu: filters.type_contenu, mood: filters.mood, platform: filters.platform },
-    total: results.length,
-    results,
+    total: formatted.length,
+    results: formatted,
     ...(isDev && { _debug: { usage: filters._usage } }),
   });
 });

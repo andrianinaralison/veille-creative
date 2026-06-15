@@ -94,7 +94,7 @@ router.get('/sessions/:id', async (req, res) => {
             typeContenu: true,
             context: true,
             status: true,
-            sectionId: true,
+            sections: { select: { sectionId: true } },
             createdAt: true,
           },
         },
@@ -105,7 +105,11 @@ router.get('/sessions/:id', async (req, res) => {
       return res.status(404).json({ error: 'Session introuvable' });
     }
 
-    res.json(session);
+    const references = session.references.map(({ sections, ...rest }) => ({
+      ...rest,
+      sectionIds: sections.map(s => s.sectionId),
+    }));
+    res.json({ ...session, references });
   } catch (err) {
     console.error('[ingestion] GET /sessions/:id', err);
     res.status(500).json({ error: 'Erreur serveur' });
