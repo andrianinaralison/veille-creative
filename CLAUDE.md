@@ -131,6 +131,10 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 ⚠️ **Finding data structurant (2026-06-14)** : **97% des refs publiées ont 0 tag de taxonomie**. v0.8 est conçu pour ne pas en dépendre ; toute la reco (v0.9) est gated sur l'enrichissement du catalogue (180-75/76).
 
+🟢 **Avancement v0.8 (2026-06-15)** : **180-64 DONE & mergé** (PR #14, rebase sur `chore/pivot-front-explorer`, commit `05ea799`) — fondation data N-N : table `ReferenceSection` (remplace `Reference.sectionId`), `Section.type` AUTO/MANUAL, `Reference.awards[]` ; migration `20260615_nn_reference_section` appliquée sur Supabase (backfill 378→378, 9 sections MANUAL). API & front admin passés en `sectionIds[]` multi-section. **Prochain : 180-67 (Save)**.
+> ⚠️ Migrations du pivot : appliquer en **SQL idempotent + apply_migration MCP + insert manuel dans `_prisma_migrations`** (PAS `prisma migrate deploy` — table incohérente, entrées `finished_at: null`).
+> ⚠️ Branche pivot `chore/pivot-front-explorer` diverge de `main` (5 devant / 10 derrière ; `CANCELLED`+fix 180-57 pas sur main). Les PR du pivot ciblent cette branche ; consolidation vers `main` à arbitrer.
+
 Restent en // (sécu/RGPD, avant ouverture publique) : 180-59 (mdp oublié), 180-61 (RGPD), 180-62 (unsubscribe). Humain : 180-48, 180-24 (périmètres à revoir post-pivot), domaine Resend prod.
 
 ## Backlog (résumé — détail dans `docs/10-produit/roadmap.md`)
