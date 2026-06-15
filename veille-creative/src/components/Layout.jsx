@@ -4,10 +4,10 @@ import { Settings, LogOut } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 
 const navItems = [
-  { to: '/', label: 'Veille', end: true },
-  { to: '/digest', label: 'Digest' },
+  { to: '/', label: 'Explorer', end: true },
   { to: '/library', label: 'Bibliothèque' },
   { to: '/projects', label: 'Projets' },
+  { to: '/digest', label: 'Digest' },
 ]
 
 const comingSoonItems = []

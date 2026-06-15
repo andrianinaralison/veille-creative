@@ -26,6 +26,25 @@ export default function CategoryPage() {
     if (state?.refs) return
     setLoading(true)
     setError(null)
+
+    // Rangée auto « Dernières publications » : pas une section serveur → reconstruite
+    // ici pour que le deep link /explorer/section/recent survive à un rechargement.
+    if (id === 'recent') {
+      api.references.list({ limit: 2000 })
+        .then(data => {
+          const published = [...(data.references ?? [])]
+            .sort((a, b) => new Date(b.publishedAt ?? b.createdAt) - new Date(a.publishedAt ?? a.createdAt))
+            .slice(0, 18)
+          setLabel('Dernières publications')
+          setSub('Fraîchement ajoutées à la veille')
+          useSavedStore.getState().mergeFlags(published)
+          setRefs(published)
+        })
+        .catch(() => setError('Impossible de charger cette section. Vérifie ta connexion et réessaie.'))
+        .finally(() => setLoading(false))
+      return
+    }
+
     api.references.sections()
       .then(data => {
         const section = (data.sections ?? []).find(s => s.id === id)
@@ -56,7 +75,7 @@ export default function CategoryPage() {
         <span className="text-ink-faint font-mono text-[11px]">/</span>
 
         <Link to="/" className="text-[11px] font-mono text-ink-muted hover:text-ink transition-colors flex-shrink-0">
-          Bibliothèque
+          Explorer
         </Link>
 
         <span className="text-ink-faint font-mono text-[11px]">/</span>
