@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ChevronDown, Bookmark, BookmarkCheck, SlidersHorizontal, X, Play } from 'lucide-react'
 import ReferenceModal from '../components/ReferenceModal'
 import { api } from '../lib/api'
-import { useSavedStore } from '../store/useSavedStore'
+import { useSavedStore, useSaved } from '../store/useSavedStore'
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 
@@ -203,8 +203,7 @@ function Hero({ reference, allRefs, onSelect }) {
 // ─── Portrait Card (cinema shelf) ────────────────────────────────────────────
 
 function ShelfCard({ reference, onClick }) {
-  const saved = useSavedStore(s => s.ids.has(reference.id))
-  const toggle = useSavedStore(s => s.toggle)
+  const [saved, toggleSave] = useSaved(reference.id)
 
   return (
     <div
@@ -228,7 +227,7 @@ function ShelfCard({ reference, onClick }) {
 
       {/* Save button on hover */}
       <button
-        onClick={(e) => { e.stopPropagation(); toggle(reference.id).catch(() => {}) }}
+        onClick={(e) => { e.stopPropagation(); toggleSave().catch(() => {}) }}
         className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ${
           saved ? 'bg-ink text-canvas' : 'bg-black/50 text-white hover:bg-ink hover:text-canvas'
         }`}

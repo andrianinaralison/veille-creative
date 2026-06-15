@@ -85,3 +85,14 @@ export const useSavedStore = create((set, get) => ({
     set({ ids: new Set(), hydrated: false })
   },
 }))
+
+/**
+ * Raccourci pour les surfaces qui affichent une réf : état `saved` réactif + un toggle
+ * lié à l'id. Évite de répéter le couple sélecteur + toggle dans chaque composant.
+ * Usage : const [saved, toggleSave] = useSaved(reference.id)
+ */
+export function useSaved(id) {
+  const saved = useSavedStore(s => s.ids.has(id))
+  const toggle = useSavedStore(s => s.toggle)
+  return [saved, () => toggle(id)]
+}
