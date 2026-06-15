@@ -26,6 +26,7 @@ vi.mock('../lib/prisma.js', () => ({
         saves.delete(key)
         return { count: had ? 1 : 0 }
       }),
+      count: vi.fn(async ({ where }) => [...saves].filter(k => k.startsWith(`${where.userId}|`)).length),
       findMany: vi.fn(async ({ where }) =>
         [...saves]
           .filter(k => k.startsWith(`${where.userId}|`))
@@ -122,6 +123,21 @@ describe('Save / unsave', () => {
   it('PUT save sur réf inexistante → 404', async () => {
     const res = await request(app).put('/api/v1/references/missing/save').set('Authorization', `Bearer ${tokenA}`)
     expect(res.status).toBe(404)
+  })
+})
+
+describe('Library — ids (hydrate du store, léger)', () => {
+  it('GET /api/v1/library/ids → 401 sans token', async () => {
+    const res = await request(app).get('/api/v1/library/ids')
+    expect(res.status).toBe(401)
+  })
+
+  it('renvoie les ids sauvegardés du user', async () => {
+    await request(app).put('/api/v1/references/r1/save').set('Authorization', `Bearer ${tokenA}`)
+    await request(app).put('/api/v1/references/r2/save').set('Authorization', `Bearer ${tokenA}`)
+    const res = await request(app).get('/api/v1/library/ids').set('Authorization', `Bearer ${tokenA}`)
+    expect(res.status).toBe(200)
+    expect([...res.body.ids].sort()).toEqual(['r1', 'r2'])
   })
 })
 

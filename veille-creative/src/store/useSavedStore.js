@@ -17,12 +17,13 @@ export const useSavedStore = create((set, get) => ({
   ids: new Set(),
   hydrated: false,
 
-  // Baseline globale : charge le vivier de l'utilisateur (login + hydratation auth).
+  // Baseline globale : charge les ids sauvegardés (endpoint léger, sans objets) au
+  // login + à l'hydratation auth. Les listes affinent ensuite via mergeFlags.
   async hydrate() {
     if (!getUserToken()) return set({ ids: new Set(), hydrated: true })
     try {
-      const { references } = await api.library.list()
-      set({ ids: new Set(references.map(r => r.id)), hydrated: true })
+      const { ids } = await api.library.ids()
+      set({ ids: new Set(ids), hydrated: true })
     } catch {
       set({ hydrated: true })
     }
