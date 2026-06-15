@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import ScrollToTop from './components/ScrollToTop'
 import Dashboard from './pages/Dashboard'
+import ExplorerPage from './pages/ExplorerPage'
 import LibraryPage from './pages/LibraryPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectCreate from './pages/ProjectCreate'
@@ -42,7 +43,8 @@ export default function App() {
         <Route path="/signup" element={<SignupPage />} />
 
         {/* ── Espace Léa (authentifié) ── */}
-        <Route path="/" element={withLayout(Dashboard)} />
+        <Route path="/" element={withLayout(ExplorerPage)} />
+        <Route path="/explorer/section/:id" element={withLayout(CategoryPage)} />
         <Route path="/library" element={withLayout(LibraryPage)} />
         <Route path="/library/section/:id" element={withLayout(CategoryPage)} />
         <Route path="/projects" element={withLayout(ProjectsPage)} />
