@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import ScrollToTop from './components/ScrollToTop'
-import Dashboard from './pages/Dashboard'
 import ExplorerPage from './pages/ExplorerPage'
 import LibraryPage from './pages/LibraryPage'
 import ProjectsPage from './pages/ProjectsPage'

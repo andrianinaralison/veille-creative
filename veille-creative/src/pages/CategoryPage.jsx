@@ -75,7 +75,7 @@ export default function CategoryPage() {
         <span className="text-ink-faint font-mono text-[11px]">/</span>
 
         <Link to="/" className="text-[11px] font-mono text-ink-muted hover:text-ink transition-colors flex-shrink-0">
-          Bibliothèque
+          Explorer
         </Link>
 
         <span className="text-ink-faint font-mono text-[11px]">/</span>
