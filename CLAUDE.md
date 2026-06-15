@@ -133,7 +133,7 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 🟢 **Avancement v0.8 (2026-06-15)** : **180-64 DONE & mergé** (PR #14, rebase sur `chore/pivot-front-explorer`, commit `05ea799`) — fondation data N-N : table `ReferenceSection` (remplace `Reference.sectionId`), `Section.type` AUTO/MANUAL, `Reference.awards[]` ; migration `20260615_nn_reference_section` appliquée sur Supabase (backfill 378→378, 9 sections MANUAL). API & front admin passés en `sectionIds[]` multi-section. **Prochain : 180-67 (Save)**.
 > ⚠️ Migrations du pivot : appliquer en **SQL idempotent + apply_migration MCP + insert manuel dans `_prisma_migrations`** (PAS `prisma migrate deploy` — table incohérente, entrées `finished_at: null`).
-> ⚠️ Branche pivot `chore/pivot-front-explorer` diverge de `main` (5 devant / 10 derrière ; `CANCELLED`+fix 180-57 pas sur main). Les PR du pivot ciblent cette branche ; consolidation vers `main` à arbitrer.
+> ✅ **Divergence résolue (2026-06-15)** : 180-56/audit (PR #12) et 180-57 (PR #15) mergés sur `main`, puis `main` re-mergé dans `chore/pivot-front-explorer`. Le pivot est désormais **0 derrière / N devant** `origin/main` et le contient entièrement. **Modèle arrêté** : `chore/pivot-front-explorer` = branche d'intégration v0.8 ; les tickets (180-67…) y sont PR ; **une** PR globale pivot→`main` quand v0.8 est déployable (main auto-déploie en prod, donc on n'y pousse pas le Explorer à moitié construit).
 
 Restent en // (sécu/RGPD, avant ouverture publique) : 180-59 (mdp oublié), 180-61 (RGPD), 180-62 (unsubscribe). Humain : 180-48, 180-24 (périmètres à revoir post-pivot), domaine Resend prod.
 
