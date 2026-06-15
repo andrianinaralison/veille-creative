@@ -203,6 +203,7 @@ enum SessionStatus {
   RUNNING
   COMPLETED
   FAILED
+  CANCELLED
 }
 
 enum DigestStatus {

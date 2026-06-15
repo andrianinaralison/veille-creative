@@ -127,7 +127,7 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 > ⚠️ Le détail (tickets, ordre, jalons) vit dans **`docs/10-produit/roadmap.md`** — source de vérité unique.
 
-✅ v0.4, v0.5, et le **code** de v0.5C/v0.6/v0.7 sont livrés (2026-06-12) en train de PRs stackées #2→#11 — voir l'état dans `docs/10-produit/roadmap.md`. Restent les tâches humaines : merge du train, clé Resend, test utilisabilité (180-48), session JTBD treatment (180-24), recettes device (180-25/27), checklist bêta (180-26).
+✅ v0.4, v0.5, v0.5C/v0.6/v0.7 livrés et **train de PRs #2→#11 mergé dans `main`** (2026-06-12). L'audit des parcours nominaux du même jour a ouvert **v0.6.1 — colmatage** (tickets 180-57→63, dont 2 bloquants : bibliothèque cassée + smart search sans UI) — voir `docs/30-tech/audit/audit-parcours-mvp-2026-06-12.md` et la roadmap. Restent côté humain : test utilisabilité (180-48), session JTBD treatment (180-24), recettes device (180-25/27), checklist bêta (180-26), domaine Resend prod.
 
 Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + digest → 🎨 treatment client.
 
@@ -153,11 +153,11 @@ Parcours cibles (cf. ROADMAP) : 🔧 boucle back curation → 🎬 veille + dige
 - ✅ Agent Claude enrichissement — tags taxonomie, mood, typeContenu, context (prompt caching, batch 15)
 - ✅ Backoffice `/admin` — CurationPage, monitoring live, tableau validation DRAFT/PUBLISHED/REJECTED
 - ✅ Profils créateurs 4 sources — YouTube (scan auto au submit), Instagram, Vimeo, site web
-- ✅ Auth utilisateurs (signup/login/me, JWT role 'user' ≠ 'admin', sessionStorage)
-- ✅ Bibliothèque branchée sur API réelle — LibraryPage + CategoryPage sur `/api/v1/references`
-- ✅ Smart search réel (public + admin) — filtre sur `taxonomy` (séparé des tags YouTube bruts, 180-49)
+- ✅ Auth utilisateurs (signup/login/me, JWT role 'user' ≠ 'admin', sessionStorage) — ⚠️ pas de reset mdp (180-59) ni gestion de compte (180-61)
+- 🔴 Bibliothèque **cassée** — LibraryPage/CategoryPage : fetch sans JWT + localhost en dur vers `/references` protégé → 401 silencieux, page vide (**180-57**, audit 2026-06-12)
+- 🟠 Smart search : backend réel public + admin (filtre `taxonomy`, 180-49) mais **aucune UI côté Léa** — `api.search.query` jamais appelé (**180-58**)
 - ✅ Feed de veille (`/` = Dashboard sur API, filtres mood/type)
-- ✅ Digest hebdo — compose admin + vue Léa + email Resend (⚠️ RESEND_API_KEY à configurer)
+- ✅ Digest hebdo — compose admin + vue Léa + email Resend (clé configurée en local, `onboarding@resend.dev` ; domaine à vérifier pour la prod) — ⚠️ pas de one-click unsubscribe (180-62)
 - ✅ Projets/treatments — CRUD scopé user, builder (intention + réfs annotées), lien public `/t/:token`, PDF via CSS print
 - ❌ mockData — supprimé, tout le front est sur l'API
 

@@ -37,6 +37,11 @@ function readableError(err) {
   return `Erreur inattendue : ${msg.slice(0, 120)}`;
 }
 
+async function isCancelled(sessionId) {
+  const s = await prisma.ingestionSession.findUnique({ where: { id: sessionId }, select: { status: true } });
+  return s?.status === 'CANCELLED';
+}
+
 // ─── Agent Topic Discovery ────────────────────────────────────────────────────
 
 export async function runIngestionAgent(sessionId, brief) {
@@ -110,6 +115,7 @@ export async function runIngestionAgent(sessionId, brief) {
           saved++;
           await updateSession({ totalSaved: saved });
         }
+        if (await isCancelled(sessionId)) { console.log(`[ingestion:${sessionId}] Annulé`); return; }
       } catch (err) { console.error(`[ingestion:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
@@ -228,6 +234,7 @@ export async function runCreatorScanAgent(sessionId, creatorIds) {
           saved++;
           await updateSession({ totalSaved: saved });
         }
+        if (await isCancelled(sessionId)) { console.log(`[creator-scan:${sessionId}] Annulé`); return; }
       } catch (err) { console.error(`[creator-scan:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
@@ -294,6 +301,7 @@ export async function fetchAndSaveLinks(sessionId, urls) {
           saved++;
           await updateSession({ totalSaved: saved });
         }
+        if (await isCancelled(sessionId)) { console.log(`[links:${sessionId}] Annulé`); return; }
       } catch (err) { console.error(`[links:${sessionId}] Save failed for ${video.videoId}:`, err.message); }
     }
 
