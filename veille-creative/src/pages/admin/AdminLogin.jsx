@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setToken } from '../../lib/admin-api'
-
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import { BASE } from '../../lib/api'
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('')

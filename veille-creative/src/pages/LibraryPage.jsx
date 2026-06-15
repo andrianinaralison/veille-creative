@@ -2,8 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ChevronDown, Bookmark, BookmarkCheck, SlidersHorizontal, X, Play } from 'lucide-react'
 import ReferenceModal from '../components/ReferenceModal'
-
-const API = 'http://localhost:3001/api/v1'
+import { api } from '../lib/api'
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 
@@ -449,6 +448,7 @@ export default function LibraryPage() {
   const [allRefs, setAllRefs] = useState([])
   const [sections, setSections] = useState([]) // sections depuis l'API
   const [loadingData, setLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [search, setSearch] = useState('')
   const [activeFilters, setActiveFilters] = useState({})
   const [filterOpen, setFilterOpen] = useState(false)
@@ -456,12 +456,15 @@ export default function LibraryPage() {
 
   const fetchData = useCallback(() => {
     setLoadingData(true)
+    setLoadError(null)
     Promise.all([
-      fetch(`${API}/references/sections`).then(r => r.json()).catch(() => ({ sections: [] })),
-      fetch(`${API}/references?limit=2000`).then(r => r.json()).catch(() => ({ references: [] })),
+      api.references.sections(),
+      api.references.list({ limit: 2000 }),
     ]).then(([sectionsData, refsData]) => {
       setSections(sectionsData.sections ?? [])
       setAllRefs(refsData.references ?? [])
+    }).catch(() => {
+      setLoadError('Impossible de charger la bibliothèque. Vérifie ta connexion et réessaie.')
     }).finally(() => setLoadingData(false))
   }, [])
 
@@ -571,6 +574,22 @@ export default function LibraryPage() {
     return (
       <div className="bg-canvas min-h-screen flex items-center justify-center">
         <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">Chargement…</p>
+      </div>
+    )
+  }
+
+  // État d'erreur — distinct de l'état vide : panne ≠ bibliothèque en cours de remplissage
+  if (loadError) {
+    return (
+      <div className="bg-canvas min-h-screen flex flex-col items-center justify-center gap-5 px-8">
+        <p className="text-xs text-red-400 font-mono text-center">{loadError}</p>
+        <button
+          type="button"
+          onClick={fetchData}
+          className="px-5 py-2.5 font-mono text-[10px] tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors"
+        >
+          Réessayer
+        </button>
       </div>
     )
   }

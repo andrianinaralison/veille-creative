@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import { BASE } from '../lib/api'
 
 // Vue client final : publique (pas de compte), lisible, imprimable en PDF.
 // À l'écran : dark cinema. À l'impression : fond blanc, encre noire.

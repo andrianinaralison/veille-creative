@@ -7,6 +7,21 @@ on:
     branches: [main]
 
 jobs:
+  guard-frontend:
+    name: Frontend — pas d'URL API en dur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Toute URL backend doit passer par lib/api.js ou lib/admin-api.js (VITE_API_URL).
+      # Un localhost:3001 ailleurs = fetch non authentifié ou déploiement cassé (180-57).
+      - name: Aucun localhost:3001 hors src/lib
+        run: |
+          if grep -rn "localhost:3001" veille-creative/src --exclude-dir=lib; then
+            echo "::error::URL API en dur détectée hors de src/lib — utiliser api.* (lib/api.js)"
+            exit 1
+          fi
+
   test-backend:
     name: Backend — Vitest
     runs-on: ubuntu-latest

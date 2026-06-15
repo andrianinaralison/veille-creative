@@ -3,8 +3,7 @@ import { useParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import ReferenceCard from '../components/ReferenceCard'
 import ReferenceModal from '../components/ReferenceModal'
-
-const API = 'http://localhost:3001/api/v1'
+import { api } from '../lib/api'
 
 // Hauteur navbar Layout = 56px (top-14), barre catégorie = 48px (h-12)
 // Le contenu doit donc partir à 104px du haut (pt-[104px])
@@ -18,12 +17,15 @@ export default function CategoryPage() {
   const [label, setLabel]     = useState(state?.label ?? '…')
   const [sub, setSub]         = useState(state?.sub   ?? '')
   const [loading, setLoading] = useState(!state?.refs)
+  const [error, setError]     = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
   const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     if (state?.refs) return
-    fetch(`${API}/references/sections`)
-      .then(r => r.json())
+    setLoading(true)
+    setError(null)
+    api.references.sections()
       .then(data => {
         const section = (data.sections ?? []).find(s => s.id === id)
         if (section) {
@@ -32,8 +34,9 @@ export default function CategoryPage() {
           setRefs((section.references ?? []).filter(r => r.status === 'PUBLISHED'))
         }
       })
+      .catch(() => setError('Impossible de charger cette section. Vérifie ta connexion et réessaie.'))
       .finally(() => setLoading(false))
-  }, [id, state])
+  }, [id, state, retryKey])
 
   return (
     <div className="bg-canvas min-h-screen">
@@ -74,7 +77,19 @@ export default function CategoryPage() {
         {loading && (
           <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted">Chargement…</p>
         )}
-        {!loading && refs.length === 0 && (
+        {error && (
+          <div className="flex flex-col items-start gap-4 py-8">
+            <p className="text-xs text-red-400 font-mono">{error}</p>
+            <button
+              type="button"
+              onClick={() => setRetryKey(k => k + 1)}
+              className="px-5 py-2.5 font-mono text-[10px] tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink hover:border-ink transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
+        {!loading && !error && refs.length === 0 && (
           <p className="text-ink-muted text-sm">Aucune référence dans cette section.</p>
         )}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
