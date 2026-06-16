@@ -131,18 +131,22 @@ Checkpoints historiques = **tags** (`v0.x-checkpoint`), pas des branches `*_Save
 
 ⚠️ **Finding data structurant (2026-06-14)** : **97% des refs publiées ont 0 tag de taxonomie**. v0.8 est conçu pour ne pas en dépendre ; toute la reco (v0.9) est gated sur l'enrichissement du catalogue (180-75/76).
 
-🟢 **Avancement v0.8 (2026-06-15)** :
+🟢 **Avancement v0.8 (2026-06-16)** :
 > - **180-64 DONE & mergé** (PR #14, commit `05ea799`) — fondation data N-N : `ReferenceSection`, `Section.type` AUTO/MANUAL, `Reference.awards[]` ; migration `20260615_nn_reference_section` (backfill 378→378, 9 sections MANUAL).
 > - **180-67 DONE & mergé** (PR #16, squash `4b56480`, **clôt 180-60**) — mécanique **Save** persistante & iso. Table `SavedReference` (PK userId+referenceId, `savedAt`, + `userTags[]`/`note` **déjà créés** pour 180-74) ; migration `20260615_saved_reference`. Backend : `PUT/DELETE /references/:id/save` (idempotents), flag `saved` sur `/references` & `/sections`, `GET /library` **paginé** + `GET /library/ids` (léger, hydrate). Front : `useSavedStore` (Zustand, source de vérité unique, toggle optimiste sérialisé anti-race) + hook `useSaved(id)`, `mergeFlags` seed depuis les listes ; câblé dans ReferenceCard/Modal/LibraryPage. Tests 53/53 + e2e Supabase. CI verte sur l'intégration.
+> - **Coquille UI 180-65/66/69/70/72/73/74 DONE & mergée** (PR #17, merge `46e0e95`, 6 commits atomiques préservés ; code-review high-effort → 6 findings foldés via fixup/autosquash). `ReferenceCard` unique (variant grid/shelf), `ReferenceModal` enrichie (awards, add-to-projet, lien créateur externe, placeholder similaires, panneau annotations), **Explorer** sur `/` (hero + rangée auto « Dernières publications » + sections MANUAL + recherche texte/facettes), **Bibliothèque** = vivier sauvegardé (`/library` paginé + lazy-load + filtre), nav refondue (Dashboard supprimé), `PATCH /library/:id` annotations. Nouveau `lib/referenceTags.js` (CAMERA_TAGS partagé). Build prod vert + e2e annotations OK.
+>   - **DoD reportés (recette/backlog)** : Trendy-vues + Nouveaux créateurs → moteur sections AUTO v0.10 (180-83, pas de `viewCount`) · recherche **NL non câblée** → après enrichissement (180-75/76) · reprise annotations dans builder treatment → 180-22 · « Nouveau projet » inline + page créateur → v0.9 (180-79).
 
 > ⚠️ Migrations du pivot : appliquer en **SQL idempotent + apply_migration MCP + insert manuel dans `_prisma_migrations`** (PAS `prisma migrate deploy`). Project Supabase : `fytnuqnxadnsedyxxlzq`.
 > ✅ **Divergence résolue (2026-06-15)** : `chore/pivot-front-explorer` = **branche d'intégration v0.8**, contient `main` entièrement. Les tickets y sont mergés ; **une** PR globale pivot→`main` quand v0.8 est déployable (main auto-déploie en prod).
 
-### ▶️ DÉMARRAGE PROCHAINE SESSION — build coquille UI v0.8 (workflow validé 2026-06-15)
-**Ordre roadmap maintenu, build/test découplé du merge** (« temps 1 / temps 2 ») :
-- **Temps 1 — build & test continu** : brancher **`feat/v0.8-explorer-ui`** depuis `chore/pivot-front-explorer` ; **1 commit atomique par ticket** ; **back (`cd server && node src/index.js`, :3001) + front Vite (:5173, HMR) qui tournent en permanence** pour voir chaque incrément live. Ordre : **180-65/66** (ReferenceCard/Modal uniques) → **180-69** (nav, `/`=Explorer, suppr. Veille) → **180-70** (page Explorer) → **180-73** (Bibliothèque = vivier, sur `/library` déjà prêt) → **180-72** (recherche) → **180-74** (annotations, colonnes déjà en base). Andri teste **tout le parcours en une passe à la fin du temps 1**.
-- **Temps 2 — formaliser** : `/code-review` sur le lot → fix → **une PR** `feat/v0.8-explorer-ui` → intégration → CI → merge → Linear chaque ticket Done.
-- Front : pas de `.env` → `VITE_API_URL` défaut `http://localhost:3001` (= back local). ReferenceCard/Modal **existent déjà** (à consolider, pas créer). `/library` paginé (limit max 200) + `/library/ids` dispo.
+### ▶️ DÉMARRAGE PROCHAINE SESSION — fin de v0.8 (2026-06-16)
+La **coquille UI v0.8 est mergée** dans `chore/pivot-front-explorer` (cf. avancement ci-dessus). Restent pour clore v0.8 :
+- **180-71** — backoffice sections Explorer (CRUD, ordre, N-N réf↔section, override) : permet de composer les rangées d'Explorer au lieu des 9 sections migrées. Back `admin-sections.route.js` existant à étendre.
+- **180-68** — vérifier puis **supprimer la limite de 20 réfs/projet** dans le builder de treatment (l'ajout réf→projet depuis la modale est déjà livré dans 180-66/68 partiel).
+- Workflow validé inchangé (« temps 1 build/test continu sur une branche `feat/…` depuis l'intégration → temps 2 : `/code-review` → 1 PR → merge → Linear Done »). Front : pas de `.env`, `VITE_API_URL` défaut `http://localhost:3001`.
+
+Puis, quand v0.8 jugée déployable : **une PR globale** `chore/pivot-front-explorer` → `main` (main auto-déploie en prod). En // débloquant v0.9 : **track enrichissement 180-75/76** (refonte tags + re-run agent Claude sur 478 refs) — prérequis reco + qualité recherche NL.
 
 Restent en // (sécu/RGPD, avant ouverture publique) : 180-59 (mdp oublié), 180-61 (RGPD), 180-62 (unsubscribe). Humain : 180-48, 180-24 (périmètres à revoir post-pivot), domaine Resend prod.
 
