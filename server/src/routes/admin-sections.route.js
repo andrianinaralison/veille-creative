@@ -76,10 +76,39 @@ router.patch('/:id', async (req, res) => {
 /** DELETE /api/v1/admin/sections/:id — supprimer (les liens N-N tombent en cascade, les refs sont conservées) */
 router.delete('/:id', async (req, res) => {
   try {
+    const section = await prisma.section.findUnique({ where: { id: req.params.id }, select: { type: true } });
+    if (!section) return res.status(404).json({ error: 'Section introuvable' });
+    if (section.type === 'AUTO') {
+      return res.status(409).json({ error: 'Une section auto ne peut pas être supprimée (renommable / overridable uniquement)' });
+    }
     await prisma.section.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Section introuvable' });
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+/**
+ * POST /api/v1/admin/sections/reorder
+ * Réordonne les sections : position = index dans le tableau fourni.
+ * Body : { orderedIds: string[] }
+ */
+router.post('/reorder', async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return res.status(400).json({ error: 'orderedIds requis' });
+  }
+  try {
+    await prisma.$transaction(
+      orderedIds.map((id, position) =>
+        prisma.section.update({ where: { id }, data: { position } })
+      )
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Section introuvable' });
+    console.error('[admin/sections] POST /reorder', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

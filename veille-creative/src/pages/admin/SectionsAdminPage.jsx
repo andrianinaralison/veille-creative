@@ -55,13 +55,15 @@ function NewSectionForm({ onCreated }) {
 
 // ─── Carte section ────────────────────────────────────────────────────────────
 
-function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }) {
+function SectionCard({ section, refs, index, total, onUpdate, onDelete, onAssign, onUnassign, onMove }) {
   const { markDirty } = useAdminStore()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(section.title)
   const [description, setDescription] = useState(section.description)
   const [saving, setSaving] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+
+  const isAuto = section.type === 'AUTO'
 
   // N-N (180-64) : une réf peut appartenir à plusieurs sections
   const sectionRefs = refs.filter(r => (r.sectionIds ?? []).includes(section.id))
@@ -90,6 +92,7 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
   }
 
   async function handleDelete() {
+    if (isAuto) return
     if (!confirm(`Supprimer la section "${section.title}" ? Les références ne seront pas supprimées.`)) return
     await apiFetch(`${API_SECTIONS}/${section.id}`, { method: 'DELETE' })
     markDirty()
@@ -130,7 +133,14 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
           />
         ) : (
           <div className="flex-1 min-w-0">
-            <h3 className="font-editorial text-base text-ink">{section.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-editorial text-base text-ink truncate">{section.title}</h3>
+              <span className={`font-mono text-[8px] tracking-widest uppercase px-1.5 py-0.5 border flex-shrink-0 ${
+                isAuto ? 'border-ink text-ink' : 'border-surface-border text-ink-faint'
+              }`}>
+                {isAuto ? 'auto' : 'manuel'}
+              </span>
+            </div>
             {section.description && (
               <p className="text-[11px] text-ink-muted truncate">{section.description}</p>
             )}
@@ -140,6 +150,18 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
         <span className="font-mono text-[9px] tracking-widest uppercase text-ink-muted flex-shrink-0">
           {sectionRefs.length} réf.
         </span>
+
+        {/* Ordre */}
+        {!editing && (
+          <div className="flex flex-col flex-shrink-0">
+            <button onClick={() => onMove(index, -1)} disabled={index === 0}
+              aria-label="Monter la section"
+              className="text-ink-faint hover:text-ink disabled:opacity-20 disabled:hover:text-ink-faint transition-colors leading-none text-[10px]">▲</button>
+            <button onClick={() => onMove(index, 1)} disabled={index === total - 1}
+              aria-label="Descendre la section"
+              className="text-ink-faint hover:text-ink disabled:opacity-20 disabled:hover:text-ink-faint transition-colors leading-none text-[10px]">▼</button>
+          </div>
+        )}
 
         <div className="flex gap-1.5 flex-shrink-0">
           {editing ? (
@@ -163,10 +185,12 @@ function SectionCard({ section, refs, onUpdate, onDelete, onAssign, onUnassign }
                 className="px-2.5 py-1 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-muted hover:text-ink transition-colors">
                 {section.active ? 'Masquer' : 'Activer'}
               </button>
-              <button onClick={handleDelete}
-                className="px-2.5 py-1 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-faint hover:border-ink hover:text-ink transition-colors">
-                ✕
-              </button>
+              {!isAuto && (
+                <button onClick={handleDelete}
+                  className="px-2.5 py-1 text-[10px] font-mono tracking-widest uppercase border border-surface-border text-ink-faint hover:border-ink hover:text-ink transition-colors">
+                  ✕
+                </button>
+              )}
             </>
           )}
         </div>
@@ -416,6 +440,7 @@ function SuggestionsPanel({ refs, onSectionCreated, onRefsAssigned }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SectionsAdminPage() {
+  const { markDirty } = useAdminStore()
   const [sections, setSections] = useState([])
   const [refs, setRefs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -467,6 +492,26 @@ export default function SectionsAdminPage() {
     ))
   }
 
+  // Réordonnancement optimiste : on échange la section avec sa voisine puis on persiste l'ordre.
+  async function handleMove(index, delta) {
+    const target = index + delta
+    if (target < 0 || target >= sections.length) return
+    const reordered = [...sections]
+    ;[reordered[index], reordered[target]] = [reordered[target], reordered[index]]
+    const withPositions = reordered.map((s, i) => ({ ...s, position: i }))
+    const prev = sections
+    setSections(withPositions)
+    try {
+      await apiFetch(`${API_SECTIONS}/reorder`, {
+        method: 'POST',
+        body: JSON.stringify({ orderedIds: reordered.map(s => s.id) }),
+      })
+      markDirty()
+    } catch {
+      setSections(prev) // rollback si l'API échoue
+    }
+  }
+
   const unassigned = refs.filter(r => !(r.sectionIds ?? []).length)
 
   return (
@@ -475,9 +520,9 @@ export default function SectionsAdminPage() {
       <div className="flex items-end justify-between mb-8">
         <div>
           <p className="font-mono text-[10px] tracking-widest uppercase text-ink-muted mb-1">
-            {sections.length} section{sections.length !== 1 ? 's' : ''} · {unassigned.length} réf. non assignées
+            {sections.length} section{sections.length !== 1 ? 's' : ''} · {unassigned.length} réf. non assignées · ordre = affichage Explorer
           </p>
-          <h1 className="font-editorial text-3xl text-ink">Sections bibliothèque</h1>
+          <h1 className="font-editorial text-3xl text-ink">Sections Explorer</h1>
         </div>
         <NewSectionForm onCreated={handleCreated} />
       </div>
@@ -493,21 +538,24 @@ export default function SectionsAdminPage() {
             onRefsAssigned={handleBulkAssign}
           />
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
             {sections.length === 0 && (
-              <p className="text-ink-muted text-sm col-span-2">
-                Aucune section. Créez-en une pour commencer à organiser la bibliothèque.
+              <p className="text-ink-muted text-sm">
+                Aucune section. Créez-en une pour composer les rangées d'Explorer.
               </p>
             )}
-            {sections.map(section => (
+            {sections.map((section, i) => (
               <SectionCard
                 key={section.id}
                 section={section}
                 refs={refs}
+                index={i}
+                total={sections.length}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
                 onAssign={handleAssign}
                 onUnassign={handleUnassign}
+                onMove={handleMove}
               />
             ))}
           </div>
