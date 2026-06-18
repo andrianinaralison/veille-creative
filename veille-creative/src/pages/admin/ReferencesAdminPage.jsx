@@ -98,6 +98,7 @@ function RefModal({ ref, onClose, onUpdate, onDelete }) {
   const [tags, setTags] = useState(ref.taxonomy ?? [])
   const [mood, setMood] = useState(ref.mood ?? '')
   const [context, setContext] = useState(ref.context ?? '')
+  const [awards, setAwards] = useState(ref.awards ?? [])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -124,7 +125,7 @@ function RefModal({ ref, onClose, onUpdate, onDelete }) {
     try {
       const updated = await apiFetch(`/references/${ref.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ taxonomy: tags, mood, context }),
+        body: JSON.stringify({ taxonomy: tags, mood, context, awards }),
       })
       onUpdate(updated)
       markDirty()
@@ -279,6 +280,12 @@ function RefModal({ ref, onClose, onUpdate, onDelete }) {
               <input id="modal-mood" value={mood} onChange={e => setMood(e.target.value)}
                 placeholder="Autre…"
                 className="bg-canvas border border-surface-border text-ink text-xs px-2 py-1 w-36 outline-none focus:border-ink transition-colors placeholder-ink-faint" />
+            </div>
+
+            {/* Prix / récompenses (awards) — bandeau modale Léa */}
+            <div className="flex-shrink-0">
+              <label id="modal-awards-label" className="font-mono text-[9px] tracking-widest uppercase text-ink-muted block mb-1.5">Prix / récompenses</label>
+              <TagEditor id="modal-awards" tags={awards} onChange={setAwards} />
             </div>
 
             {/* Contexte — remplit l'espace restant */}
